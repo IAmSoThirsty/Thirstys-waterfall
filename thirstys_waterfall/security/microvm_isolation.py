@@ -165,7 +165,7 @@ class CommunicationChannel:
             if self._socket:
                 try:
                     self._socket.close()
-                except:
+                except Exception:
                     pass
                 self._socket = None
             self._connected = False
@@ -173,7 +173,7 @@ class CommunicationChannel:
             if os.path.exists(self.socket_path):
                 try:
                     os.unlink(self.socket_path)
-                except:
+                except Exception:
                     pass
 
 
