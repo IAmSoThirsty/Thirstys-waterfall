@@ -82,6 +82,26 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+### Platform-Specific Requirements
+
+#### Linux
+```bash
+# For full VPN and firewall functionality
+sudo apt-get install wireguard-tools openvpn nftables strongswan
+```
+
+#### Windows
+- Download [WireGuard for Windows](https://www.wireguard.com/install/)
+- Download [OpenVPN for Windows](https://openvpn.net/community-downloads/)
+- Windows Firewall is built-in
+
+#### macOS
+```bash
+# For full VPN functionality
+brew install wireguard-tools openvpn
+# PF (Packet Filter) is built into macOS
+```
+
 ## 🚀 Quick Start
 
 ### Python API
@@ -210,6 +230,27 @@ All backends include:
 ✅ Comprehensive integration tests  
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) for detailed security architecture and limitations.
+
+### 🔍 Implementation Proof
+
+**Run the demo to see concrete implementations in action:**
+
+```bash
+python examples/concrete_implementation_demo.py
+```
+
+This demo shows:
+- Real VPN backend detection (WireGuard, OpenVPN, IKEv2)
+- Real firewall backend detection (nftables, Windows Firewall, PF)
+- Platform-specific integration details
+- Actual command-line tools used for each platform
+
+**Example output on Linux:**
+```
+Available VPN backends on this system: ['ikev2']
+Available firewall backends on this system: ['nftables']
+Platform-specific firewall backend: NftablesBackend
+```
 
 ## 🛡️ Security Features
 

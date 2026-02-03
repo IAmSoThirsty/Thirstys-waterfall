@@ -374,7 +374,17 @@ class PFBackend(FirewallBackend):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.anchor_name = config.get('anchor', 'thirstys')
-        self.rules_file = config.get('rules_file', '/tmp/thirstys_pf.rules')
+        # Use more secure location than /tmp for firewall rules
+        # Try user's home directory config first, fallback to /tmp only if needed
+        default_rules_dir = os.path.expanduser('~/.config/thirstys')
+        if not os.path.exists(default_rules_dir):
+            try:
+                os.makedirs(default_rules_dir, mode=0o700)  # User-only access
+            except Exception:
+                # Fallback to /tmp if config dir creation fails
+                default_rules_dir = '/tmp'
+        self.rules_file = config.get('rules_file', 
+                                     os.path.join(default_rules_dir, 'thirstys_pf.rules'))
         
     def check_availability(self) -> bool:
         """Check if PF is available"""
@@ -405,9 +415,12 @@ class PFBackend(FirewallBackend):
             return False
     
     def _write_rules_file(self):
-        """Write PF rules to file"""
+        """Write PF rules to file with secure permissions"""
         try:
-            with open(self.rules_file, 'w') as f:
+            # Create file with restrictive permissions (user read/write only)
+            with os.fdopen(os.open(self.rules_file, 
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 
+                                   0o600), 'w') as f:
                 for rule_entry in self.rules:
                     rule = rule_entry['rule']
                     pf_rule = self._convert_to_pf_rule(rule)

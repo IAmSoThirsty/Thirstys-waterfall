@@ -331,11 +331,15 @@ class TestPFBackend(unittest.TestCase):
         self.assertIn('udp', pf_rule)
         self.assertIn('10.0.0.0/8', pf_rule)
     
-    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.fdopen')
+    @patch('os.open')
     @patch('subprocess.run')
-    def test_add_rule(self, mock_run, mock_file):
+    def test_add_rule(self, mock_run, mock_os_open, mock_fdopen):
         """Test adding PF rule"""
         mock_run.return_value = MagicMock(returncode=0)
+        mock_file = MagicMock()
+        mock_fdopen.return_value.__enter__ = MagicMock(return_value=mock_file)
+        mock_fdopen.return_value.__exit__ = MagicMock(return_value=False)
         
         rule = {
             'id': 'rule_001',
@@ -348,12 +352,18 @@ class TestPFBackend(unittest.TestCase):
         
         self.assertTrue(result)
         self.assertEqual(len(self.backend.rules), 1)
-        mock_file.assert_called_once()
+        # Verify secure file creation with os.open was attempted
+        mock_os_open.assert_called_once()
     
-    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.fdopen')
+    @patch('os.open')
     @patch('subprocess.run')
-    def test_remove_rule(self, mock_run, mock_file):
+    def test_remove_rule(self, mock_run, mock_os_open, mock_fdopen):
         """Test removing PF rule"""
+        mock_file = MagicMock()
+        mock_fdopen.return_value.__enter__ = MagicMock(return_value=mock_file)
+        mock_fdopen.return_value.__exit__ = MagicMock(return_value=False)
+        
         self.backend.rules = [
             {'id': 'rule_001', 'rule': {'action': 'accept'}},
             {'id': 'rule_002', 'rule': {'action': 'drop'}}
@@ -483,13 +493,17 @@ class TestFirewallRuleEnforcement(unittest.TestCase):
         
         self.assertEqual(len(backend.rules), 2)
     
-    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.fdopen')
+    @patch('os.open')
     @patch('subprocess.run')
-    def test_pf_rule_enforcement(self, mock_run, mock_file):
+    def test_pf_rule_enforcement(self, mock_run, mock_os_open, mock_fdopen):
         """Test complete PF rule enforcement flow"""
         backend = PFBackend({'anchor': 'test', 'rules_file': '/tmp/test.rules'})
         backend.platform = 'Darwin'
         mock_run.return_value = MagicMock(returncode=0)
+        mock_file = MagicMock()
+        mock_fdopen.return_value.__enter__ = MagicMock(return_value=mock_file)
+        mock_fdopen.return_value.__exit__ = MagicMock(return_value=False)
         
         # Enable firewall
         self.assertTrue(backend.enable())

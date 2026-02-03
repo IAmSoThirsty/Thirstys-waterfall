@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 import platform
+import time
 import logging
 from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
@@ -288,7 +289,6 @@ class OpenVPNBackend(VPNBackend):
                                           stderr=subprocess.PIPE)
             
             # Wait briefly to check if connection succeeds
-            import time
             time.sleep(5)
             
             if self.process.poll() is None:
@@ -405,8 +405,8 @@ class IKEv2Backend(VPNBackend):
     def _connect_macos_native(self) -> bool:
         """Connect using macOS native VPN"""
         try:
-            # Use networksetup or scutil
-            cmd = ['networksetup', '-connectpppoeservice', self.connection_name]
+            # Use scutil for IKEv2/IPSec VPN connections
+            cmd = ['scutil', '--nc', 'start', self.connection_name]
             result = subprocess.run(cmd,
                                   capture_output=True,
                                   timeout=30)
@@ -433,7 +433,8 @@ class IKEv2Backend(VPNBackend):
             elif self.platform == 'Windows':
                 cmd = ['rasdial', self.connection_name, '/disconnect']
             elif self.platform == 'Darwin':
-                cmd = ['networksetup', '-disconnectpppoeservice', self.connection_name]
+                # Use scutil for IKEv2/IPSec on macOS
+                cmd = ['scutil', '--nc', 'stop', self.connection_name]
             else:
                 return False
             
