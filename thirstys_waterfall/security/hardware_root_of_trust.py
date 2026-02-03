@@ -89,6 +89,8 @@ class TPMInterface(HardwareInterface):
         self._keys: Dict[str, bytes] = {}
         self._pcr_banks: Dict[int, bytes] = {}
         self._hardware_id = self._generate_hardware_id()
+        # Generate unique salt from hardware ID instead of hard-coding
+        self._salt = hashlib.sha256(f"TPM_SRK_{self._hardware_id}".encode()).digest()
         self._lock = threading.Lock()
         
     def initialize(self) -> bool:
@@ -246,7 +248,7 @@ class TPMInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"TPM_SRK_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -262,7 +264,7 @@ class TPMInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"TPM_SRK_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -306,6 +308,8 @@ class SecureEnclaveInterface(HardwareInterface):
         self._initialized = False
         self._keychain: Dict[str, bytes] = {}
         self._enclave_id = self._generate_enclave_id()
+        # Generate unique salt from enclave ID instead of hard-coding
+        self._salt = hashlib.sha256(f"SECURE_ENCLAVE_{self._enclave_id}".encode()).digest()
         self._lock = threading.Lock()
     
     def initialize(self) -> bool:
@@ -381,7 +385,7 @@ class SecureEnclaveInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"SECURE_ENCLAVE_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -396,7 +400,7 @@ class SecureEnclaveInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"SECURE_ENCLAVE_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -420,6 +424,8 @@ class HSMInterface(HardwareInterface):
         self._initialized = False
         self._keys: Dict[str, bytes] = {}
         self._hsm_id = self._generate_hsm_id()
+        # Generate unique salt from HSM ID instead of hard-coding
+        self._salt = hashlib.sha256(f"HSM_MASTER_KEY_{self._hsm_id}".encode()).digest()
         self._lock = threading.Lock()
     
     def initialize(self) -> bool:
@@ -497,7 +503,7 @@ class HSMInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"HSM_MASTER_KEY_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -512,7 +518,7 @@ class HSMInterface(HardwareInterface):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"HSM_MASTER_KEY_SALT",
+            salt=self._salt,
             iterations=100000,
             backend=default_backend()
         )

@@ -1,6 +1,14 @@
 """Security module for Thirstys Waterfall - Advanced Security Features"""
 
-from .hardware_root_of_trust import HardwareRootOfTrust, TPMInterface, SecureEnclaveInterface, HSMInterface
+from .hardware_root_of_trust import (
+    HardwareRootOfTrust, 
+    TPMInterface, 
+    SecureEnclaveInterface, 
+    HSMInterface,
+    HardwareType,
+    AttestationStatus,
+    HardwareInterface
+)
 from .privacy_risk_engine import PrivacyRiskEngine, RiskLevel
 from .microvm_isolation import MicroVMIsolationManager, MicroVMInstance
 from .mfa_auth import (
@@ -36,6 +44,9 @@ __all__ = [
     'TPMInterface',
     'SecureEnclaveInterface',
     'HSMInterface',
+    'HardwareType',
+    'AttestationStatus',
+    'HardwareInterface',
     'PrivacyRiskEngine',
     'RiskLevel',
     'MicroVMIsolationManager',
