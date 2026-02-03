@@ -350,11 +350,16 @@ class PrivacyLedger:
         # Setup Fernet cipher
         self.cipher = Fernet(self.encryption_key)
         
-        # Setup AES-GCM for additional layer
+        # Setup AES-GCM with unique per-ledger salt
+        # Generate salt from storage path for deterministic but unique salt per ledger
+        import hashlib
+        path_hash = hashlib.sha256(str(self.storage_path).encode()).digest()
+        salt = path_hash[:32]  # Use first 32 bytes as salt
+        
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b'privacy_ledger_salt_v1',  # In production, use random salt
+            salt=salt,
             iterations=100000,
             backend=default_backend()
         )
