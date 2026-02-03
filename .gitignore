@@ -47,3 +47,14 @@ Thumbs.db
 # Build artifacts
 *.pyc
 __pycache__/
+
+# Environment variables and secrets (NEVER COMMIT!)
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx

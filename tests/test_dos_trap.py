@@ -385,11 +385,94 @@ def run_tests():
     suite.addTests(loader.loadTestsFromTestCase(TestCompromiseEvent))
     suite.addTests(loader.loadTestsFromTestCase(TestInterfaceDisabler))
     suite.addTests(loader.loadTestsFromTestCase(TestHardwareKeyDestroyer))
+    suite.addTests(loader.loadTestsFromTestCase(TestNoHardcodedSecrets))
     
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     
     return result
+
+
+class TestNoHardcodedSecrets(unittest.TestCase):
+    """Test that no hardcoded secrets remain in examples or source code"""
+    
+    def test_no_hardcoded_secrets_in_dos_trap_demo(self):
+        """Verify no hardcoded secrets in dos_trap_demo.py"""
+        import os
+        demo_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'examples', 'dos_trap_demo.py'
+        )
+        
+        with open(demo_file, 'r') as f:
+            content = f.read()
+        
+        # Check for specific hardcoded values that were removed
+        forbidden_patterns = [
+            b'secret_key_data_12345678',
+            b'signing_key_data_87654321', 
+            b'root_key_data_abcdefgh',
+            b'session_key_1',
+            b'session_key_2',
+            'super_secret_password',
+            'api_token_xyz123'
+        ]
+        
+        for pattern in forbidden_patterns:
+            pattern_str = pattern.decode() if isinstance(pattern, bytes) else pattern
+            self.assertNotIn(
+                pattern_str, 
+                content,
+                f"Found hardcoded secret pattern: {pattern_str}"
+            )
+    
+    def test_demo_uses_secure_generation(self):
+        """Verify demo uses secure secret generation"""
+        import os
+        demo_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'examples', 'dos_trap_demo.py'
+        )
+        
+        with open(demo_file, 'r') as f:
+            content = f.read()
+        
+        # Check that secure patterns are used
+        self.assertIn('import secrets', content, 
+                     "Demo should import secrets module for secure generation")
+        self.assertIn('secrets.token_bytes', content,
+                     "Demo should use secrets.token_bytes for secure random generation")
+        self.assertIn('os.environ.get', content,
+                     "Demo should check environment variables for secrets")
+    
+    def test_security_documentation_exists(self):
+        """Verify security documentation exists"""
+        import os
+        repo_root = os.path.dirname(os.path.dirname(__file__))
+        
+        security_md = os.path.join(repo_root, 'SECURITY.md')
+        self.assertTrue(os.path.exists(security_md), 
+                       "SECURITY.md documentation must exist")
+        
+        env_example = os.path.join(repo_root, '.env.example')
+        self.assertTrue(os.path.exists(env_example),
+                       ".env.example template must exist")
+    
+    def test_gitignore_blocks_secrets(self):
+        """Verify .gitignore blocks secret files"""
+        import os
+        gitignore_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            '.gitignore'
+        )
+        
+        with open(gitignore_file, 'r') as f:
+            content = f.read()
+        
+        # Check that .env files are ignored
+        self.assertIn('.env', content,
+                     ".gitignore must block .env files")
+
 
 
 if __name__ == '__main__':
