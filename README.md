@@ -187,6 +187,30 @@ See `examples/config.json` for full configuration options.
                                      Encrypted
 ```
 
+## 🎯 Platform Support
+
+### Cross-Platform Implementation
+
+Thirstys Waterfall provides **concrete OS-level integrations** for all major platforms:
+
+#### VPN Backends
+- **Linux**: WireGuard (wg-quick), OpenVPN, strongSwan (IKEv2)
+- **Windows**: WireGuard for Windows, OpenVPN GUI, Native IKEv2
+- **macOS**: WireGuard, OpenVPN, Native IKEv2/IPSec
+
+#### Firewall Backends
+- **Linux**: nftables integration (modern netfilter)
+- **Windows**: Windows Firewall API (netsh advfirewall)
+- **macOS**: PF (Packet Filter) via pfctl
+
+All backends include:
+✅ Automatic platform detection  
+✅ Protocol fallback mechanisms  
+✅ Real handshake and connection verification  
+✅ Comprehensive integration tests  
+
+See [THREAT_MODEL.md](THREAT_MODEL.md) for detailed security architecture and limitations.
+
 ## 🛡️ Security Features
 
 - **End-to-End Encryption** - All data encrypted in transit and at rest
@@ -199,6 +223,16 @@ See `examples/config.json` for full configuration options.
 - **Secret Management** - No hardcoded secrets, environment-based configuration
 - **Hardware Root of Trust** - TPM, Secure Enclave, HSM integration
 - **DOS Trap Mode** - Advanced compromise detection and response
+
+### 🔐 Threat Model & Security Architecture
+
+**See [THREAT_MODEL.md](THREAT_MODEL.md) for comprehensive security documentation:**
+- Threat actors and attack scenarios we defend against
+- What we protect and what's out of scope
+- Encryption architecture and key management
+- Security assumptions and limitations
+- Incident response procedures
+- Honest assessment of current capabilities vs. roadmap
 
 ### 🔐 Secret Management
 
@@ -217,6 +251,45 @@ See `examples/` directory for more:
 - `basic_usage.py` - Simple usage example
 - `advanced_usage.py` - Advanced features demonstration
 - `config.json` - Configuration template
+
+## 🧪 Testing & CI
+
+### Continuous Integration
+
+[![CI Status](https://github.com/IAmSoThirsty/Thirstys-waterfall/actions/workflows/ci.yml/badge.svg)](https://github.com/IAmSoThirsty/Thirstys-waterfall/actions)
+
+Automated testing across multiple platforms:
+- **Unit Tests**: All core components tested
+- **Integration Tests**: VPN handshake, firewall rule enforcement, browser sandboxing
+- **Platform Tests**: Linux (Ubuntu), Windows, macOS
+- **Python Versions**: 3.8, 3.9, 3.10, 3.11
+- **Security Scans**: Bandit, Safety, dependency checks
+
+### Run Tests Locally
+
+```bash
+# Run all tests
+python -m unittest discover -s tests -p "test_*.py" -v
+
+# Run specific test suites
+python -m unittest tests.test_vpn_backends -v
+python -m unittest tests.test_firewall_backends -v
+
+# Check VPN backend availability on your system
+python -c "from thirstys_waterfall.vpn.backends import VPNBackendFactory; print(VPNBackendFactory.get_available_backends())"
+
+# Check firewall backend availability on your system
+python -c "from thirstys_waterfall.firewalls.backends import FirewallBackendFactory; print(FirewallBackendFactory.get_available_backends())"
+```
+
+### Test Coverage
+
+Our test suite includes:
+- ✅ **VPN Handshake Tests**: WireGuard, OpenVPN, IKEv2 connection flows
+- ✅ **Firewall Rule Enforcement**: nftables, Windows Firewall, PF rule application
+- ✅ **Platform Detection**: Automatic backend selection per OS
+- ✅ **Protocol Fallback**: VPN protocol fallback mechanisms
+- ✅ **Connection Resilience**: Reconnection and error handling
 
 ## 🤝 Contributing
 
