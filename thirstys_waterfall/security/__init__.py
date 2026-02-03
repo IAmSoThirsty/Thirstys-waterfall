@@ -15,6 +15,21 @@ from .mfa_auth import (
     BiometricProvider,
     BiometricType,
 )
+from .dos_trap import (
+    DOSTrapMode,
+    CompromiseDetector,
+    CompromiseEvent,
+    CompromiseType,
+    ThreatLevel,
+    ResponseAction,
+    SanitizationMode,
+    SecretWiper,
+    HardwareKeyDestroyer,
+    InterfaceDisabler,
+    MemorySanitizer,
+    DiskSanitizer,
+    create_dos_trap,
+)
 
 __all__ = [
     'HardwareRootOfTrust',
@@ -35,4 +50,17 @@ __all__ = [
     'CertificateProvider',
     'BiometricProvider',
     'BiometricType',
+    'DOSTrapMode',
+    'CompromiseDetector',
+    'CompromiseEvent',
+    'CompromiseType',
+    'ThreatLevel',
+    'ResponseAction',
+    'SanitizationMode',
+    'SecretWiper',
+    'HardwareKeyDestroyer',
+    'InterfaceDisabler',
+    'MemorySanitizer',
+    'DiskSanitizer',
+    'create_dos_trap',
 ]
