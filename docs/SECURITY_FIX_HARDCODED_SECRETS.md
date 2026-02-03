@@ -2,11 +2,22 @@
 
 ## Issue Description
 
-The `hardware_root_of_trust.py` module contained hard-coded cryptographic salt values that posed a security risk. These hard-coded values could potentially be exploited if the source code was exposed, and they prevented proper instance isolation between hardware security modules.
+Hard-coded cryptographic salt values and secrets were found in multiple locations in the codebase, posing significant security risks. These hard-coded values could be exploited if the source code was exposed, and they prevented proper instance isolation between components.
+
+## Affected Files
+
+1. **`hardware_root_of_trust.py`** - FIXED ✅
+   - Hard-coded TPM, Secure Enclave, and HSM salts
+   - Status: Previously remediated with dynamic salt generation
+
+2. **`examples/dos_trap_demo.py`** - FIXED ✅ 
+   - Hard-coded demo secrets (master keys, session keys, credentials)
+   - Status: Remediated in this fix
+   - Commit: abe0171 (mentioned in GitGuardian alert)
 
 ## Vulnerabilities Identified
 
-### Before Fix (Insecure)
+### examples/dos_trap_demo.py (Current Fix)
 
 ```python
 # TPMInterface - INSECURE: Hard-coded salt
@@ -222,3 +233,175 @@ The hard-coded secret exposure vulnerability has been **completely eliminated**.
 - ✅ Proven through cryptographic isolation tests
 
 **Status: RESOLVED** 🔒
+
+---
+
+## Update: DOS Trap Demo Remediation (2026-02-03)
+
+### Additional Vulnerability: examples/dos_trap_demo.py
+
+**GitGuardian Alert**: High-entropy secrets detected in commit abe0171
+
+#### Before Fix (Insecure)
+
+```python
+def demo_secret_wiping():
+    # ❌ INSECURE: Hard-coded secrets in demo
+    master_keys = {
+        'master_encryption_key': b'secret_key_data_12345678',
+        'master_signing_key': b'signing_key_data_87654321',
+        'root_key': b'root_key_data_abcdefgh'
+    }
+    session_keys = {
+        'session_1': b'session_key_1',
+        'session_2': b'session_key_2'
+    }
+    credentials = {
+        'user_password': 'super_secret_password',
+        'api_token': 'api_token_xyz123'
+    }
+```
+
+#### After Fix (Secure)
+
+```python
+import secrets
+import os
+
+def generate_demo_secret(length: int = 24) -> bytes:
+    """Generate cryptographically secure random secret for demo."""
+    return secrets.token_bytes(length)
+
+def get_demo_credentials() -> dict:
+    """Get credentials from environment or generate safe demo values."""
+    master_encryption_key = os.environ.get('DEMO_MASTER_ENCRYPTION_KEY')
+    if master_encryption_key:
+        master_encryption_key = base64.b64decode(master_encryption_key)
+    else:
+        master_encryption_key = generate_demo_secret(24)
+    # ... similar for other secrets
+
+def demo_secret_wiping():
+    # ✓ SECURE: Dynamic generation with env var support
+    demo_creds = get_demo_credentials()
+    master_keys = demo_creds['master_keys']
+```
+
+### Updated Totals
+
+**Total Hard-Coded Secrets Removed**: 13
+- `examples/dos_trap_demo.py`: 7 secrets
+- `hardware_root_of_trust.py`: 6 salts
+
+### New Security Infrastructure
+
+#### Documentation Added
+
+1. **`SECURITY.md`** (8.9 KB)
+   - Comprehensive secret management guidelines
+   - Incident response procedures
+   - Secret rotation procedures
+   - CI/CD integration examples
+   - Compliance mappings (OWASP, CWE, NIST)
+
+2. **`.env.example`** (3.6 KB)
+   - Environment variable template
+   - Secure generation instructions
+   - CI/CD configuration examples
+   - Production secret guidelines
+
+3. **`docs/GIT_HISTORY_REMEDIATION.md`** (7.6 KB)
+   - Git history cleanup instructions
+   - BFG Repo-Cleaner guide
+   - git-filter-repo guide
+   - Pre-commit hook setup
+   - CI/CD secret scanning
+
+#### Configuration Updates
+
+1. **`.gitignore`** - Enhanced secret blocking:
+   ```
+   .env
+   .env.local
+   .env.*.local
+   *.key
+   *.pem
+   *.p12
+   *.pfx
+   secrets/
+   ```
+
+2. **Environment Variables** (optional for demos):
+   - `DEMO_MASTER_ENCRYPTION_KEY`
+   - `DEMO_MASTER_SIGNING_KEY`
+   - `DEMO_ROOT_KEY`
+   - `DEMO_USER_PASSWORD`
+   - `DEMO_API_TOKEN`
+
+### Testing Updates
+
+Added `TestNoHardcodedSecrets` test class with 4 new tests:
+
+1. `test_no_hardcoded_secrets_in_dos_trap_demo()` - Verifies specific secrets removed
+2. `test_demo_uses_secure_generation()` - Validates secure patterns used
+3. `test_security_documentation_exists()` - Ensures docs exist
+4. `test_gitignore_blocks_secrets()` - Validates .gitignore configuration
+
+```bash
+$ python -m unittest tests.test_dos_trap.TestNoHardcodedSecrets -v
+
+test_demo_uses_secure_generation ... ok
+test_gitignore_blocks_secrets ... ok
+test_no_hardcoded_secrets_in_dos_trap_demo ... ok ✓
+test_security_documentation_exists ... ok
+
+Ran 4 tests in 0.001s
+OK ✓
+```
+
+### Git History Cleanup Required
+
+⚠️ **CRITICAL**: Secrets still exist in Git history (commit abe0171)
+
+**Action Required**: Repository maintainer must:
+1. Use BFG Repo-Cleaner or git-filter-repo to clean history
+2. Force push cleaned history
+3. Notify team to delete old clones and re-clone
+
+See `docs/GIT_HISTORY_REMEDIATION.md` for detailed instructions.
+
+### Security Verification
+
+```bash
+# Verify no hardcoded secrets in working tree
+$ grep -r "secret_key_data\|super_secret_password" examples/
+# No results ✓
+
+# Run automated secret detection
+$ python -m unittest tests.test_dos_trap.TestNoHardcodedSecrets
+# All tests pass ✓
+
+# Check for environment variable usage
+$ grep "os.environ.get" examples/dos_trap_demo.py
+# Found ✓
+
+# Verify secure random generation
+$ grep "secrets.token" examples/dos_trap_demo.py
+# Found ✓
+```
+
+### Compliance Status
+
+✅ **CWE-798**: Use of Hard-coded Credentials - **RESOLVED**  
+✅ **OWASP A02:2021**: Cryptographic Failures - **MITIGATED**  
+✅ **NIST SP 800-132**: Password-Based Key Derivation - **COMPLIANT**  
+⏳ **Git History**: Cleanup pending (requires force push)
+
+### README Updates
+
+Added security section to README.md:
+- Link to SECURITY.md
+- Link to .env.example
+- Secret management best practices
+- Environment variable requirements
+

@@ -196,6 +196,20 @@ See `examples/config.json` for full configuration options.
 - **No Logging** - Never-logs policy across all components
 - **Anti-Fingerprinting** - Randomized browser fingerprint
 - **Leak Protection** - DNS, IPv6, WebRTC leak prevention
+- **Secret Management** - No hardcoded secrets, environment-based configuration
+- **Hardware Root of Trust** - TPM, Secure Enclave, HSM integration
+- **DOS Trap Mode** - Advanced compromise detection and response
+
+### 🔐 Secret Management
+
+This project follows strict security practices for secret management:
+
+- **Never hardcode secrets** in source code
+- Load all secrets from **environment variables** or **secure vaults**
+- See [SECURITY.md](SECURITY.md) for complete guidelines
+- See [.env.example](.env.example) for configuration template
+
+For detailed security policies, incident response, and secret rotation procedures, refer to our [Security Policy](SECURITY.md).
 
 ## 📚 Examples
 

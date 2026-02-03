@@ -6,6 +6,8 @@ Shows comprehensive system compromise detection and response capabilities.
 
 import logging
 import time
+import os
+import secrets
 from thirstys_waterfall.security import (
     DOSTrapMode,
     create_dos_trap,
@@ -23,6 +25,88 @@ def setup_logging():
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+
+
+def generate_demo_secret(length: int = 24) -> bytes:
+    """
+    Generate a cryptographically secure random secret for demonstration purposes.
+    
+    SECURITY NOTE: This function generates random secrets for demo/testing only.
+    In production, secrets MUST be:
+    - Loaded from environment variables (e.g., os.environ.get('SECRET_NAME'))
+    - Retrieved from a secure vault (e.g., HashiCorp Vault, AWS Secrets Manager)
+    - Never hardcoded in source code or configuration files
+    
+    Args:
+        length: Length of the secret in bytes
+        
+    Returns:
+        Cryptographically secure random bytes
+    """
+    return secrets.token_bytes(length)
+
+
+def get_demo_credentials() -> dict:
+    """
+    Get demo credentials from environment or generate safe demo values.
+    
+    SECURITY NOTE: In production environments, credentials MUST be:
+    - Loaded from environment variables
+    - Retrieved from secure secret management systems
+    - Rotated regularly according to security policy
+    - Never logged, committed to source control, or stored in plaintext
+    
+    Environment variables (optional for demo):
+    - DEMO_MASTER_ENCRYPTION_KEY: Master encryption key (base64 encoded)
+    - DEMO_MASTER_SIGNING_KEY: Master signing key (base64 encoded)
+    - DEMO_ROOT_KEY: Root key (base64 encoded)
+    - DEMO_USER_PASSWORD: User password for demo
+    - DEMO_API_TOKEN: API token for demo
+    
+    Returns:
+        Dictionary containing demo credentials (randomly generated if not in env)
+    """
+    import base64
+    
+    # Try to load from environment, generate random if not present
+    # This demonstrates the secure pattern: env vars > secure vault > NEVER hardcode
+    
+    master_encryption_key = os.environ.get('DEMO_MASTER_ENCRYPTION_KEY')
+    if master_encryption_key:
+        master_encryption_key = base64.b64decode(master_encryption_key)
+    else:
+        master_encryption_key = generate_demo_secret(24)
+        print("  ℹ️  Generated random master_encryption_key (not from env)")
+    
+    master_signing_key = os.environ.get('DEMO_MASTER_SIGNING_KEY')
+    if master_signing_key:
+        master_signing_key = base64.b64decode(master_signing_key)
+    else:
+        master_signing_key = generate_demo_secret(24)
+        print("  ℹ️  Generated random master_signing_key (not from env)")
+    
+    root_key = os.environ.get('DEMO_ROOT_KEY')
+    if root_key:
+        root_key = base64.b64decode(root_key)
+    else:
+        root_key = generate_demo_secret(20)
+        print("  ℹ️  Generated random root_key (not from env)")
+    
+    return {
+        'master_keys': {
+            'master_encryption_key': master_encryption_key,
+            'master_signing_key': master_signing_key,
+            'root_key': root_key
+        },
+        'session_keys': {
+            'session_1': generate_demo_secret(16),
+            'session_2': generate_demo_secret(16)
+        },
+        'credentials': {
+            'user_password': os.environ.get('DEMO_USER_PASSWORD', f'demo_pass_{secrets.token_hex(8)}'),
+            'api_token': os.environ.get('DEMO_API_TOKEN', f'demo_token_{secrets.token_hex(16)}')
+        }
+    }
 
 
 def threat_response_callback(events):
@@ -192,24 +276,17 @@ def demo_secret_wiping():
     
     dos_trap = create_dos_trap()
     
-    # Simulate secret storage
-    master_keys = {
-        'master_encryption_key': b'secret_key_data_12345678',
-        'master_signing_key': b'signing_key_data_87654321',
-        'root_key': b'root_key_data_abcdefgh'
-    }
+    # Generate secure demo secrets (NEVER hardcode in production!)
+    print("🔐 SECURITY NOTE: Generating cryptographically secure demo secrets...")
+    print("    In production, load secrets from environment variables or secure vault!")
+    print("    See get_demo_credentials() for the secure pattern.\n")
     
-    session_keys = {
-        'session_1': b'session_key_1',
-        'session_2': b'session_key_2'
-    }
+    demo_creds = get_demo_credentials()
+    master_keys = demo_creds['master_keys']
+    session_keys = demo_creds['session_keys']
+    credentials = demo_creds['credentials']
     
-    credentials = {
-        'user_password': 'super_secret_password',
-        'api_token': 'api_token_xyz123'
-    }
-    
-    print("Simulated secret storage:")
+    print("Simulated secret storage (randomly generated):")
     print(f"  Master Keys: {len(master_keys)}")
     print(f"  Session Keys: {len(session_keys)}")
     print(f"  Credentials: {len(credentials)}")
