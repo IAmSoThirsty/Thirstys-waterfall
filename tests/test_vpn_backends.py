@@ -5,7 +5,7 @@ Tests VPN handshake and platform-specific integrations
 
 import unittest
 import platform
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from thirstys_waterfall.vpn.backends import (
     WireGuardBackend,
     OpenVPNBackend,

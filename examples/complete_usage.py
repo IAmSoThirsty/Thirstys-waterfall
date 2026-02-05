@@ -16,49 +16,49 @@ print("="*80)
 
 # 1. Check God tier encryption status
 print("\n1. GOD TIER ENCRYPTION:")
-print(f"   Layers: 7")
-print(f"   Quantum Resistant: YES")
-print(f"   All data encrypted with military-grade security")
+print("   Layers: 7")
+print("   Quantum Resistant: YES")
+print("   All data encrypted with military-grade security")
 
 # 2. Browser with ad annihilator
 print("\n2. BROWSER + AD ANNIHILATOR (HOLY WAR MODE):")
-print(f"   No history: YES")
-print(f"   No pop-ups: YES")
-print(f"   No redirects: YES")
-print(f"   Ad blocker: HOLY WAR MODE ACTIVE")
-print(f"   ALL ADS DESTROYED")
+print("   No history: YES")
+print("   No pop-ups: YES")
+print("   No redirects: YES")
+print("   Ad blocker: HOLY WAR MODE ACTIVE")
+print("   ALL ADS DESTROYED")
 
 # 3. Thirsty Consigliere  
 print("\n3. THIRSTY CONSIGLIERE (Privacy-First Assistant):")
-print(f"   Code of Omertà: ACTIVE")
-print(f"   On-device only: YES")
-print(f"   Data minimization: YES")
-print(f"   Your confidential strategist ready")
+print("   Code of Omertà: ACTIVE")
+print("   On-device only: YES")
+print("   Data minimization: YES")
+print("   Your confidential strategist ready")
 
 # 4. Media Downloader
 print("\n4. MEDIA DOWNLOADER:")
-print(f"   Modes: audio-only, video-only, audio+video, best quality")
-print(f"   All downloads: GOD TIER ENCRYPTED")
-print(f"   Built-in library: ACTIVE")
+print("   Modes: audio-only, video-only, audio+video, best quality")
+print("   All downloads: GOD TIER ENCRYPTED")
+print("   Built-in library: ACTIVE")
 
 # 5. AI Assistant
 print("\n5. GOD TIER AI ASSISTANT:")
-print(f"   Local inference: YES")
-print(f"   No external calls: YES")
-print(f"   Complete privacy: YES")
+print("   Local inference: YES")
+print("   No external calls: YES")
+print("   Complete privacy: YES")
 
 # 6. Remote Access
 print("\n6. REMOTE ACCESS:")
-print(f"   Remote browser: Available")
-print(f"   Remote desktop: Available")
-print(f"   All connections: 7-layer encrypted")
+print("   Remote browser: Available")
+print("   Remote desktop: Available")
+print("   All connections: 7-layer encrypted")
 
 # 7. Settings & Support
 print("\n7. SETTINGS & SUPPORT:")
-print(f"   Comprehensive settings: ALL features configurable")
-print(f"   Q/A system: ACTIVE")
-print(f"   Contact threads: improvements, features, security, code of conduct")
-print(f"   Feedback manager: ACTIVE")
+print("   Comprehensive settings: ALL features configurable")
+print("   Q/A system: ACTIVE")
+print("   Contact threads: improvements, features, security, code of conduct")
+print("   Feedback manager: ACTIVE")
 
 # 8. Security Status
 print("\n8. SECURITY STATUS:")

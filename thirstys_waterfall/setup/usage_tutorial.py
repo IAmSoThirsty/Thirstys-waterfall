@@ -4,7 +4,7 @@ import logging
 class UsageTutorial:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
+
     def show_interactive_tutorial(self):
         print("\n" + "="*80)
         print("USAGE TUTORIAL")

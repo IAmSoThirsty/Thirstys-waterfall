@@ -4,9 +4,7 @@ Tests firewall rule enforcement and platform-specific integrations
 """
 
 import unittest
-import platform
-import os
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 from thirstys_waterfall.firewalls.backends import (
     NftablesBackend,
     WindowsFirewallBackend,

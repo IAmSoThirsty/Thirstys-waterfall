@@ -95,7 +95,7 @@ def example_totp_enrollment_and_auth(mfa, user_id):
         )
         
         if success:
-            print(f"✓ TOTP authentication successful")
+            print("✓ TOTP authentication successful")
             print(f"  - Auth level: {context.auth_level.name}")
             print(f"  - Methods: {[m.value for m in context.authenticated_methods]}")
         else:
@@ -126,7 +126,7 @@ def example_fido2_enrollment(mfa, user_id):
     if success:
         print(f"✓ FIDO2 credential enrolled for {user_id}")
         print(f"  - Credential ID: {credential_data['credential_id'][:40]}...")
-        print(f"  - Hardware security key registered")
+        print("  - Hardware security key registered")
 
 
 def example_passkey_enrollment(mfa, user_id):
@@ -149,7 +149,7 @@ def example_passkey_enrollment(mfa, user_id):
     if success:
         print(f"✓ Passkey enrolled for {user_id}")
         print(f"  - Device: {passkey_data['device_name']}")
-        print(f"  - Passwordless authentication enabled")
+        print("  - Passwordless authentication enabled")
 
 
 def example_biometric_enrollment(mfa, user_id):
@@ -175,7 +175,7 @@ def example_biometric_enrollment(mfa, user_id):
         print(f"✓ Biometric enrolled for {user_id}")
         print(f"  - Type: {biometric_data['type']}")
         print(f"  - Quality: {biometric_data['quality_score']*100:.1f}%")
-        print(f"  - Security: Only hashed template stored (no raw data)")
+        print("  - Security: Only hashed template stored (no raw data)")
 
 
 def example_risk_based_escalation(mfa):
@@ -224,7 +224,7 @@ def example_risk_based_escalation(mfa):
         device_fingerprint="known_device_abc123"
     )
     
-    print(f"\n  Normal user session:")
+    print("\n  Normal user session:")
     print(f"    - Risk level: {normal_context.risk_level.name}")
     
     # Test with suspicious user
@@ -235,7 +235,7 @@ def example_risk_based_escalation(mfa):
         user_agent="Unknown"
     )
     
-    print(f"\n  Suspicious user session:")
+    print("\n  Suspicious user session:")
     print(f"    - Risk level: {suspicious_context.risk_level.name}")
     print(f"    - Risk factors: {suspicious_context.risk_factors}")
     
@@ -246,7 +246,7 @@ def example_risk_based_escalation(mfa):
     )
     
     if escalation_required:
-        print(f"\n  ⚠ Additional authentication required:")
+        print("\n  ⚠ Additional authentication required:")
         for method in missing_methods:
             print(f"      - {method.value}")
 
@@ -321,9 +321,9 @@ def example_method_revocation(mfa, user_id):
     
     # List current methods (simulated)
     print(f"  Current methods for {user_id}:")
-    print(f"    - TOTP (enrolled)")
-    print(f"    - FIDO2 (enrolled)")
-    print(f"    - Passkey (enrolled)")
+    print("    - TOTP (enrolled)")
+    print("    - FIDO2 (enrolled)")
+    print("    - Passkey (enrolled)")
     
     # Revoke TOTP
     success = mfa.revoke_method(
@@ -334,7 +334,7 @@ def example_method_revocation(mfa, user_id):
     
     if success:
         print(f"\n  ✓ TOTP method revoked for {user_id}")
-        print(f"    - User must re-enroll to use TOTP")
+        print("    - User must re-enroll to use TOTP")
 
 
 def example_multi_factor_flow(mfa, user_id):
@@ -351,19 +351,19 @@ def example_multi_factor_flow(mfa, user_id):
         user_agent="Chrome/120.0"
     )
     
-    print(f"✓ Session created")
+    print("✓ Session created")
     print(f"  - Initial auth level: {context.auth_level.name}")
     print(f"  - Initial risk level: {context.risk_level.name}")
     
     # Step 1: Password (simulated - not implemented in this module)
-    print(f"\n  Step 1: Password authentication")
+    print("\n  Step 1: Password authentication")
     context.authenticated_methods.add(AuthMethod.PASSWORD)
     context.auth_level = mfa._calculate_auth_level(context)
-    print(f"    ✓ Password accepted")
+    print("    ✓ Password accepted")
     print(f"    - Auth level: {context.auth_level.name}")
     
     # Step 2: TOTP (we enrolled this earlier)
-    print(f"\n  Step 2: TOTP authentication")
+    print("\n  Step 2: TOTP authentication")
     totp_provider = mfa.providers[AuthMethod.TOTP]
     if user_id in totp_provider._secrets:
         config = totp_provider._secrets[user_id]
@@ -372,22 +372,22 @@ def example_multi_factor_flow(mfa, user_id):
         
         success, error = mfa.authenticate(context, AuthMethod.TOTP, token)
         if success:
-            print(f"    ✓ TOTP verified")
+            print("    ✓ TOTP verified")
             print(f"    - Auth level: {context.auth_level.name}")
     
     # Check if we need escalation for high-security operation
-    print(f"\n  Checking requirements for HIGH security operation:")
+    print("\n  Checking requirements for HIGH security operation:")
     escalation_required, missing_methods = mfa.require_escalation(
         context=context,
         target_level=AuthLevel.HIGH
     )
     
     if escalation_required:
-        print(f"    ⚠ Additional authentication required:")
+        print("    ⚠ Additional authentication required:")
         for method in missing_methods:
             print(f"        - {method.value}")
     else:
-        print(f"    ✓ Current authentication sufficient")
+        print("    ✓ Current authentication sufficient")
         print(f"    - Auth level: {context.auth_level.name}")
 
 

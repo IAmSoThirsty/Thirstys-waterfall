@@ -12,7 +12,7 @@ from cryptography.fernet import Fernet
 class SettingsManager:
     """
     Comprehensive Settings Manager with God tier encryption.
-    
+
     Settings Categories:
     - General (language, theme, startup)
     - Privacy (encryption, data minimization, telemetry)
@@ -27,12 +27,12 @@ class SettingsManager:
     - Firewall (8 types configuration)
     - Support (Q/A, contact, feedback)
     """
-    
+
     def __init__(self, god_tier_encryption):
         self.logger = logging.getLogger(__name__)
         self.god_tier_encryption = god_tier_encryption
         self._cipher = Fernet(Fernet.generate_key())
-        
+
         # Comprehensive settings for ALL features
         self.settings = {
             # General Settings
@@ -44,7 +44,7 @@ class SettingsManager:
                 'check_updates': False,  # Privacy-first: no auto-updates
                 'notifications': True
             },
-            
+
             # Privacy Settings (God Tier)
             'privacy': {
                 'god_tier_encryption': True,
@@ -58,7 +58,7 @@ class SettingsManager:
                 'perfect_forward_secrecy': True,
                 'ephemeral_storage': True
             },
-            
+
             # Security Settings
             'security': {
                 'kill_switch': True,
@@ -74,7 +74,7 @@ class SettingsManager:
                 'malware_scanning': True,
                 'phishing_protection': True
             },
-            
+
             # Browser Settings
             'browser': {
                 'incognito_mode': True,
@@ -93,7 +93,7 @@ class SettingsManager:
                 'download_isolation': True,
                 'encrypted_downloads': True
             },
-            
+
             # Ad Blocker Settings (HOLY WAR)
             'ad_blocker': {
                 'enabled': True,
@@ -113,7 +113,7 @@ class SettingsManager:
                 'custom_filters': True,
                 'update_filters': False  # Manual updates only for privacy
             },
-            
+
             # Thirsty Consigliere Settings
             'consigliere': {
                 'enabled': True,
@@ -128,7 +128,7 @@ class SettingsManager:
                 'action_ledger_size': 100,
                 'auto_wipe_on_close': True
             },
-            
+
             # Media Downloader Settings
             'media_downloader': {
                 'enabled': True,
@@ -143,7 +143,7 @@ class SettingsManager:
                 'auto_organize': True,
                 'thumbnail_encryption': True
             },
-            
+
             # AI Assistant Settings
             'ai_assistant': {
                 'enabled': True,
@@ -162,7 +162,7 @@ class SettingsManager:
                 'conversation_encryption': True,
                 'auto_clear_history': True
             },
-            
+
             # Remote Access Settings
             'remote_access': {
                 'browser_enabled': False,  # Disabled by default for security
@@ -177,7 +177,7 @@ class SettingsManager:
                 'desktop_port': 9001,
                 'secure_tunnel': True
             },
-            
+
             # Network/VPN Settings
             'network': {
                 'vpn_enabled': True,
@@ -193,7 +193,7 @@ class SettingsManager:
                 'connection_timeout': 30,
                 'auto_reconnect': True
             },
-            
+
             # Firewall Settings (8 Types)
             'firewalls': {
                 'packet_filtering': {
@@ -231,7 +231,7 @@ class SettingsManager:
                     'distributed_protection': True
                 }
             },
-            
+
             # Support Settings
             'support': {
                 'qa_enabled': True,
@@ -243,7 +243,7 @@ class SettingsManager:
                 'code_of_conduct_suggestions': True,
                 'encrypt_communications': True
             },
-            
+
             # Advanced Settings
             'advanced': {
                 'debug_mode': False,
@@ -256,106 +256,106 @@ class SettingsManager:
                 'encryption_hardware_acceleration': True
             }
         }
-        
+
         self._modified = False
         self._defaults = self.settings.copy()  # Keep defaults for reset
-    
+
     def get_setting(self, category: str, key: str) -> Any:
         """Get a specific setting"""
         if category in self.settings:
             return self.settings[category].get(key)
         return None
-    
+
     def set_setting(self, category: str, key: str, value: Any):
         """Set a specific setting (encrypted)"""
         if category not in self.settings:
             self.settings[category] = {}
-        
+
         old_value = self.settings[category].get(key)
         self.settings[category][key] = value
         self._modified = True
-        
+
         self.logger.info(f"Setting updated: {category}.{key} = {value}")
-        
+
         # Log security-critical changes
         if category in ['security', 'privacy', 'ad_blocker']:
             self.logger.warning(f"SECURITY SETTING CHANGED: {category}.{key} from {old_value} to {value}")
-    
+
     def get_category(self, category: str) -> Dict[str, Any]:
         """Get all settings in a category"""
         return self.settings.get(category, {}).copy()
-    
+
     def get_all_settings(self) -> Dict[str, Dict[str, Any]]:
         """Get all settings"""
         return self.settings.copy()
-    
+
     def reset_category(self, category: str):
         """Reset a category to defaults"""
         if category in self._defaults:
             self.settings[category] = self._defaults[category].copy()
             self._modified = True
             self.logger.info(f"Category reset to defaults: {category}")
-    
+
     def reset_all(self):
         """Reset all settings to defaults"""
         self.settings = self._defaults.copy()
         self._modified = True
         self.logger.warning("ALL SETTINGS RESET TO DEFAULTS")
-    
+
     def export_settings(self) -> bytes:
         """Export all settings (encrypted with God tier)"""
         settings_json = json.dumps(self.settings, indent=2)
         encrypted_settings = self.god_tier_encryption.encrypt_god_tier(settings_json.encode())
-        
+
         self.logger.info("Settings exported (God tier encrypted)")
-        
+
         return encrypted_settings
-    
+
     def import_settings(self, encrypted_data: bytes):
         """Import settings from encrypted data"""
         try:
             decrypted_data = self.god_tier_encryption.decrypt_god_tier(encrypted_data)
             imported = json.loads(decrypted_data.decode())
-            
+
             # Merge with current settings (preserve structure)
             for category, values in imported.items():
                 if category in self.settings:
                     self.settings[category].update(values)
-            
+
             self._modified = True
             self.logger.info("Settings imported successfully")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to import settings: {e}")
-    
+
     def validate_settings(self) -> Dict[str, Any]:
         """Validate all settings for security and consistency"""
         issues = []
-        
+
         # Check critical security settings
         if not self.settings['privacy']['god_tier_encryption']:
             issues.append("God tier encryption is disabled!")
-        
+
         if not self.settings['security']['kill_switch']:
             issues.append("Kill switch is disabled!")
-        
+
         if not self.settings['ad_blocker']['holy_war_mode']:
             issues.append("Ad blocker HOLY WAR mode is disabled!")
-        
+
         if self.settings['remote_access']['browser_enabled'] or self.settings['remote_access']['desktop_enabled']:
             if not self.settings['remote_access']['require_authentication']:
                 issues.append("Remote access enabled without authentication!")
-        
+
         return {
             'valid': len(issues) == 0,
             'issues': issues,
             'warnings': len(issues)
         }
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get settings manager status"""
         validation = self.validate_settings()
-        
+
         return {
             'god_tier_encrypted': True,
             'encryption_layers': 7,

@@ -7,8 +7,7 @@ multi-layer obfuscation, and protocol mimicry.
 from thirstys_waterfall.network import (
     AdvancedStealthManager,
     TransportType,
-    ProtocolMimicry,
-    ObfuscationTechnique
+    ProtocolMimicry
 )
 from thirstys_waterfall.vpn.vpn_manager import VPNManager
 from thirstys_waterfall.privacy.onion_router import OnionRouter
@@ -82,7 +81,7 @@ def main():
     print(f"    ✓ Stealth Manager Active: {status['active']}")
     print(f"    ✓ Per-Request Routing: {status['per_request_routing']}")
     print(f"    ✓ Circuit Pool: {status['circuits']['active']}/{status['circuits']['total']}")
-    print(f"    ✓ Active Transports:")
+    print("    ✓ Active Transports:")
     for transport_name, transport_info in status['transports'].items():
         if transport_info['active']:
             print(f"        - {transport_name}: Priority {transport_info['priority']}, "
@@ -134,8 +133,8 @@ def main():
     print("       - 0-RTT connection resumption")
     stealth.enable_http3_fallback()
     request4 = {'url': 'https://fast-api.com/data', 'domain': 'fast-api.com'}
-    result4 = stealth.route_request(request4)
-    print(f"       ✓ QUIC Tunnel: Enabled")
+    stealth.route_request(request4)
+    print("       ✓ QUIC Tunnel: Enabled")
     
     # Step 5: Demonstrate obfuscation techniques
     print("\n[5] Multi-Layer Obfuscation Techniques...")
@@ -206,32 +205,32 @@ def main():
     print("\n[9] Performance Metrics...")
     metrics = stealth.get_detailed_metrics()
     
-    print(f"\n    Request Statistics:")
+    print("\n    Request Statistics:")
     print(f"      Total Requests: {metrics['requests_routed']}")
     print(f"      Failed Requests: {metrics['failed_requests']}")
     print(f"      Success Rate: {((metrics['requests_routed'] - metrics['failed_requests']) / max(metrics['requests_routed'], 1) * 100):.1f}%")
     
-    print(f"\n    Circuit Statistics:")
+    print("\n    Circuit Statistics:")
     print(f"      Circuits Built: {metrics['circuits_built']}")
-    print(f"      Circuit Rotations: (automatic)")
+    print("      Circuit Rotations: (automatic)")
     
-    print(f"\n    Performance:")
+    print("\n    Performance:")
     print(f"      Average Latency: {metrics['average_latency_ms']:.2f}ms")
     print(f"      Bytes Transmitted: {metrics['bytes_transmitted']:,}")
     print(f"      Bytes Received: {metrics['bytes_received']:,}")
     
-    print(f"\n    Transport Usage:")
+    print("\n    Transport Usage:")
     for transport, count in metrics['transports_used'].items():
         print(f"      {transport}: {count} requests")
     
-    print(f"\n    Obfuscation Applied:")
+    print("\n    Obfuscation Applied:")
     for technique, count in metrics['obfuscation_applied'].items():
         print(f"      {technique}: {count} times")
     
-    print(f"\n    Domain Fronting:")
+    print("\n    Domain Fronting:")
     print(f"      Used: {metrics['domain_fronting_used']} times")
     
-    print(f"\n    Protocol Mimicry:")
+    print("\n    Protocol Mimicry:")
     for protocol, count in metrics['protocols_mimicked'].items():
         print(f"      {protocol}: {count} times")
     

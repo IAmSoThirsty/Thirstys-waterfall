@@ -4,7 +4,7 @@ Tests for MicroVM Isolation Module
 
 import unittest
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from thirstys_waterfall.security.microvm_isolation import (
     MicroVMIsolationManager,
     MicroVMInstance,
@@ -127,7 +127,7 @@ class TestMicroVMInstance(unittest.TestCase):
                 with patch.object(self.vm._channel, 'receive_message', 
                                 return_value={"type": "pong"}):
                     # Start should succeed
-                    result = self.vm.start()
+                    self.vm.start()
                     
                     # Should have attempted to start
                     self.assertTrue(mock_popen.called)
@@ -222,7 +222,7 @@ class TestMicroVMIsolationManager(unittest.TestCase):
     
     def test_resource_tracking(self):
         """Test resource usage tracking"""
-        vm_id = self.manager.create_vm(
+        self.manager.create_vm(
             isolation_type=IsolationType.BROWSER_TAB,
             resource_limits=VMResourceLimits(vcpu_count=2, memory_mb=1024)
         )
@@ -236,7 +236,7 @@ class TestMicroVMIsolationManager(unittest.TestCase):
         """Test listing VMs"""
         # Create different types
         tab_vm = self.manager.create_vm(IsolationType.BROWSER_TAB)
-        ext_vm = self.manager.create_vm(IsolationType.EXTENSION)
+        self.manager.create_vm(IsolationType.EXTENSION)
         
         # List all
         all_vms = self.manager.list_vms()

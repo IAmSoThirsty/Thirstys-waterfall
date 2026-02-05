@@ -12,7 +12,6 @@ from thirstys_waterfall.security import (
     DOSTrapMode,
     create_dos_trap,
     ThreatLevel,
-    CompromiseType,
     SanitizationMode,
 )
 from thirstys_waterfall.security.hardware_root_of_trust import HardwareRootOfTrust
@@ -115,7 +114,7 @@ def threat_response_callback(events):
     print("THREAT RESPONSE CALLBACK TRIGGERED")
     print("=" * 80)
     for event in events:
-        print(f"\nThreat Detected:")
+        print("\nThreat Detected:")
         print(f"  Type: {event.compromise_type.value}")
         print(f"  Level: {event.threat_level.name}")
         print(f"  Description: {event.description}")
@@ -142,7 +141,7 @@ def demo_basic_usage():
     
     # Check status
     status = dos_trap.get_status()
-    print(f"\nDOS Trap Status:")
+    print("\nDOS Trap Status:")
     print(f"  Active: {status['active']}")
     print(f"  Triggered: {status['triggered']}")
     print(f"  Threat Level: {status['threat_level']}")
@@ -158,7 +157,7 @@ def demo_basic_usage():
     
     # Get final report
     report = dos_trap.get_threat_report()
-    print(f"\nFinal Threat Report:")
+    print("\nFinal Threat Report:")
     print(f"  Total Threats: {report['total_threats']}")
     print(f"  Current Level: {report['current_threat_level']}")
     print(f"  System Compromised: {report['system_compromised']}")
@@ -373,7 +372,7 @@ def demo_interface_disabling():
     print("DOS TRAP MODE - Interface Disabling Demo (Simulation)")
     print("=" * 80 + "\n")
     
-    dos_trap = create_dos_trap()
+    create_dos_trap()
     
     print("⚠️  NOTE: This is a simulation. Actual interface disabling")
     print("    requires elevated privileges and will disconnect your system.\n")
@@ -415,7 +414,7 @@ def demo_manual_trigger():
     
     # Check status
     status = dos_trap.get_status()
-    print(f"\nPost-Trigger Status:")
+    print("\nPost-Trigger Status:")
     print(f"  Triggered: {status['triggered']}")
     print(f"  Threat Level: {status['threat_level']}")
     print(f"  Detected Threats: {status['detected_threats']}")

@@ -21,7 +21,6 @@ from thirstys_waterfall.security.mfa_auth import (
     CertificateProvider,
     BiometricProvider,
     generate_totp_secret,
-    verify_totp_token,
 )
 
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -66,7 +65,7 @@ class TestMFAAuthenticator(unittest.TestCase):
     
     def test_session_validation(self):
         """Test session validation"""
-        context = self.mfa.create_auth_context(
+        self.mfa.create_auth_context(
             user_id=self.user_id,
             session_id=self.session_id,
             ip_address="192.168.1.100",
@@ -80,7 +79,7 @@ class TestMFAAuthenticator(unittest.TestCase):
     
     def test_session_invalidation(self):
         """Test session invalidation"""
-        context = self.mfa.create_auth_context(
+        self.mfa.create_auth_context(
             user_id=self.user_id,
             session_id=self.session_id,
             ip_address="192.168.1.100",
@@ -112,7 +111,7 @@ class TestMFAAuthenticator(unittest.TestCase):
     
     def test_get_session_info(self):
         """Test session info retrieval"""
-        context = self.mfa.create_auth_context(
+        self.mfa.create_auth_context(
             user_id=self.user_id,
             session_id=self.session_id,
             ip_address="192.168.1.100",
@@ -129,7 +128,7 @@ class TestMFAAuthenticator(unittest.TestCase):
     
     def test_audit_log(self):
         """Test audit logging"""
-        context = self.mfa.create_auth_context(
+        self.mfa.create_auth_context(
             user_id=self.user_id,
             session_id=self.session_id,
             ip_address="192.168.1.100",
@@ -492,7 +491,7 @@ class TestThreadSafety(unittest.TestCase):
                     user_agent="Test"
                 )
                 results.append(context.session_id)
-            except Exception as e:
+            except Exception:
                 results.append(None)
         
         threads = [threading.Thread(target=create_session, args=(i,)) for i in range(20)]
@@ -516,7 +515,7 @@ class TestThreadSafety(unittest.TestCase):
                     credential_data=generate_totp_secret()
                 )
                 results.append(success)
-            except Exception as e:
+            except Exception:
                 results.append(False)
         
         threads = [threading.Thread(target=enroll_method, args=(i,)) for i in range(20)]

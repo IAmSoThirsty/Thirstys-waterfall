@@ -22,11 +22,11 @@ class IncognitoBrowser:
     - Keyboard/mouse cloaking
     - Zero telemetry
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.logger = logging.getLogger(__name__)
-        
+
         # Privacy settings
         self.incognito_mode = config.get('incognito_mode', True)
         self.no_history = config.get('no_history', True)
@@ -37,10 +37,10 @@ class IncognitoBrowser:
         self.tracker_blocking = config.get('tracker_blocking', True)
         self.keyboard_cloaking = config.get('keyboard_cloaking', True)
         self.mouse_cloaking = config.get('mouse_cloaking', True)
-        
+
         # ENCRYPTION: Generate encryption key for all browser data
         self._cipher = Fernet(Fernet.generate_key())
-        
+
         # Components
         self.tab_manager = TabManager(self.tab_isolation)
         self.sandbox = BrowserSandbox(config.get('sandbox_enabled', True))
@@ -49,109 +49,109 @@ class IncognitoBrowser:
             block_popups=True,  # Block pop-ups
             block_redirects=True  # Block redirects
         )
-        
+
         # ENCRYPTED COMPONENTS: Everything encrypted
         self.encrypted_search = EncryptedSearchEngine(self._cipher)
         self.encrypted_navigation = EncryptedNavigationHistory(self._cipher)
-        
+
         self._active = False
         self._extension_whitelist = config.get('extension_whitelist', [])
         self._download_isolation = config.get('download_isolation', True)
-    
+
     def start(self):
         """Start incognito browser"""
         self.logger.info("Starting Incognito Browser")
-        
+
         # Verify privacy mode
         if not self._verify_privacy_mode():
             raise RuntimeError("Privacy mode verification failed")
-        
+
         # Start components
         self.sandbox.start()
         self.content_blocker.start()
-        
+
         # Start encrypted components
         self.encrypted_search.start()
         self.encrypted_navigation.start()
-        
+
         self._active = True
         self.logger.info("Incognito browser started - EVERYTHING ENCRYPTED")
         self.logger.info("NO history, cache, cookies, pop-ups, or redirects")
         self.logger.info("ALL searches encrypted, ALL sites encrypted")
-    
+
     def stop(self):
         """Stop browser and clear all data"""
         self.logger.info("Stopping Incognito Browser")
-        
+
         # Stop encrypted components (wipes encrypted data)
         self.encrypted_search.stop()
         self.encrypted_navigation.stop()
-        
+
         # Close all tabs
         self.tab_manager.close_all_tabs()
-        
+
         # Clear any ephemeral data
         self._clear_ephemeral_data()
-        
+
         # Stop components
         self.sandbox.stop()
         self.content_blocker.stop()
-        
+
         self._active = False
-    
+
     def _verify_privacy_mode(self) -> bool:
         """Verify privacy settings are correct"""
         if not self.incognito_mode:
             self.logger.error("Incognito mode must be enabled")
             return False
-        
+
         if not self.no_history or not self.no_cache or not self.no_cookies:
             self.logger.error("History, cache, and cookies must be disabled")
             return False
-        
+
         return True
-    
+
     def create_tab(self, url: Optional[str] = None) -> str:
         """
         Create new isolated tab.
-        
+
         Returns:
             Tab ID
         """
         if not self._active:
             raise RuntimeError("Browser not active")
-        
+
         # Create isolated tab
         tab_id = self.tab_manager.create_tab(url)
-        
+
         # Apply privacy policies to tab
         self._apply_privacy_policies(tab_id)
-        
+
         return tab_id
-    
+
     def close_tab(self, tab_id: str):
         """Close tab and clear its data"""
         self.tab_manager.close_tab(tab_id)
-    
+
     def navigate(self, tab_id: str, url: str) -> bool:
         """
         Navigate tab to URL with privacy protection.
         URL is encrypted immediately after validation.
-        
+
         Returns:
             True if navigation allowed, False if blocked
         """
         # Check if URL should be blocked
         if not self.content_blocker.should_allow_url(url):
-            self.logger.warning(f"URL blocked: (encrypted)")
+            self.logger.warning("URL blocked: (encrypted)")
             return False
-        
+
         # Record encrypted navigation (URL encrypted immediately)
         self.encrypted_navigation.record_navigation(url, tab_id)
-        
+
         # Navigate in sandbox
         return self.tab_manager.navigate(tab_id, url)
-    
+
     def _apply_privacy_policies(self, tab_id: str):
         """Apply privacy policies to tab"""
         # Disable storage
@@ -163,18 +163,18 @@ class IncognitoBrowser:
             'popups': False,  # NEW REQUIREMENT
             'redirects': False  # NEW REQUIREMENT
         })
-    
+
     def _clear_ephemeral_data(self):
         """Clear all ephemeral data"""
         # No history to clear (never stored)
         # No cache to clear (never stored)
         # No cookies to clear (never stored)
         self.logger.debug("Ephemeral data cleared (nothing stored)")
-    
+
     def install_extension(self, extension_id: str) -> bool:
         """
         Install extension if whitelisted.
-        
+
         Returns:
             True if installed, False if blocked
         """
@@ -184,22 +184,22 @@ class IncognitoBrowser:
         else:
             self.logger.warning(f"Extension not whitelisted: {extension_id}")
             return False
-    
+
     def download_file(self, url: str, tab_id: str) -> Optional[str]:
         """
         Download file with isolation.
-        
+
         Returns:
             Download path if successful
         """
         if not self._download_isolation:
             self.logger.warning("Download isolation not enabled")
-        
+
         # Downloads are isolated and scanned
         self.logger.info(f"Downloading file: {url}")
         # In production, would download to isolated directory
         return None
-    
+
     def get_fingerprint_protection_status(self) -> Dict[str, Any]:
         """Get fingerprint protection status"""
         return {
@@ -213,17 +213,17 @@ class IncognitoBrowser:
             'screen_size_spoofed': True,
             'hardware_info_hidden': True
         }
-    
+
     def search(self, query: str) -> Dict[str, Any]:
         """
         Perform encrypted search.
         Query is encrypted immediately.
-        
+
         Returns:
             Encrypted search results
         """
         return self.encrypted_search.search(query)
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get browser status"""
         return {

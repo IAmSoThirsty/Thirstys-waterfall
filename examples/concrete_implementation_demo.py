@@ -4,8 +4,8 @@ Concrete Implementation Demo
 Demonstrates real VPN and firewall backend integrations
 """
 
-from thirstys_waterfall.vpn.backends import VPNBackendFactory, WireGuardBackend, OpenVPNBackend, IKEv2Backend
-from thirstys_waterfall.firewalls.backends import FirewallBackendFactory, NftablesBackend, WindowsFirewallBackend, PFBackend
+from thirstys_waterfall.vpn.backends import VPNBackendFactory
+from thirstys_waterfall.firewalls.backends import FirewallBackendFactory
 import platform
 
 
@@ -40,16 +40,16 @@ def main():
         
         if backend:
             is_available = backend.check_availability()
-            print(f"  - Backend created: ✅")
+            print("  - Backend created: ✅")
             print(f"  - Available on system: {'✅' if is_available else '❌'}")
             print(f"  - Platform: {backend.platform}")
             
             if is_available:
-                print(f"  - Ready for connection!")
+                print("  - Ready for connection!")
             else:
-                print(f"  - Not installed or not accessible")
+                print("  - Not installed or not accessible")
         else:
-            print(f"  - Backend creation failed: ❌")
+            print("  - Backend creation failed: ❌")
         
         print()
     
@@ -66,10 +66,10 @@ def main():
     firewall_backend = FirewallBackendFactory.create_backend()
     
     if firewall_backend:
-        print(f"Platform-specific firewall backend created:")
+        print("Platform-specific firewall backend created:")
         print(f"  - Type: {firewall_backend.__class__.__name__}")
         print(f"  - Platform: {firewall_backend.platform}")
-        print(f"  - Available: ✅")
+        print("  - Available: ✅")
         print()
         
         # Demo: Add a firewall rule (won't actually execute without sudo)
@@ -81,7 +81,7 @@ def main():
             'dst_port': 443
         }
         print(f"  Rule: {demo_rule}")
-        print(f"  Note: Actual rule application requires elevated privileges")
+        print("  Note: Actual rule application requires elevated privileges")
     else:
         print("❌ No firewall backend available on this platform")
     

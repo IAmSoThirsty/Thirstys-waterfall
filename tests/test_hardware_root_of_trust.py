@@ -8,7 +8,6 @@ from thirstys_waterfall.security import (
     TPMInterface,
     SecureEnclaveInterface,
     HSMInterface,
-    HardwareType,
     AttestationStatus
 )
 

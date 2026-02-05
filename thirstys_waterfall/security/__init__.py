@@ -1,9 +1,9 @@
 """Security module for Thirstys Waterfall - Advanced Security Features"""
 
 from .hardware_root_of_trust import (
-    HardwareRootOfTrust, 
-    TPMInterface, 
-    SecureEnclaveInterface, 
+    HardwareRootOfTrust,
+    TPMInterface,
+    SecureEnclaveInterface,
     HSMInterface,
     HardwareType,
     AttestationStatus,

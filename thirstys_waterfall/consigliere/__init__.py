@@ -10,7 +10,7 @@ from .privacy_checker import PrivacyChecker
 
 __all__ = [
     'ThirstyConsigliere',
-    'CapabilityManager', 
+    'CapabilityManager',
     'ActionLedger',
     'PrivacyChecker'
 ]

@@ -4,7 +4,7 @@ import logging
 class NoticeLetterManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
+
     def show_notice_and_get_acceptance(self):
         print("\n" + "="*80)
         print("SYSTEM STIPULATIONS")
