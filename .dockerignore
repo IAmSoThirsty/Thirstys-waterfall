@@ -6,10 +6,14 @@
 # GitHub
 .github
 
-# Documentation
-*.md
+# Documentation (keep README.md and LICENSE for package metadata)
 docs/
 examples/
+
+# Exclude specific docs but keep README and LICENSE
+!README.md
+!LICENSE
+!CHANGELOG.md
 
 # Python cache
 __pycache__

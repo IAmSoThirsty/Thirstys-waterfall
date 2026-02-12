@@ -242,6 +242,59 @@ Complete annihilation of intrusive advertising.
 
 ## 📦 Installation
 
+### Quick Install
+
+#### Using Installer Scripts (Recommended)
+
+**Linux/macOS:**
+```bash
+# Clone repository
+git clone https://github.com/IAmSoThirsty/Thirstys-waterfall.git
+cd Thirstys-waterfall
+
+# Run installer
+bash install.sh
+```
+
+**Windows:**
+```batch
+# Clone repository
+git clone https://github.com/IAmSoThirsty/Thirstys-waterfall.git
+cd Thirstys-waterfall
+
+# Run installer
+install.bat
+```
+
+#### Using pip
+
+```bash
+# Install from PyPI (when published)
+pip install thirstys-waterfall
+
+# Or install from source
+git clone https://github.com/IAmSoThirsty/Thirstys-waterfall.git
+cd Thirstys-waterfall
+pip install -e .
+```
+
+#### Using Docker
+
+```bash
+# Using Docker Compose (recommended)
+docker-compose up -d
+
+# Or build and run directly
+docker build -t thirstys-waterfall .
+docker run -d --name thirstys-waterfall \
+  --cap-add NET_ADMIN \
+  --cap-add NET_RAW \
+  -v thirstys_data:/home/thirsty/.thirstys_waterfall \
+  thirstys-waterfall
+```
+
+### Manual Installation
+
 ```bash
 # Clone repository
 git clone https://github.com/IAmSoThirsty/Thirstys-waterfall.git
@@ -349,6 +402,57 @@ See `examples/config.json` for full configuration options.
   }
 }
 ```
+
+## 🚀 Production Deployment
+
+Thirstys Waterfall is **100% production-ready** with comprehensive deployment options:
+
+### Deployment Methods
+
+1. **Docker Deployment** (Recommended for Production)
+   - Multi-stage optimized Dockerfile
+   - Docker Compose orchestration
+   - Health checks and resource limits
+   - Non-root user security
+   - Ready for Kubernetes
+
+2. **PyPI Package** (Recommended for Users)
+   - Published Python package
+   - Simple `pip install` deployment
+   - Platform-independent
+
+3. **Systemd Service** (Linux Servers)
+   - Native systemd integration
+   - Automatic startup and restart
+   - System-level security hardening
+
+4. **Windows Service** (Windows Servers)
+   - Native Windows service support
+   - Automatic startup configuration
+
+### Quick Production Deploy
+
+```bash
+# Docker (Simplest)
+docker-compose up -d
+
+# Linux systemd
+sudo systemctl enable thirstys-waterfall
+sudo systemctl start thirstys-waterfall
+
+# Check status
+docker ps  # Docker
+sudo systemctl status thirstys-waterfall  # Systemd
+```
+
+### Packaging & Distribution
+
+- ✅ **PyPI Ready**: Standard Python packaging with `pyproject.toml`
+- ✅ **Docker Hub Ready**: Optimized container images
+- ✅ **GitHub Releases**: Automated release workflow
+- ✅ **Multi-Platform**: Linux, Windows, macOS support
+
+📖 **[Complete Deployment Guide →](docs/DEPLOYMENT.md)**
 
 ## 🎯 Use Cases
 
