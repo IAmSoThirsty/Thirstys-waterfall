@@ -20,6 +20,13 @@ class TrackerDestroyer:
         self.social_trackers = self._load_social_trackers()
         self.advertising_trackers = self._load_ad_trackers()
 
+        # Combined tracker domains for quick lookup
+        self._tracker_domains = (
+            self.analytics_trackers |
+            self.social_trackers |
+            self.advertising_trackers
+        )
+
         self.destroyed_count = 0
 
     def _load_analytics(self) -> Set[str]:
@@ -65,3 +72,11 @@ class TrackerDestroyer:
                     }
 
         return {'destroyed': False}
+
+    def should_block(self, url: str) -> bool:
+        """Determine if URL should be blocked as tracker"""
+        url_lower = url.lower()
+        for tracker in self._tracker_domains:
+            if tracker in url_lower:
+                return True
+        return False

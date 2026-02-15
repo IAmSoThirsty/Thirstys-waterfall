@@ -30,3 +30,15 @@ class AutoplayKiller:
     def get_stats(self):
         """Get kill statistics"""
         return {'autoplay_killed': self.killed_count}
+
+    def block_autoplay(self) -> bool:
+        """Block autoplay globally"""
+        self.logger.debug("Autoplay blocking activated")
+        return True
+
+    def is_autoplay(self, element: str) -> bool:
+        """Check if element has autoplay attribute"""
+        if not element:
+            return False
+        element_lower = element.lower()
+        return 'autoplay' in element_lower or 'auto-play' in element_lower

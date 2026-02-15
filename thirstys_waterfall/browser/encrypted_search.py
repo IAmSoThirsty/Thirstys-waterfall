@@ -21,8 +21,9 @@ class EncryptedSearchEngine:
         # Encrypted search history (encrypted queries)
         self._encrypted_search_history = []
 
-        # Encrypted cache (encrypted query -> encrypted results)
-        self._encrypted_cache: Dict[bytes, bytes] = {}
+        # Encrypted cache (query_hash -> encrypted results)
+        # Use hash as key since Fernet encryption is non-deterministic
+        self._encrypted_cache: Dict[str, bytes] = {}
 
     def start(self):
         """Start encrypted search engine"""
@@ -53,30 +54,30 @@ class EncryptedSearchEngine:
         # Encrypt query immediately
         encrypted_query = self._cipher.encrypt(query.encode())
 
-        # Log encrypted query (never plaintext)
-        query_hash = hashlib.sha256(encrypted_query).hexdigest()[:16]
-        self.logger.debug(f"Encrypted search: {query_hash}")
+        # Create deterministic hash for caching (from plaintext before encryption)
+        query_hash = hashlib.sha256(query.encode()).hexdigest()
+        self.logger.debug(f"Search hash: {query_hash[:16]}")
 
         # Store encrypted query in history
         self._encrypted_search_history.append({
             'encrypted_query': encrypted_query,
             'timestamp': time.time(),
-            'hash': query_hash
+            'hash': query_hash[:16]
         })
 
-        # Check encrypted cache
-        if encrypted_query in self._encrypted_cache:
+        # Check encrypted cache (using hash as key)
+        if query_hash in self._encrypted_cache:
             self.logger.debug("Returning encrypted cached results")
             return {
-                'encrypted_results': self._encrypted_cache[encrypted_query],
+                'encrypted_results': self._encrypted_cache[query_hash],
                 'from_cache': True
             }
 
         # Perform search (in production would use encrypted search API)
         encrypted_results = self._perform_encrypted_search(encrypted_query)
 
-        # Cache encrypted results
-        self._encrypted_cache[encrypted_query] = encrypted_results
+        # Cache encrypted results (using hash as key)
+        self._encrypted_cache[query_hash] = encrypted_results
 
         return {
             'encrypted_results': encrypted_results,

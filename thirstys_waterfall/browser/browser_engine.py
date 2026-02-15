@@ -42,17 +42,35 @@ class IncognitoBrowser:
         self._cipher = Fernet(Fernet.generate_key())
 
         # Components
-        self.tab_manager = TabManager(self.tab_isolation)
-        self.sandbox = BrowserSandbox(config.get('sandbox_enabled', True))
-        self.content_blocker = ContentBlocker(
+        self._tab_manager = TabManager({
+            'tab_isolation': self.tab_isolation,
+            'max_tabs': config.get('max_tabs', 100)
+        })
+        self._sandbox = BrowserSandbox({
+            'enabled': config.get('sandbox_enabled', True),
+            'memory_limit_mb': config.get('memory_limit_mb', 512),
+            'cpu_limit_percent': config.get('cpu_limit_percent', 50)
+        })
+        self._content_blocker = ContentBlocker(
             block_trackers=self.tracker_blocking,
             block_popups=True,  # Block pop-ups
-            block_redirects=True  # Block redirects
+            block_redirects=True,  # Block redirects
+            block_ads=True
         )
 
+        # MAXIMUM ALLOWED DESIGN: Expose as public properties
+        self.tab_manager = self._tab_manager
+        self.sandbox = self._sandbox
+        self.content_blocker = self._content_blocker
+
         # ENCRYPTED COMPONENTS: Everything encrypted
-        self.encrypted_search = EncryptedSearchEngine(self._cipher)
-        self.encrypted_navigation = EncryptedNavigationHistory(self._cipher)
+        self._search_engine = EncryptedSearchEngine(self._cipher)
+        self._nav_history = EncryptedNavigationHistory(self._cipher)
+
+        # MAXIMUM ALLOWED DESIGN: Expose as public properties for test introspection
+        self.encrypted_search = self._search_engine
+        self.encrypted_navigation = self._nav_history
+        self._navigation_history = self._nav_history  # Alias
 
         self._active = False
         self._extension_whitelist = config.get('extension_whitelist', [])
@@ -66,13 +84,14 @@ class IncognitoBrowser:
         if not self._verify_privacy_mode():
             raise RuntimeError("Privacy mode verification failed")
 
-        # Start components
-        self.sandbox.start()
-        self.content_blocker.start()
+        # Start components - MAXIMUM ALLOWED DESIGN: explicit lifecycle
+        self._tab_manager.start()
+        self._sandbox.start()
+        self._content_blocker.start()
 
         # Start encrypted components
-        self.encrypted_search.start()
-        self.encrypted_navigation.start()
+        self._search_engine.start()
+        self._nav_history.start()
 
         self._active = True
         self.logger.info("Incognito browser started - EVERYTHING ENCRYPTED")
@@ -84,18 +103,18 @@ class IncognitoBrowser:
         self.logger.info("Stopping Incognito Browser")
 
         # Stop encrypted components (wipes encrypted data)
-        self.encrypted_search.stop()
-        self.encrypted_navigation.stop()
+        self._search_engine.stop()
+        self._nav_history.stop()
 
         # Close all tabs
-        self.tab_manager.close_all_tabs()
+        self._tab_manager.stop()
 
         # Clear any ephemeral data
         self._clear_ephemeral_data()
 
         # Stop components
-        self.sandbox.stop()
-        self.content_blocker.stop()
+        self._sandbox.stop()
+        self._content_blocker.stop()
 
         self._active = False
 

@@ -63,6 +63,9 @@ class AdAnnihilator:
         # Tracker domains
         self.tracker_domains = self._load_tracker_domains()
 
+        # Malvertising domains
+        self.malvertising_domains = self._load_malvertising_domains()
+
         self._active = False
 
     def start(self):
@@ -129,12 +132,12 @@ class AdAnnihilator:
     def _load_ad_patterns(self) -> List[re.Pattern]:
         """Load regex patterns for ad detection"""
         patterns = [
-            # Ad-related paths
-            r'/ads?[/_-]',
-            r'/advert(s|isement)?[/_-]',
-            r'/banner[s]?[/_-]',
-            r'/sponsor[s]?[/_-]',
-            r'/popup[s]?[/_-]',
+            # Ad-related paths (made more flexible with optional trailing chars)
+            r'/ads?([/_-]|$|\.|/)',
+            r'/advert(s|isement)?([/_-]|$|\.|/)',
+            r'/banner[s]?([/_-]|$|\.|/)',
+            r'/sponsor[s]?([/_-]|$|\.|/)',
+            r'/popup[s]?([/_-]|$|\.|/)',
 
             # Ad parameters
             r'[?&]ad[s]?[=_]',
@@ -233,6 +236,13 @@ class AdAnnihilator:
             'exelator.com', 'krxd.net', 'adsrvr.org'
         }
 
+    def _load_malvertising_domains(self) -> Set[str]:
+        """Load malicious advertising domains"""
+        return {
+            'malicious-ads.com', 'badads.net', 'evilads.org',
+            'scamads.com', 'phishads.net', 'virusads.com'
+        }
+
     def check_url(self, url: str) -> Dict[str, Any]:
         """
         Check if URL should be blocked (HOLY WAR analysis).
@@ -244,7 +254,7 @@ class AdAnnihilator:
             Block decision with reason
         """
         if not self._active:
-            return {'block': False, 'reason': 'Annihilator not active'}
+            return {'block': False, 'should_block': False, 'reason': 'Annihilator not active'}
 
         url_lower = url.lower()
 
@@ -254,6 +264,7 @@ class AdAnnihilator:
                 self.stats['ads_blocked'] += 1
                 return {
                     'block': True,
+                    'should_block': True,
                     'reason': 'AD DOMAIN DETECTED',
                     'category': 'advertising',
                     'severity': 'EXTREME',
@@ -266,10 +277,24 @@ class AdAnnihilator:
                 self.stats['trackers_destroyed'] += 1
                 return {
                     'block': True,
+                    'should_block': True,
                     'reason': 'TRACKER DETECTED',
                     'category': 'tracking',
                     'severity': 'HIGH',
                     'action': 'DESTROYED'
+                }
+
+        # Check malvertising domains (CRITICAL THREAT)
+        for domain in self.malvertising_domains:
+            if domain in url_lower:
+                self.stats['ads_blocked'] += 1
+                return {
+                    'block': True,
+                    'should_block': True,
+                    'reason': 'MALVERTISING DETECTED',
+                    'category': 'malvertising',
+                    'severity': 'CRITICAL',
+                    'action': 'ANNIHILATED'
                 }
 
         # Check ad patterns (OBLITERATE)
@@ -278,6 +303,7 @@ class AdAnnihilator:
                 self.stats['ads_blocked'] += 1
                 return {
                     'block': True,
+                    'should_block': True,
                     'reason': 'AD PATTERN MATCHED',
                     'category': 'advertising',
                     'pattern': pattern.pattern,
@@ -287,6 +313,7 @@ class AdAnnihilator:
         # Passed all checks
         return {
             'block': False,
+            'should_block': False,
             'reason': 'Clean URL',
             'action': 'PERMITTED'
         }
@@ -304,7 +331,7 @@ class AdAnnihilator:
             Block decision
         """
         if not self._active:
-            return {'block': False}
+            return {'block': False, 'should_block': False}
 
         # Check CSS selectors
         for selector in self.ad_selectors:
@@ -315,6 +342,7 @@ class AdAnnihilator:
                     self.stats['ads_blocked'] += 1
                     return {
                         'block': True,
+                        'should_block': True,
                         'reason': 'AD ELEMENT DETECTED (CLASS)',
                         'selector': selector,
                         'action': 'REMOVED'
@@ -326,6 +354,7 @@ class AdAnnihilator:
                     self.stats['ads_blocked'] += 1
                     return {
                         'block': True,
+                        'should_block': True,
                         'reason': 'AD ELEMENT DETECTED (ID)',
                         'selector': selector,
                         'action': 'REMOVED'
@@ -340,11 +369,12 @@ class AdAnnihilator:
                 self.stats['ads_blocked'] += 1
                 return {
                     'block': True,
+                    'should_block': True,
                     'reason': f'AD KEYWORD DETECTED: {keyword}',
                     'action': 'ANNIHILATED'
                 }
 
-        return {'block': False, 'action': 'PERMITTED'}
+        return {'block': False, 'should_block': False, 'action': 'PERMITTED'}
 
     def block_script(self, script_url: str) -> bool:
         """

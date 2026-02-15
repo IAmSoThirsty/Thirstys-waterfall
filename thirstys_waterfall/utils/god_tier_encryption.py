@@ -216,7 +216,7 @@ class GodTierEncryption:
 
     def _encrypt_chacha20(self, data: bytes) -> bytes:
         """ChaCha20-Poly1305 encryption"""
-        nonce = os.urandom(12)
+        nonce = os.urandom(16)  # ChaCha20 requires 16-byte nonce
         cipher = Cipher(
             algorithms.ChaCha20(self._chacha_key, nonce),
             mode=None,
@@ -228,8 +228,8 @@ class GodTierEncryption:
 
     def _decrypt_chacha20(self, encrypted_data: bytes) -> bytes:
         """ChaCha20-Poly1305 decryption"""
-        nonce = encrypted_data[:12]
-        ciphertext = encrypted_data[12:]
+        nonce = encrypted_data[:16]  # ChaCha20 requires 16-byte nonce
+        ciphertext = encrypted_data[16:]
 
         cipher = Cipher(
             algorithms.ChaCha20(self._chacha_key, nonce),
