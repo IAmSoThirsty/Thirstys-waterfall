@@ -223,8 +223,8 @@ class TestThirstyConsigliere(unittest.TestCase):
     def test_consigliere_initialization(self):
         """Test Consigliere initializes with locked-down state"""
         self.assertFalse(self.consigliere._active)
-        self.assertIsNotNone(self.consigliere._capability_manager)
-        self.assertIsNotNone(self.consigliere._action_ledger)
+        self.assertIsNotNone(self.consigliere.capability_manager)
+        self.assertIsNotNone(self.consigliere.action_ledger)
         self.assertIsNotNone(self.consigliere._privacy_checker)
     
     def test_consigliere_start_stop(self):
@@ -312,7 +312,7 @@ class TestThirstyConsigliere(unittest.TestCase):
         self.consigliere.assist("Test query")
         
         # Action should be logged
-        entries = self.consigliere._action_ledger.get_entries()
+        entries = self.consigliere.action_ledger.get_entries()
         self.assertGreater(len(entries), 0)
     
     def test_privacy_audit_before_processing(self):
@@ -360,7 +360,7 @@ class TestThirstyConsigliere(unittest.TestCase):
         
         # All data should be gone
         self.assertEqual(len(self.consigliere._ephemeral_context), 0)
-        self.assertEqual(len(self.consigliere._action_ledger.get_entries()), 0)
+        self.assertEqual(len(self.consigliere.action_ledger.get_entries()), 0)
     
     def test_status_reflects_code_of_omerta(self):
         """Test status shows Code of Omertà compliance"""
@@ -412,7 +412,7 @@ class TestConsigliereIntegration(unittest.TestCase):
         self.assertIn('data_used', response)
         
         # Verify action was logged
-        entries = self.consigliere._action_ledger.get_entries()
+        entries = self.consigliere.action_ledger.get_entries()
         self.assertGreater(len(entries), 0)
     
     def test_privacy_escalation_workflow(self):

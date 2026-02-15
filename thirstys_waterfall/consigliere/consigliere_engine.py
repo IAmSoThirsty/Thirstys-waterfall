@@ -210,8 +210,8 @@ class ThirstyConsigliere:
             # Keep minimal data types
             elif key in ["page_title", "language"]:
                 minimized[key] = value
-            # Skip identifiers
-            elif key not in ["user_id", "session_id", "tracking_id"]:
+            # Skip identifiers and privacy-sensitive fields
+            elif key not in ["user_id", "session_id", "tracking_id", "user_agent", "timestamp"]:
                 minimized[key] = value
 
         return minimized
