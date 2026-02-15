@@ -84,7 +84,7 @@ class TestAdAnnihilator(unittest.TestCase):
     def test_annihilator_initialization(self):
         """Test HOLY WAR engine initializes correctly"""
         self.assertFalse(self.annihilator._active)
-        self.assertTrue(self.annihilator._config["nuclear_level"])
+        self.assertTrue(self.annihilator.config["nuclear_level"])
 
         # Verify ad domains loaded
         self.assertGreater(len(self.annihilator._ad_domains), 0)

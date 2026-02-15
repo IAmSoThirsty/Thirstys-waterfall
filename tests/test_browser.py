@@ -441,7 +441,7 @@ class TestBrowserSandbox(unittest.TestCase):
     def test_sandbox_initialization(self):
         """Test sandbox initializes correctly"""
         self.assertFalse(self.sandbox._active)
-        self.assertTrue(self.sandbox._enabled)
+        self.assertTrue(self.sandbox.enabled)
 
     def test_sandbox_process_isolation(self):
         """Test sandbox creates isolated processes"""

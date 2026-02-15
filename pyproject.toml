@@ -80,7 +80,23 @@ thirstys_waterfall = ["**/*.json", "**/*.txt", "**/*.yml", "**/*.yaml"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=thirstys_waterfall --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+source = ["thirstys_waterfall"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
 
 [tool.black]
 line-length = 127
