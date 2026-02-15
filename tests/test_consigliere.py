@@ -101,7 +101,7 @@ class TestActionLedger(unittest.TestCase):
         self.assertIn('id', entry)
     
     def test_ledger_max_entries_enforced(self):
-        \"\"\"Test ledger respects max entries limit\"\"\"
+        """Test ledger respects max entries limit"""
         # Add more than max_entries
         for i in range(10):
             self.ledger.add_entry(f'action_{i}', {'data': i})
@@ -110,7 +110,7 @@ class TestActionLedger(unittest.TestCase):
         self.assertEqual(len(entries), 5)  # max_entries = 5
     
     def test_redact_entry(self):
-        \"\"\"Test entry redaction\"\"\"
+        """Test entry redaction"""
         self.ledger.add_entry('sensitive_action', {'sensitive': 'data'})
         
         entries = self.ledger.get_entries()
