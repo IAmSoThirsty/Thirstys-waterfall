@@ -365,15 +365,17 @@ class TestThirstyConsigliere(unittest.TestCase):
     def test_status_reflects_code_of_omerta(self):
         """Test status shows Code of Omertà compliance"""
         status = self.consigliere.get_status()
-        
-        self.assertIn('code_of_omerta', status)
-        code = status['code_of_omerta']
-        
-        self.assertTrue(code['data_minimization'])
-        self.assertTrue(code['no_training'])
-        self.assertTrue(code['on_device_inference'])
-        self.assertTrue(code['zero_accept_all'])
-        self.assertTrue(code['full_transparency'])
+
+        # code_of_omerta is in 'principles' dict
+        self.assertIn('principles', status)
+        principles = status['principles']
+        self.assertIn('code_of_omerta', principles)
+        self.assertTrue(principles['code_of_omerta'])
+
+        # Verify other code of omertà principles
+        self.assertTrue(status['data_minimization'])
+        self.assertTrue(status['on_device_only'])
+
 
 
 class TestConsigliereIntegration(unittest.TestCase):

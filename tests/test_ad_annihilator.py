@@ -87,10 +87,10 @@ class TestAdAnnihilator(unittest.TestCase):
         self.assertTrue(self.annihilator.config["nuclear_level"])
 
         # Verify ad domains loaded
-        self.assertGreater(len(self.annihilator._ad_domains), 0)
+        self.assertGreater(len(self.annihilator.ad_domains), 0)
 
         # Verify patterns loaded
-        self.assertGreater(len(self.annihilator._ad_patterns), 0)
+        self.assertGreater(len(self.annihilator.ad_patterns), 0)
 
     def test_annihilator_start_stop(self):
         """Test starting and stopping holy war"""
@@ -183,7 +183,7 @@ class TestAdAnnihilator(unittest.TestCase):
 
         # Verify stats updated
         stats = self.annihilator.get_stats()
-        self.assertGreater(stats["popups_blocked"], 0)
+        self.assertGreater(stats["popups_obliterated"], 0)
 
     def test_redirect_interception(self):
         """Test suspicious redirects are blocked"""
@@ -342,7 +342,7 @@ class TestAdAnnihilatorIntegration(unittest.TestCase):
         # Verify all stats updated
         stats = self.annihilator.get_stats()
         self.assertGreater(stats["ads_blocked"], 0)
-        self.assertGreater(stats["popups_blocked"], 0)
+        self.assertGreater(stats["popups_obliterated"], 0)
         self.assertGreater(stats["autoplay_killed"], 0)
 
     def test_malvertising_protection(self):
