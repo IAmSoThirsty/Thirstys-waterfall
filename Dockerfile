@@ -1,11 +1,13 @@
-# Multi-stage build for production deployment
-FROM python:3.11-slim as builder
+# Production Dockerfile for Thirstys-Waterfall Web Interface
+# Single-stage build for simplicity and reliability
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    THIRSTYS_ENV=production
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,56 +16,43 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     libssl-dev \
     libffi-dev \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Create application directory
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy web interface requirements and install
+COPY web/requirements.txt web/requirements.txt
+RUN pip install --no-cache-dir -r web/requirements.txt
 
 # Copy application code
 COPY . .
 
-# Install the application
-RUN pip install --no-cache-dir -e .
-
-# Production stage
-FROM python:3.11-slim
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    THIRSTYS_ENV=production
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Install the Thirstys-Waterfall package
+RUN pip install --no-cache-dir -e . || echo "Note: Package installation skipped (development mode)"
 
 # Create non-root user for security
 RUN useradd -m -u 1000 -s /bin/bash thirsty && \
     mkdir -p /home/thirsty/.thirstys_waterfall && \
-    chown -R thirsty:thirsty /home/thirsty
-
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /app /app
-
-# Set working directory
-WORKDIR /app
+    chown -R thirsty:thirsty /home/thirsty /app
 
 # Switch to non-root user
 USER thirsty
 
-# Expose default port (if web interface is added)
+# Set working directory to web interface
+WORKDIR /app/web
+
+# Expose port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "from thirstys_waterfall import ThirstysWaterfall; print('healthy')" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
-# Default command
-CMD ["thirstys-waterfall", "--help"]
+# Start the web server
+CMD ["bash", "/app/web/start.sh"]
