@@ -625,9 +625,9 @@ class WiFiController:
         """Get WiFi connection status"""
         return {
             "connected": self.connected_network is not None,
-            "network": self.connected_network.__dict__
-            if self.connected_network
-            else None,
+            "network": (
+                self.connected_network.__dict__ if self.connected_network else None
+            ),
             "adapters": [adapter.__dict__ for adapter in self.adapters],
             "available_networks_count": len(self.available_networks),
             "marketplace_mode": self.marketplace_mode,

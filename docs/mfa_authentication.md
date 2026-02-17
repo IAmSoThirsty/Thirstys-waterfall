@@ -68,11 +68,15 @@ The module supports dynamic authentication requirements based on risk assessment
 from thirstys_waterfall.security import MFAAuthenticator, AuthMethod
 
 # Initialize
+
 mfa = MFAAuthenticator()
 
 # Configure Privacy Risk Engine integration
+
 def assess_risk(context):
+
     # Custom risk assessment logic
+
     if context.ip_address in suspicious_ips:
         return RiskLevel.HIGH
     return RiskLevel.LOW
@@ -83,7 +87,9 @@ mfa.set_risk_engine_callback(assess_risk)
 ### Create Authentication Context
 
 ```python
+
 # Create context for user session
+
 context = mfa.create_auth_context(
     user_id="user123",
     session_id="session_abc",
@@ -103,9 +109,11 @@ print(f"Required auth level: {context.auth_level.name}")
 from thirstys_waterfall.security.mfa_auth import generate_totp_secret
 
 # Generate secret
+
 secret = generate_totp_secret()
 
 # Enroll TOTP for user
+
 success, enrollment_data = mfa.enroll_method(
     user_id="user123",
     method=AuthMethod.TOTP,
@@ -115,13 +123,17 @@ success, enrollment_data = mfa.enroll_method(
 if success:
     print(f"Secret (base32): {enrollment_data['secret']}")
     print(f"Provisioning URI: {enrollment_data['provisioning_uri']}")
+
     # Display QR code with provisioning URI for user to scan
+
 ```
 
 ### Authenticate with TOTP
 
 ```python
+
 # User provides 6-digit TOTP token
+
 token = "123456"
 
 success, error = mfa.authenticate(
@@ -144,6 +156,7 @@ else:
 import base64
 
 # From WebAuthn registration ceremony
+
 credential_data = {
     'credential_id': base64.b64encode(credential_id).decode(),
     'public_key': base64.b64encode(public_key_cose).decode(),
@@ -160,7 +173,9 @@ success = mfa.enroll_method(
 ### Authenticate with FIDO2
 
 ```python
+
 # From WebAuthn authentication ceremony
+
 credential = {
     'credential_id': base64.b64encode(credential_id).decode(),
     'authenticator_data': base64.b64encode(auth_data).decode(),
@@ -181,6 +196,7 @@ success, error = mfa.authenticate(
 from thirstys_waterfall.security import BiometricType
 
 # Enroll fingerprint
+
 biometric_data = {
     'type': BiometricType.FINGERPRINT.value,
     'template': fingerprint_template_data,  # From biometric scanner
@@ -200,6 +216,7 @@ success = mfa.enroll_method(
 from thirstys_waterfall.security import AuthLevel
 
 # Check if escalation is needed for high-security operation
+
 escalation_required, missing_methods = mfa.require_escalation(
     context=context,
     target_level=AuthLevel.HIGH
@@ -217,9 +234,11 @@ if escalation_required:
 from thirstys_waterfall.security import RiskLevel
 
 # Suspicious activity detected
+
 mfa.update_risk_level(context, RiskLevel.HIGH)
 
 # Check if re-authentication is needed
+
 if context.auth_level.value < AuthLevel.HIGH.value:
     print("Re-authentication required due to increased risk")
 ```
@@ -227,13 +246,16 @@ if context.auth_level.value < AuthLevel.HIGH.value:
 ### Session Management
 
 ```python
+
 # Validate session
+
 valid, ctx = mfa.validate_session(session_id="session_abc")
 
 if valid:
     print("Session is valid")
-    
+
     # Get session info
+
     info = mfa.get_session_info(session_id="session_abc")
     print(f"User: {info['user_id']}")
     print(f"Auth level: {info['auth_level']}")
@@ -245,7 +267,9 @@ else:
 ### Revoke Authentication Method
 
 ```python
+
 # Revoke TOTP
+
 success = mfa.revoke_method(
     user_id="user123",
     method=AuthMethod.TOTP,
@@ -253,6 +277,7 @@ success = mfa.revoke_method(
 )
 
 # Revoke FIDO2 credential
+
 success = mfa.revoke_method(
     user_id="user123",
     method=AuthMethod.FIDO2,
@@ -263,7 +288,9 @@ success = mfa.revoke_method(
 ### Audit Logging
 
 ```python
+
 # Get recent audit events
+
 audit_log = mfa.get_audit_log(limit=100)
 
 for entry in audit_log:
@@ -327,20 +354,23 @@ All operations are thread-safe:
 ## Integration with Privacy Risk Engine
 
 ```python
+
 # Configure integration
+
 def risk_assessment(context):
     from thirstys_waterfall.security import PrivacyRiskEngine
-    
+
     engine = PrivacyRiskEngine()
-    
+
     # Analyze context
+
     risk_level = engine.analyze_context(
         ip_address=context.ip_address,
         user_agent=context.user_agent,
         device_fingerprint=context.device_fingerprint,
         behavioral_patterns=context.typing_patterns
     )
-    
+
     return risk_level
 
 mfa.set_risk_engine_callback(risk_assessment)

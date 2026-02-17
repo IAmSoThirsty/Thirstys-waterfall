@@ -13,7 +13,7 @@ class NextGenerationFirewall(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.ai_detection = config.get('ai_detection', True)
+        self.ai_detection = config.get("ai_detection", True)
         self._threat_signatures = set()
         self._anomaly_baseline = {}
         self._load_threat_signatures()
@@ -34,13 +34,13 @@ class NextGenerationFirewall(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove NGFW rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
 
     def _load_threat_signatures(self):
         """Load known threat signatures"""
         # Known malware/threat signatures (hashes)
-        self._threat_signatures.add('deadbeef')
-        self._threat_signatures.add('baadf00d')
+        self._threat_signatures.add("deadbeef")
+        self._threat_signatures.add("baadf00d")
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet with advanced inspection"""
@@ -67,7 +67,7 @@ class NextGenerationFirewall(FirewallBase):
 
     def _deep_packet_inspection(self, packet: Dict[str, Any]) -> bool:
         """Perform deep packet inspection"""
-        payload = packet.get('payload', '')
+        payload = packet.get("payload", "")
 
         # Calculate payload hash
         if payload:
@@ -77,8 +77,8 @@ class NextGenerationFirewall(FirewallBase):
                 return False
 
         # Check for protocol violations
-        protocol = packet.get('protocol', '')
-        if protocol == 'http' and 'Host' not in str(payload):
+        protocol = packet.get("protocol", "")
+        if protocol == "http" and "Host" not in str(payload):
             return False
 
         return True
@@ -86,21 +86,21 @@ class NextGenerationFirewall(FirewallBase):
     def _detect_anomaly(self, packet: Dict[str, Any]) -> bool:
         """AI-based anomaly detection"""
         # Simplified anomaly detection
-        src_ip = packet.get('src_ip')
+        src_ip = packet.get("src_ip")
 
         if src_ip not in self._anomaly_baseline:
             self._anomaly_baseline[src_ip] = {
-                'packet_count': 0,
-                'avg_size': 0,
-                'protocols': set()
+                "packet_count": 0,
+                "avg_size": 0,
+                "protocols": set(),
             }
 
         baseline = self._anomaly_baseline[src_ip]
-        baseline['packet_count'] += 1
-        baseline['protocols'].add(packet.get('protocol'))
+        baseline["packet_count"] += 1
+        baseline["protocols"].add(packet.get("protocol"))
 
         # Detect port scanning (many different ports from same source)
-        if baseline['packet_count'] > 100 and len(baseline['protocols']) > 10:
+        if baseline["packet_count"] > 100 and len(baseline["protocols"]) > 10:
             self.logger.warning(f"Possible port scan from {src_ip}")
             return True
 
@@ -108,17 +108,17 @@ class NextGenerationFirewall(FirewallBase):
 
     def _is_intrusion_attempt(self, packet: Dict[str, Any]) -> bool:
         """Detect intrusion attempts"""
-        payload = str(packet.get('payload', ''))
+        payload = str(packet.get("payload", ""))
 
         # SQL injection patterns
-        sql_patterns = ['UNION SELECT', 'OR 1=1', "'; DROP", '--']
+        sql_patterns = ["UNION SELECT", "OR 1=1", "'; DROP", "--"]
         for pattern in sql_patterns:
             if pattern.upper() in payload.upper():
                 self.logger.warning("SQL injection attempt detected")
                 return True
 
         # XSS patterns
-        xss_patterns = ['<script>', 'javascript:', 'onerror=']
+        xss_patterns = ["<script>", "javascript:", "onerror="]
         for pattern in xss_patterns:
             if pattern.lower() in payload.lower():
                 self.logger.warning("XSS attempt detected")
@@ -133,7 +133,7 @@ class NextGenerationFirewall(FirewallBase):
     def get_threat_intelligence(self) -> Dict[str, Any]:
         """Get threat intelligence data"""
         return {
-            'signatures': len(self._threat_signatures),
-            'monitored_ips': len(self._anomaly_baseline),
-            'threats_detected': self._statistics['threats_detected']
+            "signatures": len(self._threat_signatures),
+            "monitored_ips": len(self._anomaly_baseline),
+            "threats_detected": self._statistics["threats_detected"],
         }

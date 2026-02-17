@@ -8,9 +8,4 @@ from .capability_manager import CapabilityManager
 from .action_ledger import ActionLedger
 from .privacy_checker import PrivacyChecker
 
-__all__ = [
-    'ThirstyConsigliere',
-    'CapabilityManager',
-    'ActionLedger',
-    'PrivacyChecker'
-]
+__all__ = ["ThirstyConsigliere", "CapabilityManager", "ActionLedger", "PrivacyChecker"]

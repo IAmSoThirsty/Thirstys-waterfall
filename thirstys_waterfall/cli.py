@@ -12,35 +12,15 @@ def main():
         description="Thirstys Waterfall - Integrated Privacy-First System"
     )
 
-    parser.add_argument(
-        '--config',
-        type=str,
-        help='Path to configuration file'
-    )
+    parser.add_argument("--config", type=str, help="Path to configuration file")
 
-    parser.add_argument(
-        '--start',
-        action='store_true',
-        help='Start the system'
-    )
+    parser.add_argument("--start", action="store_true", help="Start the system")
 
-    parser.add_argument(
-        '--stop',
-        action='store_true',
-        help='Stop the system'
-    )
+    parser.add_argument("--stop", action="store_true", help="Stop the system")
 
-    parser.add_argument(
-        '--status',
-        action='store_true',
-        help='Show system status'
-    )
+    parser.add_argument("--status", action="store_true", help="Show system status")
 
-    parser.add_argument(
-        '--audit',
-        action='store_true',
-        help='Run privacy audit'
-    )
+    parser.add_argument("--audit", action="store_true", help="Run privacy audit")
 
     args = parser.parse_args()
 
@@ -57,6 +37,7 @@ def main():
             try:
                 # Keep running
                 import time
+
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
@@ -83,5 +64,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

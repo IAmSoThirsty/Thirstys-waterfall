@@ -14,85 +14,87 @@ def main():
     print("Thirstys Waterfall - Concrete Implementation Demo")
     print("=" * 80)
     print()
-    
+
     # Detect platform
     current_platform = platform.system()
     print(f"🖥️  Current Platform: {current_platform}")
     print(f"    Python: {platform.python_version()}")
     print(f"    Machine: {platform.machine()}")
     print()
-    
+
     # VPN Backend Detection
     print("-" * 80)
     print("🔐 VPN Backend Detection")
     print("-" * 80)
-    
+
     available_vpn_backends = VPNBackendFactory.get_available_backends()
     print(f"✅ Available VPN backends on this system: {available_vpn_backends}")
     print()
-    
+
     # Test each VPN backend
-    vpn_protocols = ['wireguard', 'openvpn', 'ikev2']
-    
+    vpn_protocols = ["wireguard", "openvpn", "ikev2"]
+
     for protocol in vpn_protocols:
         print(f"Testing {protocol.upper()}:")
         backend = VPNBackendFactory.create_backend(protocol, {})
-        
+
         if backend:
             is_available = backend.check_availability()
             print("  - Backend created: ✅")
             print(f"  - Available on system: {'✅' if is_available else '❌'}")
             print(f"  - Platform: {backend.platform}")
-            
+
             if is_available:
                 print("  - Ready for connection!")
             else:
                 print("  - Not installed or not accessible")
         else:
             print("  - Backend creation failed: ❌")
-        
+
         print()
-    
+
     # Firewall Backend Detection
     print("-" * 80)
     print("🛡️  Firewall Backend Detection")
     print("-" * 80)
-    
+
     available_firewall_backends = FirewallBackendFactory.get_available_backends()
-    print(f"✅ Available firewall backends on this system: {available_firewall_backends}")
+    print(
+        f"✅ Available firewall backends on this system: {available_firewall_backends}"
+    )
     print()
-    
+
     # Create platform-appropriate firewall backend
     firewall_backend = FirewallBackendFactory.create_backend()
-    
+
     if firewall_backend:
         print("Platform-specific firewall backend created:")
         print(f"  - Type: {firewall_backend.__class__.__name__}")
         print(f"  - Platform: {firewall_backend.platform}")
         print("  - Available: ✅")
         print()
-        
+
         # Demo: Add a firewall rule (won't actually execute without sudo)
         print("Demo: Firewall Rule Example")
         demo_rule = {
-            'id': 'demo_https',
-            'action': 'accept',
-            'protocol': 'tcp',
-            'dst_port': 443
+            "id": "demo_https",
+            "action": "accept",
+            "protocol": "tcp",
+            "dst_port": 443,
         }
         print(f"  Rule: {demo_rule}")
         print("  Note: Actual rule application requires elevated privileges")
     else:
         print("❌ No firewall backend available on this platform")
-    
+
     print()
-    
+
     # Platform-Specific Details
     print("-" * 80)
     print("📋 Platform-Specific Details")
     print("-" * 80)
-    
-    if current_platform == 'Linux':
+
+    if current_platform == "Linux":
         print("Linux Platform:")
         print("  VPN:")
         print("    - WireGuard: Use 'wg-quick up wg0' to connect")
@@ -102,8 +104,8 @@ def main():
         print("    - nftables: Modern replacement for iptables")
         print("    - Commands: 'nft add rule', 'nft list ruleset'")
         print("    - Requires: root/sudo privileges")
-    
-    elif current_platform == 'Windows':
+
+    elif current_platform == "Windows":
         print("Windows Platform:")
         print("  VPN:")
         print("    - WireGuard: Use WireGuard for Windows GUI or CLI")
@@ -112,8 +114,8 @@ def main():
         print("  Firewall:")
         print("    - Windows Firewall: netsh advfirewall commands")
         print("    - Requires: Administrator privileges")
-    
-    elif current_platform == 'Darwin':
+
+    elif current_platform == "Darwin":
         print("macOS Platform:")
         print("  VPN:")
         print("    - WireGuard: Install via Homebrew or official app")
@@ -123,9 +125,9 @@ def main():
         print("    - PF (Packet Filter): Use 'pfctl' commands")
         print("    - Configuration: /etc/pf.conf or anchors")
         print("    - Requires: root/sudo privileges")
-    
+
     print()
-    
+
     # Security Notes
     print("-" * 80)
     print("🔒 Security Notes")
@@ -146,30 +148,30 @@ def main():
     print("   - Attack scenarios and defenses")
     print("   - Encryption key management")
     print()
-    
+
     # Installation Requirements
     print("-" * 80)
     print("📦 Installation Requirements")
     print("-" * 80)
-    
-    if current_platform == 'Linux':
+
+    if current_platform == "Linux":
         print("For full functionality on Linux:")
         print("  sudo apt-get install wireguard-tools openvpn nftables strongswan")
-    elif current_platform == 'Windows':
+    elif current_platform == "Windows":
         print("For full functionality on Windows:")
         print("  - Download WireGuard from: https://www.wireguard.com/install/")
         print("  - Download OpenVPN from: https://openvpn.net/community-downloads/")
         print("  - Windows Firewall is built-in")
-    elif current_platform == 'Darwin':
+    elif current_platform == "Darwin":
         print("For full functionality on macOS:")
         print("  brew install wireguard-tools openvpn")
         print("  PF (pfctl) is built into macOS")
-    
+
     print()
     print("=" * 80)
     print("Demo complete! All core subsystems have concrete OS-level implementations.")
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

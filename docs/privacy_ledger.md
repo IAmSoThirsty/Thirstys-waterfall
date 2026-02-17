@@ -5,6 +5,7 @@ Production-grade encrypted privacy accountability ledger for immutable audit log
 ## Features
 
 ### Core Security
+
 - **Zero-Knowledge Encryption**: User-key based encryption with dual-layer protection (Fernet + AES-256-GCM)
 - **Tamper Detection**: SHA-512 cryptographic hashing with blockchain-style chain linking
 - **Merkle Tree Verification**: O(log n) proof verification for entry integrity
@@ -12,12 +13,14 @@ Production-grade encrypted privacy accountability ledger for immutable audit log
 - **Thread-Safe Operations**: Full concurrency support with RLock protection
 
 ### Audit Capabilities
+
 - **Structured Logging**: Type-safe event logging with severity levels
 - **Efficient Search**: Indexed by user, event type, time range
 - **Audit Export**: JSON export with optional field decryption for compliance
 - **Chain Integrity**: Full ledger verification with tamper detection
 
 ### Privacy & Compliance
+
 - **Retention Policies**: Configurable data retention with secure multi-pass deletion
 - **Forensic Resistance**: Secure data wiping before deletion
 - **Immutable Records**: Append-only operations prevent modification
@@ -31,9 +34,11 @@ from thirstys_waterfall.security.privacy_ledger import (
 )
 
 # Create ledger
+
 ledger = PrivacyLedger("audit.dat", retention_days=90)
 
 # Log an event
+
 ledger.append(
     event_type=EventType.USER_LOGIN,
     user_id="john.doe@example.com",
@@ -44,13 +49,16 @@ ledger.append(
 )
 
 # Verify integrity
+
 is_valid, errors = ledger.verify_chain_integrity()
 print(f"Ledger valid: {is_valid}")
 
 # Search entries
+
 entries = ledger.search(user_id="john.doe@example.com")
 
 # Close ledger
+
 ledger.close()
 ```
 
@@ -59,7 +67,9 @@ ledger.close()
 ### Components
 
 #### PrivacyLedger
+
 Main ledger class managing all operations:
+
 - Entry creation and storage
 - Encryption/decryption
 - Search and retrieval
@@ -67,7 +77,9 @@ Main ledger class managing all operations:
 - Persistence management
 
 #### LedgerEntry
+
 Immutable dataclass representing a single audit event:
+
 - Unique entry ID
 - Timestamp (UTC)
 - Event type and severity
@@ -80,7 +92,9 @@ Immutable dataclass representing a single audit event:
 - Merkle proof
 
 #### MerkleTree
+
 Efficient verification structure:
+
 - Binary tree of cryptographic hashes
 - O(log n) proof generation
 - O(log n) proof verification
@@ -124,6 +138,7 @@ Efficient verification structure:
 ### Chain Integrity
 
 Each entry contains:
+
 - `hash`: SHA-512 hash of entry content
 - `previous_hash`: Hash of previous entry (blockchain-style)
 
@@ -166,6 +181,7 @@ class SeverityLevel(Enum):
 ### PrivacyLedger
 
 #### Constructor
+
 ```python
 PrivacyLedger(
     storage_path: str,
@@ -251,6 +267,7 @@ python -m unittest tests.test_privacy_ledger -v
 ```
 
 Test coverage:
+
 - Entry creation and integrity
 - Merkle tree proof generation/verification
 - Thread-safe concurrent operations
@@ -271,18 +288,21 @@ Test coverage:
 ## Security Considerations
 
 ### Encryption Key Management
+
 - Store encryption keys securely (e.g., AWS KMS, HashiCorp Vault)
 - Never commit keys to version control
 - Use unique keys per environment
 - Rotate keys periodically
 
 ### Access Control
+
 - Limit ledger file access to authorized processes
 - Use OS-level file permissions (600 recommended)
 - Consider encrypting entire filesystem
 - Log all ledger access attempts
 
 ### Retention & Deletion
+
 - Set appropriate retention policies
 - Secure deletion uses multi-pass overwrite
 - Consider regulatory requirements (GDPR, HIPAA)
@@ -291,6 +311,7 @@ Test coverage:
 ## Compliance
 
 Suitable for:
+
 - **GDPR**: Right to audit, data minimization
 - **HIPAA**: Audit trail requirements
 - **SOC 2**: Security logging

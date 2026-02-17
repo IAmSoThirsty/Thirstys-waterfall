@@ -9,6 +9,7 @@ The MicroVM Isolation Module provides hardware-level process isolation for secur
 ## Features
 
 ### Core Capabilities
+
 - **Hard Process Separation**: Complete isolation at the VM level
 - **Micro-Segmentation**: Network-isolated VMs with optional connectivity
 - **Resource Management**: Per-VM CPU, memory, disk, and network limits
@@ -19,12 +20,14 @@ The MicroVM Isolation Module provides hardware-level process isolation for secur
 - **Thread-Safe**: All operations protected with proper locking
 
 ### Isolation Types
+
 - **Browser Tab**: Isolate individual browser tabs
 - **Extension**: Isolate browser extensions
 - **Session**: Isolate browsing sessions
 - **Plugin**: Isolate plugins and third-party components
 
 ### VM Backends
+
 - **Firecracker**: AWS's lightweight virtualization technology
 - **QEMU**: Full-featured virtualization with microvm machine type
 - **Cloud Hypervisor**: Rust-based VMM optimized for cloud workloads
@@ -43,6 +46,7 @@ from thirstys_waterfall.security.microvm_isolation import (
 )
 
 # Initialize manager
+
 config = {
     "max_vcpus": 16,
     "max_memory_mb": 8192,
@@ -52,6 +56,7 @@ manager = MicroVMIsolationManager(config)
 manager.start()
 
 # Create isolated VM for browser tab
+
 vm_id = manager.create_vm(
     isolation_type=IsolationType.BROWSER_TAB,
     resource_limits=VMResourceLimits(
@@ -65,18 +70,22 @@ vm_id = manager.create_vm(
 )
 
 # Start the VM
+
 vm = manager.get_vm(vm_id)
 vm.start()
 
 # Send command to VM
+
 response = vm.send_command("execute", {"action": "render_page"})
 
 # Get VM status
+
 info = vm.get_info()
 print(f"VM State: {info['state']}")
 print(f"Resources: {info['resource_limits']}")
 
 # Cleanup
+
 vm.stop()
 manager.destroy_vm(vm_id)
 manager.stop()
@@ -85,7 +94,9 @@ manager.stop()
 ### Advanced Example
 
 ```python
+
 # Create VM with custom configuration
+
 vm_id = manager.create_vm(
     isolation_type=IsolationType.EXTENSION,
     resource_limits=VMResourceLimits(
@@ -112,7 +123,9 @@ vm_id = manager.create_vm(
 ### Resource Management
 
 ```python
+
 # Check resource usage
+
 usage = manager.get_resource_usage()
 print(f"Total VMs: {usage['total_vms']}")
 print(f"vCPUs allocated: {usage['vcpus_allocated']}/{usage['vcpus_available']}")
@@ -124,12 +137,15 @@ print(f"VMs by state: {usage['vms_by_state']}")
 ### Health Monitoring
 
 ```python
+
 # Get health status
+
 health = manager.get_health_status()
 print(f"Healthy VMs: {health['healthy_vms']}")
 print(f"Unhealthy VMs: {health['unhealthy_vms']}")
 
 # Get VM-specific health metrics
+
 vm = manager.get_vm(vm_id)
 metrics = vm.get_health_metrics()
 print(f"CPU Usage: {metrics.cpu_usage_percent}%")
@@ -144,10 +160,12 @@ print(f"Status: {metrics.health_status}")
 from thirstys_waterfall.security.microvm_isolation import CommunicationChannel
 
 # Create communication channel
+
 channel = CommunicationChannel(vm_id)
 channel.connect()
 
 # Send message
+
 channel.send_message({
     "type": "command",
     "action": "process_request",
@@ -155,6 +173,7 @@ channel.send_message({
 })
 
 # Receive response
+
 response = channel.receive_message(timeout=5.0)
 print(f"Response: {response}")
 
@@ -167,11 +186,14 @@ channel.close()
 
 ```python
 config = {
+
     # Resource limits
+
     "max_vcpus": 16,              # Maximum vCPUs across all VMs
     "max_memory_mb": 8192,        # Maximum memory across all VMs (MB)
-    
+
     # Defaults for new VMs
+
     "default_vcpu_count": 1,      # Default vCPUs per VM
     "default_memory_mb": 512,     # Default memory per VM (MB)
     "default_disk_size_mb": 1024, # Default disk size per VM (MB)
@@ -249,30 +271,35 @@ CREATED → STARTING → RUNNING ⟷ PAUSED
 ## Requirements
 
 ### System Requirements
+
 - Linux kernel 4.14+ (for KVM support)
 - x86_64 architecture
 - KVM virtualization enabled
 - Python 3.8+
 
 ### Optional Requirements
+
 - Firecracker binary (for Firecracker backend)
 - QEMU 4.2+ (for QEMU backend)
 - Cloud Hypervisor (for Cloud Hypervisor backend)
 
 ### Python Dependencies
+
 - Standard library only (no external dependencies)
 
 ## Performance
 
 ### Resource Overhead
+
 - **Memory**: ~50-100MB base per VM + workload memory
 - **CPU**: Minimal overhead (<5%) when VM is idle
-- **Startup Time**: 
+- **Startup Time**:
   - Firecracker: ~125ms
   - QEMU microvm: ~150ms
   - Cloud Hypervisor: ~100ms
 
 ### Scaling
+
 - Tested with 100+ concurrent VMs per host
 - Resource limits enforced to prevent overcommitment
 - Automatic cleanup of dead VMs reduces memory leaks
@@ -292,17 +319,20 @@ python3 examples/microvm_isolation_demo.py
 ## Troubleshooting
 
 ### VM fails to start
+
 - Check if KVM is enabled: `lsmod | grep kvm`
 - Verify backend binary exists: `which firecracker` or `which qemu-system-x86_64`
 - Check kernel and rootfs paths are correct
 - Review logs for specific error messages
 
 ### Communication channel connection fails
+
 - Ensure socket path is accessible
 - Check VM has started successfully
 - Verify firewall rules allow local socket communication
 
 ### Resource exhaustion
+
 - Check resource usage: `manager.get_resource_usage()`
 - Increase manager limits in configuration
 - Clean up unused VMs: `manager.destroy_all_vms()`
@@ -314,6 +344,7 @@ See repository LICENSE file.
 ## Contributing
 
 Contributions welcome! Please ensure:
+
 - All tests pass
 - Code follows existing style
 - Add tests for new features

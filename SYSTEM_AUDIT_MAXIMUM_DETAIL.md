@@ -1,4 +1,5 @@
 # SYSTEM AUDIT: MAXIMUM ALLOWED DETAIL
+
 ## UNIVERSAL, META, SELF-CONSISTENT ANALYSIS
 
 **Generation Date**: 2026-02-15
@@ -17,9 +18,11 @@
 ### 1.1 ARCHITECTURAL LAYERS
 
 #### 1.1.1 Layer 0: Foundation Layer
+
 **Purpose**: Core cryptographic primitives and system utilities
 **Dependencies**: cryptography>=41.0.0
 **Components**:
+
 - `utils/god_tier_encryption.py`: 7-layer encryption implementation
   - Layer 1: AES-256-GCM (symmetric encryption, authenticated)
   - Layer 2: RSA-4096 (asymmetric encryption, quantum-resistant design)
@@ -47,8 +50,10 @@
   - TTL: Respects DNS record TTL values
 
 #### 1.1.2 Layer 1: Storage Layer
+
 **Purpose**: Persistent and ephemeral data storage with encryption
 **Components**:
+
 - `storage/privacy_vault.py`: Encrypted persistent storage
   - Encryption: 7-layer god tier encryption
   - Format: Binary encrypted blobs
@@ -62,8 +67,10 @@
   - Multipass: 3-pass overwrite (0xFF, 0x00, random)
 
 #### 1.1.3 Layer 2: Network Layer
+
 **Purpose**: Network connectivity with privacy and security
 **Components**:
+
 - `vpn/`: Built-in VPN subsystem (NO external services)
   - `vpn_manager.py`: VPN lifecycle management
   - `backends.py`: Platform-specific VPN backends
@@ -102,8 +109,10 @@
   - `wifi_security.py`: WiFi security (WPA3, encryption)
 
 #### 1.1.4 Layer 3: Firewall Layer
+
 **Purpose**: Multi-tier traffic filtering and threat detection
 **Components**: 8 firewall types (unprecedented integration)
+
 - `firewalls/packet_filtering.py`: Layer 3/4 filtering
   - IP filtering: Source/destination IP address rules
   - Port filtering: TCP/UDP port rules
@@ -158,8 +167,10 @@
   - Failover: Backend fallback mechanism
 
 #### 1.1.5 Layer 4: Browser Layer
+
 **Purpose**: Privacy-first web browsing with complete isolation
 **Components**:
+
 - `browser/browser_engine.py`: Core browser engine
   - Rendering: Custom rendering engine (no external dependencies)
   - JavaScript: JavaScript execution sandbox
@@ -192,8 +203,10 @@
   - Redirect blocking: Navigation interception
 
 #### 1.1.6 Layer 5: Privacy Layer
+
 **Purpose**: Anti-tracking, anti-fingerprinting, privacy auditing
 **Components**:
+
 - `privacy/anti_fingerprint.py`: Browser fingerprint randomization
   - Canvas fingerprinting: Canvas API poisoning
   - WebGL fingerprinting: WebGL API poisoning
@@ -229,8 +242,10 @@
   - Circuit rotation: Periodic circuit refresh
 
 #### 1.1.7 Layer 6: Security Layer
+
 **Purpose**: Multi-factor authentication, compromise detection, isolation
 **Components**:
+
 - `security/mfa_auth.py`: Multi-factor authentication
   - TOTP: Time-based One-Time Password (RFC 6238)
   - FIDO2/WebAuthn: Hardware security keys
@@ -279,8 +294,10 @@
   - Dynamic escalation: Risk-based MFA escalation
 
 #### 1.1.8 Layer 7: Application Layer
+
 **Purpose**: User-facing applications and services
 **Components**:
+
 - `ad_annihilator/`: HOLY WAR MODE - comprehensive ad blocking
   - `holy_war_engine.py`: Core ad annihilation engine
   - `ad_database.py`: Ad domain database (1000+ domains)
@@ -325,8 +342,10 @@
   - `theme_detector.py`: System theme detection (dark/light)
 
 #### 1.1.9 Layer 8: Configuration Layer
+
 **Purpose**: System configuration and validation
 **Components**:
+
 - `config/registry.py`: Configuration registry
   - Format: JSON-based configuration
   - Encryption: Encrypted configuration storage
@@ -338,8 +357,10 @@
   - Constraint validation: Value range validation
 
 #### 1.1.10 Layer 9: Orchestration Layer
+
 **Purpose**: System-wide coordination and kill switch
 **Components**:
+
 - `orchestrator.py`: Main system orchestrator (ThirstysWaterfall class)
   - Subsystem coordination: Lifecycle management for all subsystems
   - Global kill switch integration: Coordinated emergency shutdown
@@ -351,8 +372,10 @@
   - Recovery: Manual recovery process required
 
 #### 1.1.11 Layer 10: CLI Layer
+
 **Purpose**: Command-line interface
 **Components**:
+
 - `cli.py`: Command-line interface
   - Commands: start, stop, status, audit, configure
   - Arguments: --config, --verbose, --debug
@@ -364,6 +387,7 @@
 ### 2.1 EXTERNAL DEPENDENCIES
 
 #### 2.1.1 Direct Dependencies
+
 - `cryptography>=41.0.0`: Core cryptographic library
   - Provides: AES, RSA, ECC, ChaCha20, Fernet, PBKDF2
   - Used by: All encryption-related modules
@@ -371,6 +395,7 @@
   - License: Apache 2.0, BSD
 
 #### 2.1.2 Optional Dependencies (Development)
+
 - `pytest>=7.0.0`: Testing framework
 - `pytest-cov>=4.0.0`: Code coverage
 - `black>=23.0.0`: Code formatter
@@ -444,6 +469,7 @@ consigliere/consigliere_engine.py
 ```
 
 ### 2.3 CIRCULAR DEPENDENCY ANALYSIS
+
 **Status**: No circular dependencies detected
 **Validation method**: Module import order analysis
 **Result**: Dependency graph is acyclic (DAG)
@@ -453,6 +479,7 @@ consigliere/consigliere_engine.py
 ## 3. CROSS-CUTTING CONCERNS
 
 ### 3.1 LOGGING
+
 **Implementation**: Encrypted logging via `utils/encrypted_logging.py`
 **Encryption**: Fernet (AES-128-CBC + HMAC-SHA256)
 **Format**: JSON-structured logs
@@ -462,8 +489,10 @@ consigliere/consigliere_engine.py
 **Components using logging**: All components (via `orchestrator.py` initialization)
 
 ### 3.2 ERROR HANDLING
+
 **Strategy**: Hierarchical exception handling
 **Base exceptions**:
+
 - `ThirstysWaterfallException`: Base exception for all custom exceptions
 - `ConfigurationError`: Configuration-related errors
 - `EncryptionError`: Encryption/decryption errors
@@ -477,6 +506,7 @@ consigliere/consigliere_engine.py
 **Error recovery**: Graceful degradation with fallback mechanisms
 
 ### 3.3 CONFIGURATION MANAGEMENT
+
 **Format**: JSON-based configuration
 **Location**: `config/` directory, `examples/config.json`
 **Validation**: Schema-based validation via `config/validator.py`
@@ -485,8 +515,10 @@ consigliere/consigliere_engine.py
 **Environment variables**: Override via environment variables
 
 ### 3.4 ENCRYPTION
+
 **Primary implementation**: 7-layer god tier encryption via `utils/god_tier_encryption.py`
 **Layers**:
+
 1. AES-256-GCM: Symmetric encryption with authentication
 2. RSA-4096: Asymmetric encryption
 3. ChaCha20-Poly1305: Stream cipher with authentication
@@ -496,12 +528,14 @@ consigliere/consigliere_engine.py
 7. Zero-knowledge architecture: No plaintext persistence
 
 **Key management**:
+
 - Master key: Generated on first run, stored encrypted
 - Session keys: Ephemeral, destroyed on session end
 - Key rotation: Automatic key rotation every 24 hours
 - Key storage: Hardware-backed storage when available (TPM, Secure Enclave, HSM)
 
 **Encryption points**:
+
 - Storage: All data at rest encrypted
 - Network: All data in transit encrypted
 - Logs: All logs encrypted
@@ -511,8 +545,10 @@ consigliere/consigliere_engine.py
 - VPN: VPN traffic encrypted (double encryption)
 
 ### 3.5 MONITORING AND METRICS
+
 **Implementation**: Health check endpoints in each subsystem
 **Metrics collected**:
+
 - System metrics: CPU, memory, disk, network usage
 - VPN metrics: Connection status, bandwidth, latency
 - Firewall metrics: Rules active, packets blocked, threats detected
@@ -521,13 +557,16 @@ consigliere/consigliere_engine.py
 - Security metrics: Authentication attempts, MFA challenges, DOS trap triggers
 
 **Monitoring endpoints**:
+
 - `/status`: Overall system status
 - `/health`: Health check (200 OK if healthy)
 - `/metrics`: Prometheus-compatible metrics endpoint
 
 ### 3.6 TESTING
+
 **Framework**: unittest (Python standard library)
 **Test types**:
+
 - Unit tests: Individual component testing
 - Integration tests: Subsystem integration testing
 - Platform tests: Platform-specific backend testing
@@ -538,7 +577,9 @@ consigliere/consigliere_engine.py
 **CI/CD integration**: GitHub Actions workflow (`.github/workflows/ci.yml`)
 
 ### 3.7 SECURITY
+
 **Security principles**:
+
 - Defense in depth: Multiple security layers
 - Least privilege: Minimal permissions required
 - Fail-safe defaults: Secure defaults, explicit opt-in for insecure options
@@ -549,6 +590,7 @@ consigliere/consigliere_engine.py
 - Psychological acceptability: Usable security
 
 **Security boundaries**:
+
 - Process boundaries: Separate processes for browser tabs, VPN, firewalls
 - Network boundaries: VPN tunnel, firewalls
 - Trust boundaries: User input validation, external API validation
@@ -564,6 +606,7 @@ consigliere/consigliere_engine.py
 ### 4.1 SYSTEM INVARIANTS
 
 #### 4.1.1 Cryptographic Invariants
+
 - **Invariant**: All data at rest MUST be encrypted with at least AES-256-GCM
 - **Enforcement**: Enforced by `utils/god_tier_encryption.py` and `storage/` modules
 - **Validation**: Runtime assertion checks
@@ -577,6 +620,7 @@ consigliere/consigliere_engine.py
 - **Validation**: Key storage format validation
 
 #### 4.1.2 Privacy Invariants
+
 - **Invariant**: Browser history MUST NOT be persisted in plaintext
 - **Enforcement**: `browser/encrypted_navigation.py` encrypts all URLs before storage
 - **Validation**: Storage format checks
@@ -590,6 +634,7 @@ consigliere/consigliere_engine.py
 - **Validation**: Network traffic monitoring, code review
 
 #### 4.1.3 Security Invariants
+
 - **Invariant**: VPN kill switch MUST activate if VPN connection drops
 - **Enforcement**: `vpn/kill_switch.py` monitors VPN connection state
 - **Validation**: Connection state monitoring, automatic network isolation
@@ -603,6 +648,7 @@ consigliere/consigliere_engine.py
 - **Validation**: Risk score calculation, MFA challenge enforcement
 
 #### 4.1.4 Isolation Invariants
+
 - **Invariant**: Browser tabs MUST be process-isolated
 - **Enforcement**: `browser/sandbox.py` creates separate processes
 - **Validation**: Process tree inspection
@@ -614,6 +660,7 @@ consigliere/consigliere_engine.py
 ### 4.2 OPERATIONAL CONSTRAINTS
 
 #### 4.2.1 Resource Constraints
+
 - **Constraint**: Minimum RAM: 2GB
 - **Rationale**: Browser tabs, VPN, firewalls, encryption overhead
 - **Impact**: System may fail to start or OOM if insufficient
@@ -627,6 +674,7 @@ consigliere/consigliere_engine.py
 - **Impact**: Performance degradation on unsupported architectures
 
 #### 4.2.2 Network Constraints
+
 - **Constraint**: Internet connectivity required for VPN and external operations
 - **Rationale**: VPN requires external VPN server, web browsing requires internet
 - **Impact**: VPN and browsing unavailable in offline mode
@@ -636,6 +684,7 @@ consigliere/consigliere_engine.py
 - **Impact**: DNS-over-HTTPS fallback, IP-only navigation possible
 
 #### 4.2.3 Platform Constraints
+
 - **Constraint**: Supported platforms: Linux, Windows, macOS
 - **Rationale**: Platform-specific VPN and firewall backends
 - **Impact**: Unsupported platforms will have degraded functionality
@@ -645,6 +694,7 @@ consigliere/consigliere_engine.py
 - **Impact**: System will not run on Python 3.7 or below
 
 #### 4.2.4 Security Constraints
+
 - **Constraint**: No hardcoded secrets allowed
 - **Rationale**: Security best practice, credential exposure risk
 - **Impact**: Configuration via environment variables or secure vaults required
@@ -660,6 +710,7 @@ consigliere/consigliere_engine.py
 ### 5.1 IDENTIFIED EDGE CASES
 
 #### 5.1.1 Network Edge Cases
+
 1. **VPN connection drop during active browsing**
    - **Detection**: `vpn/kill_switch.py` monitors connection state
    - **Recovery**: Kill switch activates, blocks all traffic, attempts reconnection
@@ -676,6 +727,7 @@ consigliere/consigliere_engine.py
    - **User impact**: Unexpected traffic blocking or allowing
 
 #### 5.1.2 Storage Edge Cases
+
 4. **Disk full during encrypted logging**
    - **Detection**: Write operation returns ENOSPC error
    - **Recovery**: Emergency log rotation, oldest logs deleted
@@ -687,6 +739,7 @@ consigliere/consigliere_engine.py
    - **User impact**: Potential data leak (mitigated by encryption)
 
 #### 5.1.3 Encryption Edge Cases
+
 6. **Decryption key loss**
    - **Detection**: Decryption operation fails with invalid key error
    - **Recovery**: No recovery possible, encrypted data is lost
@@ -698,6 +751,7 @@ consigliere/consigliere_engine.py
    - **User impact**: Reduced security (software key storage)
 
 #### 5.1.4 Browser Edge Cases
+
 8. **Tab process crash**
    - **Detection**: `browser/tab_manager.py` monitors process health
    - **Recovery**: Tab marked as crashed, user can reload
@@ -709,6 +763,7 @@ consigliere/consigliere_engine.py
    - **User impact**: Suspended tabs require reload
 
 #### 5.1.5 Security Edge Cases
+
 10. **MFA device unavailable**
     - **Detection**: MFA challenge timeout or user indicates device lost
     - **Recovery**: Fallback MFA method (e.g., backup codes)
@@ -763,8 +818,10 @@ consigliere/consigliere_engine.py
 ### 6.1 AUTOMATED RECOVERY
 
 #### 6.1.1 VPN Recovery
+
 **Trigger**: VPN connection drop
 **Recovery steps**:
+
 1. Kill switch activates (blocks all non-VPN traffic)
 2. Attempt reconnection to current VPN server (3 retries, 5s backoff)
 3. If reconnection fails, attempt connection to next VPN server (3 retries)
@@ -775,8 +832,10 @@ consigliere/consigliere_engine.py
 **Success rate**: Estimated 95% (based on VPN server availability)
 
 #### 6.1.2 Firewall Recovery
+
 **Trigger**: Firewall rule application failure
 **Recovery steps**:
+
 1. Fail-closed: Block all traffic
 2. Log failure details (rule, backend, error)
 3. Attempt to reload firewall rules (1 retry, immediate)
@@ -787,8 +846,10 @@ consigliere/consigliere_engine.py
 **Success rate**: Estimated 99% (rule syntax errors are rare)
 
 #### 6.1.3 Browser Tab Recovery
+
 **Trigger**: Tab process crash
 **Recovery steps**:
+
 1. Tab marked as crashed in `browser/tab_manager.py`
 2. Tab UI shows "Tab crashed, click to reload"
 3. User clicks reload
@@ -801,8 +862,10 @@ consigliere/consigliere_engine.py
 ### 6.2 MANUAL RECOVERY
 
 #### 6.2.1 Configuration Reset
+
 **Trigger**: Configuration corruption or invalid configuration
 **Recovery steps**:
+
 1. Stop system (if running)
 2. Delete or rename corrupted configuration file
 3. Restart system
@@ -813,8 +876,10 @@ consigliere/consigliere_engine.py
 **Data loss**: Custom settings lost
 
 #### 6.2.2 Encryption Key Recovery
+
 **Trigger**: Master encryption key loss
 **Recovery steps**:
+
 1. **No recovery possible for encrypted data** (zero-knowledge design)
 2. User must start fresh with new master key
 3. All encrypted data is permanently lost
@@ -823,8 +888,10 @@ consigliere/consigliere_engine.py
 **Data loss**: Complete (all encrypted data)
 
 #### 6.2.3 Kill Switch Manual Recovery
+
 **Trigger**: Kill switch activated (VPN drop, compromise detected, user trigger)
 **Recovery steps**:
+
 1. User investigates cause of kill switch activation
 2. User resolves underlying issue (e.g., VPN server issue, false positive)
 3. User manually deactivates kill switch via CLI or GUI
@@ -834,8 +901,10 @@ consigliere/consigliere_engine.py
 **Data loss**: None (ephemeral data may be lost)
 
 #### 6.2.4 DOS Trap Recovery
+
 **Trigger**: DOS trap activated (rootkit detected, compromise suspected)
 **Recovery steps**:
+
 1. System enters lockdown mode:
    - All secrets wiped
    - Hardware keys destroyed (if possible)
@@ -863,6 +932,7 @@ consigliere/consigliere_engine.py
 ### 7.1 GOVERNANCE
 
 #### 7.1.1 Project Governance
+
 **License**: MIT License
 **Copyright**: Thirsty Security Team
 **Repository**: https://github.com/IAmSoThirsty/Thirstys-waterfall
@@ -872,6 +942,7 @@ consigliere/consigliere_engine.py
 **Release cadence**: No defined cadence, releases as needed
 
 #### 7.1.2 Security Governance
+
 **Security policy**: Documented in `SECURITY.md`
 **Incident response**: Contact security@thirstys.local
 **Vulnerability disclosure**: Private disclosure encouraged, public disclosure after fix
@@ -879,6 +950,7 @@ consigliere/consigliere_engine.py
 **Threat model**: Documented in `THREAT_MODEL.md`
 
 #### 7.1.3 Data Governance
+
 **Data ownership**: User owns all data
 **Data processing**: All processing is local (on-device)
 **Data retention**: User-configurable, defaults to minimal retention
@@ -888,12 +960,14 @@ consigliere/consigliere_engine.py
 ### 7.2 IDENTITY MANAGEMENT
 
 #### 7.2.1 User Identity
+
 **Authentication**: Multi-factor authentication via `security/mfa_auth.py`
 **Supported methods**: TOTP, FIDO2, Passkeys, X.509, Biometric
 **Session management**: Token-based, timeout configurable (default: 30 minutes)
 **Identity federation**: Not supported (local-only authentication)
 
 #### 7.2.2 Role-Based Access Control (RBAC)
+
 **Status**: Not implemented (feature gap)
 **Current model**: Single-user, full access
 **Future enhancement**: Multi-user support with role-based permissions
@@ -914,6 +988,7 @@ consigliere/consigliere_engine.py
 ### 7.4 LIFECYCLE MANAGEMENT
 
 #### 7.4.1 Installation Lifecycle
+
 **Phases**: Download → Install → Initialize → Configure → Activate
 **Installation methods**: pip, Docker, native installers (Windows .bat, Linux .sh)
 **Initialization**: First-run setup wizard (`setup/setup_wizard.py`)
@@ -921,8 +996,10 @@ consigliere/consigliere_engine.py
 **Activation**: System ready for use after configuration
 
 #### 7.4.2 Operational Lifecycle
+
 **Phases**: Startup → Running → Shutdown
 **Startup sequence**:
+
 1. Load configuration
 2. Initialize encryption subsystem
 3. Initialize storage subsystem
@@ -934,6 +1011,7 @@ consigliere/consigliere_engine.py
 
 **Running state**: All subsystems active, monitoring and responding to events
 **Shutdown sequence**:
+
 1. Stop accepting new requests
 2. Complete active requests (graceful shutdown)
 3. Wipe ephemeral storage
@@ -943,12 +1021,14 @@ consigliere/consigliere_engine.py
 7. Exit
 
 #### 7.4.3 Upgrade Lifecycle
+
 **Upgrade process**: Not documented (feature gap)
 **Current approach**: Manual upgrade (pip install --upgrade or new Docker image)
 **Data migration**: Not implemented (feature gap)
 **Configuration migration**: Not implemented (feature gap)
 
 #### 7.4.4 Deprecation and End-of-Life
+
 **Deprecation policy**: Not defined
 **End-of-life process**: Not defined
 **Long-term support**: Not defined
@@ -1069,6 +1149,7 @@ USER OUTPUT (rendered page, downloaded file, etc.)
 ### 8.3 EXTERNAL INTEGRATION POINTS
 
 #### 8.3.1 Operating System Integration
+
 - **Linux**:
   - VPN: WireGuard (`wg-quick`), OpenVPN (`openvpn`), strongSwan (`ipsec`)
   - Firewall: nftables (`nft`), iptables (`iptables`)
@@ -1088,12 +1169,14 @@ USER OUTPUT (rendered page, downloaded file, etc.)
   - Hardware: Secure Enclave (Apple Secure Enclave API)
 
 #### 8.3.2 Hardware Integration
+
 - **TPM 2.0**: Hardware root of trust, key storage
 - **Secure Enclave**: Apple hardware security, key storage
 - **HSM**: External hardware security modules (via PKCS#11)
 - **FIDO2/WebAuthn**: Hardware security keys (YubiKey, etc.)
 
 #### 8.3.3 External Services Integration
+
 - **DNS-over-HTTPS**: Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)
 - **VPN Servers**: User-configured VPN servers (WireGuard, OpenVPN, IKEv2)
 - **No telemetry**: No external analytics or telemetry services
@@ -1101,53 +1184,70 @@ USER OUTPUT (rendered page, downloaded file, etc.)
 ### 8.4 API INTERFACES
 
 #### 8.4.1 Public API (Python)
+
 ```python
 from thirstys_waterfall import ThirstysWaterfall
 
 # Initialize system
+
 waterfall = ThirstysWaterfall(config_path="config.json")
 
 # Start all subsystems
+
 waterfall.start()
 
 # Create browser tab
+
 tab_id = waterfall.browser.create_tab()
 
 # Navigate to URL (encrypted automatically)
+
 waterfall.browser.navigate(tab_id, "https://example.com")
 
 # Perform search (query encrypted automatically)
+
 results = waterfall.browser.search("search query")
 
 # Get system status
+
 status = waterfall.get_status()
 
 # Run privacy audit
+
 audit = waterfall.run_privacy_audit()
 
 # Stop system (wipe ephemeral data)
+
 waterfall.stop()
 ```
 
 #### 8.4.2 CLI Interface
+
 ```bash
+
 # Start system
+
 thirstys-waterfall --start
 
 # Show status
+
 thirstys-waterfall --status
 
 # Run privacy audit
+
 thirstys-waterfall --audit
 
 # Use custom config
+
 thirstys-waterfall --config config.json --start
 
 # Stop system
+
 thirstys-waterfall --stop
 ```
 
 #### 8.4.3 Configuration API (JSON)
+
 ```json
 {
   "global": {
@@ -1215,6 +1315,7 @@ thirstys-waterfall --stop
 **Error 3-7**: `test_ad_annihilator.py` - AttributeError
 **Locations**: Lines 264, 271, 279, 296, 301
 **Details**: Missing methods on `TrackerDestroyer` and `AutoplayKiller`:
+
 - `TrackerDestroyer._tracker_domains` (attribute)
 - `TrackerDestroyer.should_block()` (method)
 - `AutoplayKiller.block_autoplay()` (method)
@@ -1421,6 +1522,7 @@ thirstys-waterfall --stop
 ### 11.1 DEPLOYMENT MODELS
 
 #### 11.1.1 Single-User Desktop Deployment
+
 **Target**: Individual users on personal computers
 **Installation**: pip, native installers
 **Configuration**: Local JSON configuration file
@@ -1430,6 +1532,7 @@ thirstys-waterfall --stop
 **Cons**: Manual updates, no centralized management
 
 #### 11.1.2 Docker Container Deployment
+
 **Target**: Users familiar with Docker, containerized environments
 **Installation**: Docker Compose or standalone Docker
 **Configuration**: Environment variables, mounted config file
@@ -1439,6 +1542,7 @@ thirstys-waterfall --stop
 **Cons**: Requires Docker, additional overhead
 
 #### 11.1.3 Systemd Service Deployment (Linux)
+
 **Target**: Linux servers, always-on systems
 **Installation**: pip + systemd unit file
 **Configuration**: `/etc/thirstys_waterfall/config.json`
@@ -1448,6 +1552,7 @@ thirstys-waterfall --stop
 **Cons**: Linux-only, requires root for setup
 
 #### 11.1.4 Windows Service Deployment
+
 **Target**: Windows servers, always-on systems
 **Installation**: Native installer + Windows service registration
 **Configuration**: `%PROGRAMDATA%\Thirstys Waterfall\config.json`
@@ -1459,24 +1564,28 @@ thirstys-waterfall --stop
 ### 11.2 PERFORMANCE CONSIDERATIONS
 
 #### 11.2.1 Encryption Overhead
+
 **Impact**: 7-layer encryption adds latency and CPU overhead
 **Benchmark**: Not measured (recommendation: add performance tests)
 **Mitigation**: Hardware acceleration (AES-NI, AVX), caching
 **Trade-off**: Security vs. performance (configurable encryption levels recommended)
 
 #### 11.2.2 VPN Overhead
+
 **Impact**: Multi-hop VPN adds latency (5-20ms per hop)
 **Benchmark**: Not measured
 **Mitigation**: Reduce hop count, use faster VPN servers
 **Trade-off**: Anonymity vs. latency
 
 #### 11.2.3 Firewall Overhead
+
 **Impact**: 8 firewall types add packet processing overhead
 **Benchmark**: Not measured
 **Mitigation**: Optimize rule sets, use hardware offload when available
 **Trade-off**: Security vs. throughput
 
 #### 11.2.4 Browser Overhead
+
 **Impact**: Process isolation adds memory overhead (separate process per tab)
 **Benchmark**: Not measured
 **Mitigation**: Suspend inactive tabs, limit max tabs
@@ -1485,16 +1594,19 @@ thirstys-waterfall --stop
 ### 11.3 SCALABILITY CONSIDERATIONS
 
 #### 11.3.1 Concurrent Users
+
 **Current design**: Single-user system
 **Scalability**: Limited to single user per instance
 **Enhancement**: Multi-user support required for scalability
 
 #### 11.3.2 Concurrent Connections
+
 **Current design**: No explicit connection limits
 **Scalability**: Limited by OS resources (file descriptors, memory)
 **Enhancement**: Connection pooling, connection limits
 
 #### 11.3.3 Data Storage
+
 **Current design**: Local encrypted storage
 **Scalability**: Limited by disk space
 **Enhancement**: Distributed storage, cloud storage integration
@@ -1502,7 +1614,9 @@ thirstys-waterfall --stop
 ### 11.4 MAINTAINABILITY CONSIDERATIONS
 
 #### 11.4.1 Code Maintainability
+
 **Code metrics**:
+
 - Total LOC: 17,456
 - Average file length: ~180 LOC
 - Cyclomatic complexity: Not measured
@@ -1512,13 +1626,16 @@ thirstys-waterfall --stop
 **Recommendations**: Add linting rules, reduce complexity, refactor duplicated code
 
 #### 11.4.2 Dependency Management
+
 **Current approach**: Minimal dependencies (cryptography only)
 **Pros**: Fewer dependency vulnerabilities, smaller attack surface
 **Cons**: More code to maintain internally
 **Recommendations**: Continue minimal dependency approach, monitor cryptography library updates
 
 #### 11.4.3 Test Maintainability
+
 **Test metrics**:
+
 - Total tests: 244
 - Test LOC: Not measured
 - Test flakiness: Not measured
@@ -1553,6 +1670,7 @@ thirstys-waterfall --stop
 ### 12.3 RISK ASSESSMENT
 
 #### 12.3.1 Security Risks
+
 - **Risk**: Unpatched vulnerabilities in cryptography library
   - **Mitigation**: Monitor CVEs, update promptly
   - **Likelihood**: MEDIUM
@@ -1572,6 +1690,7 @@ thirstys-waterfall --stop
   - **Priority**: MEDIUM
 
 #### 12.3.2 Privacy Risks
+
 - **Risk**: Traffic analysis despite obfuscation
   - **Mitigation**: Advanced stealth techniques, Tor integration (future)
   - **Likelihood**: LOW
@@ -1585,6 +1704,7 @@ thirstys-waterfall --stop
   - **Priority**: MEDIUM
 
 #### 12.3.3 Operational Risks
+
 - **Risk**: Configuration corruption
   - **Mitigation**: Configuration validation, fallback to defaults
   - **Likelihood**: LOW
@@ -1600,23 +1720,27 @@ thirstys-waterfall --stop
 ### 12.4 RECOMMENDED ACTIONS
 
 #### 12.4.1 Immediate Actions (Week 1)
+
 1. Fix 19 test failures (Priority 1: Import errors, Priority 2: Attribute errors, Priority 3: Assertion failures)
 2. Add code coverage measurement to CI/CD
 3. Document deployment best practices
 
 #### 12.4.2 Short-Term Actions (Month 1)
+
 4. Implement auto-update mechanism with signature verification
 5. Add performance benchmarks to CI/CD
 6. Commission third-party security audit
 7. Generate API documentation with Sphinx
 
 #### 12.4.3 Medium-Term Actions (Quarter 1)
+
 8. Implement HSM integration (PKCS#11)
 9. Add certificate pinning for critical domains
 10. Implement multi-user support
 11. Add GDPR compliance tools (data export, deletion verification)
 
 #### 12.4.4 Long-Term Actions (Year 1)
+
 12. Port to mobile platforms (Android, iOS)
 13. Implement browser extension support
 14. Integrate Tor and I2P networks
@@ -1701,6 +1825,7 @@ This analysis provides MAXIMUM ALLOWED DETAIL within operational, safety, and le
 ### Completeness Assessment
 
 This analysis is COMPLETE within the above constraints. All permitted detail has been provided across:
+
 - ✅ All architectural layers, sublayers, components, subcomponents
 - ✅ All dependencies and cross-dependencies
 - ✅ All cross-cutting concerns

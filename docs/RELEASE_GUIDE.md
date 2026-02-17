@@ -19,10 +19,13 @@ Quick reference for creating releases of Thirstys Waterfall.
 Update version in `setup.py` and `pyproject.toml`:
 
 ```python
+
 # setup.py
+
 version="1.0.0"
 
 # pyproject.toml
+
 [project]
 version = "1.0.0"
 ```
@@ -32,15 +35,19 @@ version = "1.0.0"
 Add a new section for the release:
 
 ```markdown
+
 ## [1.0.0] - 2026-02-12
 
 ### Added
+
 - New feature 1
 - New feature 2
 
 ### Fixed
+
 - Bug fix 1
 - Bug fix 2
+
 ```
 
 ### 3. Commit Changes
@@ -54,10 +61,13 @@ git push origin main
 ### 4. Create and Push Tag
 
 ```bash
+
 # Create annotated tag
+
 git tag -a v1.0.0 -m "Release v1.0.0"
 
 # Push tag to GitHub
+
 git push origin v1.0.0
 ```
 
@@ -76,47 +86,61 @@ Once the tag is pushed, GitHub Actions will automatically:
 ### Build Packages
 
 ```bash
+
 # Install build tools
+
 pip install build wheel twine
 
 # Build distributions
+
 python -m build
 
 # Check distributions
+
 twine check dist/*
 ```
 
 ### Build Docker Image
 
 ```bash
+
 # Build image
+
 docker build -t thirstys-waterfall:1.0.0 .
 
 # Tag as latest
+
 docker tag thirstys-waterfall:1.0.0 thirstys-waterfall:latest
 
 # Test image
+
 docker run --rm thirstys-waterfall:1.0.0 thirstys-waterfall --help
 ```
 
 ### Publish to PyPI
 
 ```bash
+
 # Upload to PyPI (requires API token)
+
 twine upload dist/*
 
 # Or upload to TestPyPI first
+
 twine upload --repository testpypi dist/*
 ```
 
 ### Push Docker Image
 
 ```bash
+
 # Tag for registry
+
 docker tag thirstys-waterfall:1.0.0 yourusername/thirstys-waterfall:1.0.0
 docker tag thirstys-waterfall:1.0.0 yourusername/thirstys-waterfall:latest
 
 # Push to Docker Hub
+
 docker push yourusername/thirstys-waterfall:1.0.0
 docker push yourusername/thirstys-waterfall:latest
 ```
@@ -160,14 +184,19 @@ git tag -a v1.0.1 -m "Patch release: Bug fixes"
 If a release has issues:
 
 ```bash
+
 # Delete local tag
+
 git tag -d v1.0.0
 
 # Delete remote tag
+
 git push origin :refs/tags/v1.0.0
 
 # Delete GitHub release via web interface
+
 # Unpublish from PyPI (contact PyPI support)
+
 ```
 
 ## Version Numbering
@@ -196,7 +225,9 @@ For Docker Hub publishing:
 ### Build Fails
 
 ```bash
+
 # Clean and rebuild
+
 rm -rf dist/ build/ *.egg-info
 python -m build
 ```
@@ -204,21 +235,28 @@ python -m build
 ### Docker Build Fails
 
 ```bash
+
 # Clear Docker cache
+
 docker builder prune
 
 # Rebuild without cache
+
 docker build --no-cache -t thirstys-waterfall:test .
 ```
 
 ### PyPI Upload Fails
 
 ```bash
+
 # Check package
+
 twine check dist/*
 
 # Verify token
+
 # Test with TestPyPI first
+
 ```
 
 ## Resources

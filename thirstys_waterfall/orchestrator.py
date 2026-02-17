@@ -20,7 +20,7 @@ from .privacy import (
     AntiPhishingEngine,
     AntiMalwareEngine,
     PrivacyAuditor,
-    OnionRouter
+    OnionRouter,
 )
 from .storage import PrivacyVault, EphemeralStorage
 from .kill_switch import GlobalKillSwitch
@@ -82,7 +82,9 @@ class ThirstysWaterfall:
         self.logger.info(f"Encryption Tier: {strength['tier']}")
         self.logger.info(f"Encryption Layers: {strength['layers']}")
         self.logger.info(f"Quantum Resistant: {strength['quantum_resistant']}")
-        self.logger.info(f"Perfect Forward Secrecy: {strength['perfect_forward_secrecy']}")
+        self.logger.info(
+            f"Perfect Forward Secrecy: {strength['perfect_forward_secrecy']}"
+        )
 
         # MASTER ENCRYPTION KEY for entire system (using god tier encryption)
         self._master_cipher = Fernet(Fernet.generate_key())
@@ -116,25 +118,23 @@ class ThirstysWaterfall:
         """Setup logging configuration"""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.StreamHandler(sys.stdout)
-            ]
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
         )
 
     def _initialize_subsystems(self):
         """Initialize all subsystems"""
         # Firewall Manager (all 8 types)
-        self.firewall = FirewallManager(self.config.get_section('firewalls'))
+        self.firewall = FirewallManager(self.config.get_section("firewalls"))
 
         # VPN Manager
-        self.vpn = VPNManager(self.config.get_section('vpn'))
+        self.vpn = VPNManager(self.config.get_section("vpn"))
 
         # Incognito Browser
-        self.browser = IncognitoBrowser(self.config.get_section('browser'))
+        self.browser = IncognitoBrowser(self.config.get_section("browser"))
 
         # Privacy engines
-        privacy_config = self.config.get_section('privacy')
+        privacy_config = self.config.get_section("privacy")
         self.anti_fingerprint = AntiFingerprintEngine(privacy_config)
         self.anti_tracker = AntiTrackerEngine(privacy_config)
         self.anti_phishing = AntiPhishingEngine(privacy_config)
@@ -143,7 +143,7 @@ class ThirstysWaterfall:
         self.onion_router = OnionRouter(privacy_config)
 
         # Storage
-        storage_config = self.config.get_section('storage')
+        storage_config = self.config.get_section("storage")
         self.privacy_vault = PrivacyVault(storage_config)
         self.ephemeral_storage = EphemeralStorage(storage_config)
 
@@ -224,39 +224,39 @@ class ThirstysWaterfall:
 
         try:
             # Stop browser first
-            if hasattr(self, 'browser'):
+            if hasattr(self, "browser"):
                 self.browser.stop()
 
             # Stop privacy engines
-            if hasattr(self, 'anti_fingerprint'):
+            if hasattr(self, "anti_fingerprint"):
                 self.anti_fingerprint.stop()
-            if hasattr(self, 'anti_tracker'):
+            if hasattr(self, "anti_tracker"):
                 self.anti_tracker.stop()
-            if hasattr(self, 'anti_phishing'):
+            if hasattr(self, "anti_phishing"):
                 self.anti_phishing.stop()
-            if hasattr(self, 'anti_malware'):
+            if hasattr(self, "anti_malware"):
                 self.anti_malware.stop()
-            if hasattr(self, 'privacy_auditor'):
+            if hasattr(self, "privacy_auditor"):
                 self.privacy_auditor.stop()
-            if hasattr(self, 'onion_router'):
+            if hasattr(self, "onion_router"):
                 self.onion_router.stop()
 
             # Stop VPN
-            if hasattr(self, 'vpn'):
+            if hasattr(self, "vpn"):
                 self.vpn.stop()
 
             # Stop firewalls
-            if hasattr(self, 'firewall'):
+            if hasattr(self, "firewall"):
                 self.firewall.stop()
 
             # Stop storage
-            if hasattr(self, 'privacy_vault'):
+            if hasattr(self, "privacy_vault"):
                 self.privacy_vault.stop()
-            if hasattr(self, 'ephemeral_storage'):
+            if hasattr(self, "ephemeral_storage"):
                 self.ephemeral_storage.stop()
 
             # Disable kill switch last
-            if hasattr(self, 'kill_switch'):
+            if hasattr(self, "kill_switch"):
                 self.kill_switch.disable()
 
             self._active = False
@@ -268,50 +268,50 @@ class ThirstysWaterfall:
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
         return {
-            'active': self._active,
-            'encryption_tier': 'GOD TIER',
-            'encryption_layers': 7,
-            'everything_encrypted': True,
-            'built_in_vpn': True,
-            'kill_switch': {
-                'enabled': self.kill_switch.is_active(),
-                'triggered': self.kill_switch.is_triggered()
+            "active": self._active,
+            "encryption_tier": "GOD TIER",
+            "encryption_layers": 7,
+            "everything_encrypted": True,
+            "built_in_vpn": True,
+            "kill_switch": {
+                "enabled": self.kill_switch.is_active(),
+                "triggered": self.kill_switch.is_triggered(),
             },
-            'firewall': self.firewall.get_statistics(),
-            'vpn': self.vpn.get_status(),
-            'browser': self.browser.get_status(),
-            'privacy': {
-                'anti_fingerprint': self.anti_fingerprint.get_protection_status(),
-                'anti_tracker': self.anti_tracker.get_statistics(),
-                'anti_phishing': self.anti_phishing.get_statistics(),
-                'anti_malware': self.anti_malware.get_statistics(),
+            "firewall": self.firewall.get_statistics(),
+            "vpn": self.vpn.get_status(),
+            "browser": self.browser.get_status(),
+            "privacy": {
+                "anti_fingerprint": self.anti_fingerprint.get_protection_status(),
+                "anti_tracker": self.anti_tracker.get_statistics(),
+                "anti_phishing": self.anti_phishing.get_statistics(),
+                "anti_malware": self.anti_malware.get_statistics(),
             },
-            'storage': {
-                'vault_active': self.privacy_vault.is_active(),
-                'ephemeral_stats': self.ephemeral_storage.get_statistics(),
-                'all_encrypted': True,
-                'encryption_tier': 'GOD TIER'
+            "storage": {
+                "vault_active": self.privacy_vault.is_active(),
+                "ephemeral_stats": self.ephemeral_storage.get_statistics(),
+                "all_encrypted": True,
+                "encryption_tier": "GOD TIER",
             },
-            'encryption': {
-                'tier': 'GOD TIER',
-                'layers': 7,
-                'searches_encrypted': True,
-                'sites_encrypted': True,
-                'traffic_encrypted': True,
-                'storage_encrypted': True,
-                'logs_encrypted': True,
-                'config_encrypted': True,
-                'algorithms': [
-                    'AES-256-GCM',
-                    'RSA-4096',
-                    'ChaCha20-Poly1305',
-                    'ECC-521',
-                    'Fernet'
+            "encryption": {
+                "tier": "GOD TIER",
+                "layers": 7,
+                "searches_encrypted": True,
+                "sites_encrypted": True,
+                "traffic_encrypted": True,
+                "storage_encrypted": True,
+                "logs_encrypted": True,
+                "config_encrypted": True,
+                "algorithms": [
+                    "AES-256-GCM",
+                    "RSA-4096",
+                    "ChaCha20-Poly1305",
+                    "ECC-521",
+                    "Fernet",
                 ],
-                'quantum_resistant': True,
-                'perfect_forward_secrecy': True,
-                'zero_knowledge': True
-            }
+                "quantum_resistant": True,
+                "perfect_forward_secrecy": True,
+                "zero_knowledge": True,
+            },
         }
 
     def run_privacy_audit(self) -> Dict[str, Any]:

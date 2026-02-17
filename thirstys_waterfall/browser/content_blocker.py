@@ -28,10 +28,13 @@ class ContentBlocker:
     - Invalid URL: Default to ALLOW (fail-open for usability)
     """
 
-    def __init__(self, block_trackers: bool = True,
-                 block_popups: bool = True,
-                 block_redirects: bool = True,
-                 block_ads: bool = True):
+    def __init__(
+        self,
+        block_trackers: bool = True,
+        block_popups: bool = True,
+        block_redirects: bool = True,
+        block_ads: bool = True,
+    ):
         self.block_trackers = block_trackers
         self.block_popups = block_popups  # NEW REQUIREMENT
         self.block_redirects = block_redirects  # NEW REQUIREMENT
@@ -48,17 +51,19 @@ class ContentBlocker:
 
         # MAXIMUM ALLOWED DESIGN: Expose configuration as dict for introspection
         self.config = {
-            'block_trackers': self.block_trackers,
-            'block_popups': self.block_popups,
-            'block_redirects': self.block_redirects,
-            'block_ads': self.block_ads
+            "block_trackers": self.block_trackers,
+            "block_popups": self.block_popups,
+            "block_redirects": self.block_redirects,
+            "block_ads": self.block_ads,
         }
 
         self._load_blocklists()
 
     def start(self):
         """Start content blocker"""
-        self.logger.info("Starting Content Blocker - blocking trackers, pop-ups, and redirects")
+        self.logger.info(
+            "Starting Content Blocker - blocking trackers, pop-ups, and redirects"
+        )
         self._active = True
 
     def stop(self):
@@ -76,45 +81,45 @@ class ContentBlocker:
         """
         # Known tracker domains
         self._tracker_domains = {
-            'google-analytics.com',
-            'doubleclick.net',
-            'facebook.com/tr',
-            'facebook.net',
-            'googlesyndication.com',
-            'googletagmanager.com',
-            'scorecardresearch.com',
-            'quantserve.com',
-            'chartbeat.com',
-            'hotjar.com',
-            'mouseflow.com',
-            'crazyegg.com',
-            'inspectlet.com'
+            "google-analytics.com",
+            "doubleclick.net",
+            "facebook.com/tr",
+            "facebook.net",
+            "googlesyndication.com",
+            "googletagmanager.com",
+            "scorecardresearch.com",
+            "quantserve.com",
+            "chartbeat.com",
+            "hotjar.com",
+            "mouseflow.com",
+            "crazyegg.com",
+            "inspectlet.com",
         }
 
         # Known ad domains (MAXIMUM ALLOWED DESIGN: explicit categorization)
         self._ad_domains = {
-            'doubleclick.net',
-            'googlesyndication.com',
-            'advertising.com',
-            'adnxs.com',
-            'adsafeprotected.com',
-            'amazon-adsystem.com'
+            "doubleclick.net",
+            "googlesyndication.com",
+            "advertising.com",
+            "adnxs.com",
+            "adsafeprotected.com",
+            "amazon-adsystem.com",
         }
 
         # Malicious patterns
         self._malicious_patterns = [
-            r'eval\s*\(',
-            r'document\.write\s*\(',
-            r'onclick\s*=',
-            r'onload\s*=',
-            r'onerror\s*=',
-            r'<iframe[^>]*>',
-            r'javascript:',
-            r'window\.open\(',  # NEW REQUIREMENT: Block pop-ups
-            r'location\.href\s*=',  # NEW REQUIREMENT: Block redirects
-            r'location\.replace\(',  # NEW REQUIREMENT: Block redirects
-            r'window\.location\s*=',  # NEW REQUIREMENT: Block redirects
-            r'meta.*http-equiv.*refresh'  # NEW REQUIREMENT: Block meta redirects
+            r"eval\s*\(",
+            r"document\.write\s*\(",
+            r"onclick\s*=",
+            r"onload\s*=",
+            r"onerror\s*=",
+            r"<iframe[^>]*>",
+            r"javascript:",
+            r"window\.open\(",  # NEW REQUIREMENT: Block pop-ups
+            r"location\.href\s*=",  # NEW REQUIREMENT: Block redirects
+            r"location\.replace\(",  # NEW REQUIREMENT: Block redirects
+            r"window\.location\s*=",  # NEW REQUIREMENT: Block redirects
+            r"meta.*http-equiv.*refresh",  # NEW REQUIREMENT: Block meta redirects
         ]
 
     def should_allow_url(self, url: str) -> bool:
@@ -184,11 +189,11 @@ class ContentBlocker:
         """Check if URL appears malicious"""
         # Check for suspicious patterns
         suspicious = [
-            'javascript:',
-            'data:text/html',
-            '../../../',
-            'file://',
-            'chrome://'
+            "javascript:",
+            "data:text/html",
+            "../../../",
+            "file://",
+            "chrome://",
         ]
 
         for pattern in suspicious:
@@ -200,9 +205,9 @@ class ContentBlocker:
     def _contains_popup_code(self, content: str) -> bool:
         """Check if content contains pop-up code (NEW REQUIREMENT)"""
         popup_patterns = [
-            r'window\.open\s*\(',
-            r'showModalDialog\s*\(',
-            r'showModelessDialog\s*\(',
+            r"window\.open\s*\(",
+            r"showModalDialog\s*\(",
+            r"showModelessDialog\s*\(",
             r'<a[^>]*target\s*=\s*["\']_blank["\'][^>]*onclick',
         ]
 
@@ -215,11 +220,11 @@ class ContentBlocker:
     def _contains_redirect_code(self, content: str) -> bool:
         """Check if content contains redirect code (NEW REQUIREMENT)"""
         redirect_patterns = [
-            r'location\.href\s*=',
-            r'location\.replace\s*\(',
-            r'location\.assign\s*\(',
-            r'window\.location\s*=',
-            r'window\.location\.href\s*=',
+            r"location\.href\s*=",
+            r"location\.replace\s*\(",
+            r"location\.assign\s*\(",
+            r"window\.location\s*=",
+            r"window\.location\.href\s*=",
             r'<meta[^>]*http-equiv\s*=\s*["\']refresh["\']',
         ]
 
@@ -245,16 +250,16 @@ class ContentBlocker:
         - All counters, all categories, all states
         """
         return {
-            'blocked_count': self._blocked_count,
-            'popup_count': self._popup_count,
-            'redirect_count': self._redirect_count,
-            'tracker_domains': len(self._tracker_domains),
-            'ad_domains': len(self._ad_domains),
-            'active': self._active,
-            'block_popups': self.block_popups,
-            'block_redirects': self.block_redirects,
-            'block_ads': self.block_ads,
-            'block_trackers': self.block_trackers
+            "blocked_count": self._blocked_count,
+            "popup_count": self._popup_count,
+            "redirect_count": self._redirect_count,
+            "tracker_domains": len(self._tracker_domains),
+            "ad_domains": len(self._ad_domains),
+            "active": self._active,
+            "block_popups": self.block_popups,
+            "block_redirects": self.block_redirects,
+            "block_ads": self.block_ads,
+            "block_trackers": self.block_trackers,
         }
 
     def should_block(self, url: str) -> bool:

@@ -20,6 +20,7 @@ from cryptography.hazmat.backends import default_backend
 
 class TransportType(Enum):
     """Available pluggable transport types"""
+
     OBFS4 = "obfs4"
     MEEK = "meek"
     SNOWFLAKE = "snowflake"
@@ -31,6 +32,7 @@ class TransportType(Enum):
 
 class ObfuscationTechnique(Enum):
     """Traffic obfuscation techniques"""
+
     PADDING = "padding"
     TIMING = "timing"
     SHAPING = "shaping"
@@ -40,6 +42,7 @@ class ObfuscationTechnique(Enum):
 
 class ProtocolMimicry(Enum):
     """Protocols to mimic"""
+
     HTTP = "http"
     HTTPS = "https"
     TLS = "tls"
@@ -51,12 +54,15 @@ class ProtocolMimicry(Enum):
 @dataclass
 class StealthMetrics:
     """Metrics for stealth operations"""
+
     requests_routed: int = 0
     bytes_transmitted: int = 0
     bytes_received: int = 0
     circuits_built: int = 0
     transports_used: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
-    obfuscation_applied: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    obfuscation_applied: Dict[str, int] = field(
+        default_factory=lambda: defaultdict(int)
+    )
     protocols_mimicked: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
     domain_fronting_used: int = 0
     average_latency_ms: float = 0.0
@@ -75,6 +81,7 @@ class StealthMetrics:
 @dataclass
 class TransportConfig:
     """Configuration for a pluggable transport"""
+
     transport_type: TransportType
     enabled: bool = True
     priority: int = 5
@@ -92,6 +99,7 @@ class TransportConfig:
 @dataclass
 class OnionCircuit:
     """Represents an onion routing circuit"""
+
     circuit_id: str
     entry_node: Dict[str, Any]
     middle_nodes: List[Dict[str, Any]]
@@ -103,9 +111,9 @@ class OnionCircuit:
 
     def get_path(self) -> List[str]:
         """Get circuit path as list of node IDs"""
-        path = [self.entry_node['id']]
-        path.extend([n['id'] for n in self.middle_nodes])
-        path.append(self.exit_node['id'])
+        path = [self.entry_node["id"]]
+        path.extend([n["id"] for n in self.middle_nodes])
+        path.append(self.exit_node["id"])
         return path
 
 
@@ -172,13 +180,15 @@ class PluggableTransport:
         front_domains = [
             "cdn.cloudflare.com",
             "ajax.googleapis.com",
-            "s3.amazonaws.com"
+            "s3.amazonaws.com",
         ]
 
         self.config.bridge_addresses = front_domains
         self._active = True
         self._update_success_rate(True)
-        self.logger.info(f"meek transport established via {random.choice(front_domains)}")
+        self.logger.info(
+            f"meek transport established via {random.choice(front_domains)}"
+        )
         return True
 
     def _connect_snowflake(self) -> bool:
@@ -235,10 +245,10 @@ class PluggableTransport:
         """Perform obfs4 protocol handshake"""
         # Generate obfs4 session keys
         handshake_data = {
-            'node_id': self.config.fingerprint,
-            'public_key': secrets.token_bytes(32),
-            'iat_mode': 1,  # Inter-arrival time obfuscation
-            'session_id': secrets.token_hex(16)
+            "node_id": self.config.fingerprint,
+            "public_key": secrets.token_bytes(32),
+            "iat_mode": 1,  # Inter-arrival time obfuscation
+            "session_id": secrets.token_hex(16),
         }
         self.logger.debug(f"obfs4 handshake: session {handshake_data['session_id']}")
 
@@ -270,7 +280,7 @@ class PluggableTransport:
         padding = secrets.token_bytes(padding_size)
 
         # Pack: [data_length(4 bytes)][data][padding]
-        obfuscated = struct.pack('!I', len(data)) + data + padding
+        obfuscated = struct.pack("!I", len(data)) + data + padding
         return obfuscated
 
     def _encrypt_transport(self, data: bytes) -> bytes:
@@ -280,7 +290,7 @@ class PluggableTransport:
         cipher = Cipher(
             algorithms.AES(self._cipher_key),
             modes.GCM(nonce),
-            backend=default_backend()
+            backend=default_backend(),
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
@@ -306,26 +316,28 @@ class ObfuscationLayer:
 
     def __init__(self, config: Dict[str, Any]):
         self.logger = logging.getLogger(__name__)
-        self.enabled = config.get('obfuscation_enabled', True)
+        self.enabled = config.get("obfuscation_enabled", True)
 
         # Obfuscation parameters
-        self.padding_enabled = config.get('padding', True)
-        self.min_padding = config.get('min_padding', 0)
-        self.max_padding = config.get('max_padding', 1024)
+        self.padding_enabled = config.get("padding", True)
+        self.min_padding = config.get("min_padding", 0)
+        self.max_padding = config.get("max_padding", 1024)
 
-        self.timing_enabled = config.get('timing_randomization', True)
-        self.min_delay_ms = config.get('min_delay_ms', 0)
-        self.max_delay_ms = config.get('max_delay_ms', 500)
+        self.timing_enabled = config.get("timing_randomization", True)
+        self.min_delay_ms = config.get("min_delay_ms", 0)
+        self.max_delay_ms = config.get("max_delay_ms", 500)
 
-        self.shaping_enabled = config.get('traffic_shaping', True)
-        self.target_packet_size = config.get('target_packet_size', 1400)
+        self.shaping_enabled = config.get("traffic_shaping", True)
+        self.target_packet_size = config.get("target_packet_size", 1400)
 
-        self.mimicry_enabled = config.get('protocol_mimicry', True)
+        self.mimicry_enabled = config.get("protocol_mimicry", True)
         self.default_protocol = ProtocolMimicry.HTTPS
 
         self._metrics = defaultdict(int)
 
-    def obfuscate_request(self, data: bytes, technique: Optional[ObfuscationTechnique] = None) -> bytes:
+    def obfuscate_request(
+        self, data: bytes, technique: Optional[ObfuscationTechnique] = None
+    ) -> bytes:
         """Apply obfuscation to outgoing request"""
         if not self.enabled:
             return data
@@ -333,19 +345,23 @@ class ObfuscationLayer:
         obfuscated = data
 
         # Apply padding
-        if self.padding_enabled and (technique is None or technique == ObfuscationTechnique.PADDING):
+        if self.padding_enabled and (
+            technique is None or technique == ObfuscationTechnique.PADDING
+        ):
             obfuscated = self._apply_padding(obfuscated)
-            self._metrics['padding_applied'] += 1
+            self._metrics["padding_applied"] += 1
 
         # Apply fragmentation
         if technique == ObfuscationTechnique.FRAGMENTATION:
             obfuscated = self._fragment_data(obfuscated)
-            self._metrics['fragmentation_applied'] += 1
+            self._metrics["fragmentation_applied"] += 1
 
         # Traffic shaping
-        if self.shaping_enabled and (technique is None or technique == ObfuscationTechnique.SHAPING):
+        if self.shaping_enabled and (
+            technique is None or technique == ObfuscationTechnique.SHAPING
+        ):
             obfuscated = self._shape_traffic(obfuscated)
-            self._metrics['shaping_applied'] += 1
+            self._metrics["shaping_applied"] += 1
 
         return obfuscated
 
@@ -355,7 +371,7 @@ class ObfuscationLayer:
         padding = secrets.token_bytes(padding_size)
 
         # Format: [original_length(4)][data][padding]
-        padded = struct.pack('!I', len(data)) + data + padding
+        padded = struct.pack("!I", len(data)) + data + padding
         return padded
 
     def remove_padding(self, padded_data: bytes) -> bytes:
@@ -363,20 +379,19 @@ class ObfuscationLayer:
         if len(padded_data) < 4:
             return padded_data
 
-        original_length = struct.unpack('!I', padded_data[:4])[0]
-        return padded_data[4:4+original_length]
+        original_length = struct.unpack("!I", padded_data[:4])[0]
+        return padded_data[4 : 4 + original_length]
 
     def _fragment_data(self, data: bytes) -> bytes:
         """Fragment data into smaller chunks"""
         # Store chunks with index for reassembly
         chunk_size = random.randint(512, 1024)
-        chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
+        chunks = [data[i : i + chunk_size] for i in range(0, len(data), chunk_size)]
 
         # In production, would return chunks separately
         # For now, concat with markers
-        fragmented = b''.join(
-            struct.pack('!H', i) + chunk
-            for i, chunk in enumerate(chunks)
+        fragmented = b"".join(
+            struct.pack("!H", i) + chunk for i, chunk in enumerate(chunks)
         )
         return fragmented
 
@@ -398,7 +413,7 @@ class ObfuscationLayer:
 
         # Apply delay
         time.sleep(delay_s)
-        self._metrics['timing_delays'] += 1
+        self._metrics["timing_delays"] += 1
 
         return delay_ms
 
@@ -430,60 +445,64 @@ class ObfuscationLayer:
         http_header += b"User-Agent: Mozilla/5.0\r\n"
         http_header += b"Accept: text/html\r\n\r\n"
 
-        self._metrics['http_mimicry'] += 1
+        self._metrics["http_mimicry"] += 1
         return http_header + data
 
     def _mimic_https(self, data: bytes) -> bytes:
         """Make traffic look like HTTPS/TLS"""
         # TLS Client Hello structure
-        tls_header = b'\x16\x03\x01'  # Handshake, TLS 1.0
-        tls_header += struct.pack('!H', len(data) + 4)
-        tls_header += b'\x01'  # Client Hello
-        tls_header += struct.pack('!I', len(data))[1:]  # 3-byte length
+        tls_header = b"\x16\x03\x01"  # Handshake, TLS 1.0
+        tls_header += struct.pack("!H", len(data) + 4)
+        tls_header += b"\x01"  # Client Hello
+        tls_header += struct.pack("!I", len(data))[1:]  # 3-byte length
 
-        self._metrics['https_mimicry'] += 1
+        self._metrics["https_mimicry"] += 1
         return tls_header + data
 
     def _mimic_tls(self, data: bytes) -> bytes:
         """Make traffic look like TLS"""
         # TLS record layer
-        tls_record = b'\x17\x03\x03'  # Application Data, TLS 1.2
-        tls_record += struct.pack('!H', len(data))
+        tls_record = b"\x17\x03\x03"  # Application Data, TLS 1.2
+        tls_record += struct.pack("!H", len(data))
 
-        self._metrics['tls_mimicry'] += 1
+        self._metrics["tls_mimicry"] += 1
         return tls_record + data
 
     def _mimic_dns(self, data: bytes) -> bytes:
         """Make traffic look like DNS query"""
         # DNS header
-        dns_header = struct.pack('!HHHHHH',
+        dns_header = struct.pack(
+            "!HHHHHH",
             random.randint(1, 65535),  # Transaction ID
             0x0100,  # Flags: standard query
-            1, 0, 0, 0  # Questions, Answers, Authority, Additional
+            1,
+            0,
+            0,
+            0,  # Questions, Answers, Authority, Additional
         )
 
-        self._metrics['dns_mimicry'] += 1
+        self._metrics["dns_mimicry"] += 1
         return dns_header + data
 
     def _mimic_bittorrent(self, data: bytes) -> bytes:
         """Make traffic look like BitTorrent"""
         # BitTorrent handshake
-        bt_header = b'\x13BitTorrent protocol'
-        bt_header += b'\x00' * 8  # Reserved bytes
+        bt_header = b"\x13BitTorrent protocol"
+        bt_header += b"\x00" * 8  # Reserved bytes
         bt_header += secrets.token_bytes(20)  # Info hash
         bt_header += secrets.token_bytes(20)  # Peer ID
 
-        self._metrics['bittorrent_mimicry'] += 1
+        self._metrics["bittorrent_mimicry"] += 1
         return bt_header + data
 
     def _mimic_gaming(self, data: bytes) -> bytes:
         """Make traffic look like gaming protocol (UDP-like)"""
         # Gaming packet header
-        game_header = struct.pack('!I', random.randint(1, 10000))  # Sequence number
-        game_header += struct.pack('!f', time.time())  # Timestamp
-        game_header += b'\x00' * 4  # Flags
+        game_header = struct.pack("!I", random.randint(1, 10000))  # Sequence number
+        game_header += struct.pack("!f", time.time())  # Timestamp
+        game_header += b"\x00" * 4  # Flags
 
-        self._metrics['gaming_mimicry'] += 1
+        self._metrics["gaming_mimicry"] += 1
         return game_header + data
 
     def get_metrics(self) -> Dict[str, int]:
@@ -499,26 +518,14 @@ class DomainFronting:
 
     def __init__(self, config: Dict[str, Any]):
         self.logger = logging.getLogger(__name__)
-        self.enabled = config.get('domain_fronting_enabled', True)
+        self.enabled = config.get("domain_fronting_enabled", True)
 
         # Major CDN providers for fronting
         self.cdn_domains = {
-            'cloudflare': [
-                'cdnjs.cloudflare.com',
-                'cdn.cloudflare.com'
-            ],
-            'cloudfront': [
-                'd1234567890abc.cloudfront.net',
-                'cloudfront.net'
-            ],
-            'fastly': [
-                'fastly.com',
-                'global.ssl.fastly.net'
-            ],
-            'akamai': [
-                'akamai.net',
-                'akamaiedge.net'
-            ]
+            "cloudflare": ["cdnjs.cloudflare.com", "cdn.cloudflare.com"],
+            "cloudfront": ["d1234567890abc.cloudfront.net", "cloudfront.net"],
+            "fastly": ["fastly.com", "global.ssl.fastly.net"],
+            "akamai": ["akamai.net", "akamaiedge.net"],
         }
 
         self._active_fronts = []
@@ -538,19 +545,23 @@ class DomainFronting:
         provider = random.choice(list(self.cdn_domains.keys()))
         front_domain = random.choice(self.cdn_domains[provider])
 
-        self._active_fronts.append({
-            'target': target_domain,
-            'front': front_domain,
-            'provider': provider,
-            'established': time.time()
-        })
+        self._active_fronts.append(
+            {
+                "target": target_domain,
+                "front": front_domain,
+                "provider": provider,
+                "established": time.time(),
+            }
+        )
 
         self._usage_count[provider] += 1
         self.logger.info(f"Domain fronting: {target_domain} via {front_domain}")
 
         return front_domain
 
-    def get_fronted_request(self, request: Dict[str, Any], front_domain: str) -> Dict[str, Any]:
+    def get_fronted_request(
+        self, request: Dict[str, Any], front_domain: str
+    ) -> Dict[str, Any]:
         """
         Modify request to use domain fronting.
 
@@ -558,8 +569,8 @@ class DomainFronting:
         Host header: Shows actual target
         """
         fronted_request = request.copy()
-        fronted_request['sni_domain'] = front_domain
-        fronted_request['domain_fronting'] = True
+        fronted_request["sni_domain"] = front_domain
+        fronted_request["domain_fronting"] = True
 
         return fronted_request
 
@@ -587,8 +598,8 @@ class AdvancedStealthManager:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-        self.enabled = config.get('advanced_stealth_enabled', True)
-        self.per_request_routing = config.get('per_request_routing', True)
+        self.enabled = config.get("advanced_stealth_enabled", True)
+        self.per_request_routing = config.get("per_request_routing", True)
 
         # Initialize components
         self._init_transports()
@@ -621,7 +632,7 @@ class AdvancedStealthManager:
             TransportConfig(TransportType.HTTP3, priority=7),
             TransportConfig(TransportType.QUIC, priority=6),
             TransportConfig(TransportType.WEBSOCKET, priority=5),
-            TransportConfig(TransportType.DIRECT, priority=1)
+            TransportConfig(TransportType.DIRECT, priority=1),
         ]
 
         for config in transport_configs:
@@ -630,16 +641,16 @@ class AdvancedStealthManager:
 
     def _init_obfuscation(self):
         """Initialize obfuscation layer"""
-        self.obfuscation = ObfuscationLayer(self.config.get('obfuscation', {}))
+        self.obfuscation = ObfuscationLayer(self.config.get("obfuscation", {}))
 
     def _init_domain_fronting(self):
         """Initialize domain fronting"""
-        self.domain_fronting = DomainFronting(self.config.get('domain_fronting', {}))
+        self.domain_fronting = DomainFronting(self.config.get("domain_fronting", {}))
 
     def _init_onion_circuits(self):
         """Initialize onion circuits for per-request routing"""
         self._circuits: List[OnionCircuit] = []
-        self._circuit_pool_size = self.config.get('circuit_pool_size', 5)
+        self._circuit_pool_size = self.config.get("circuit_pool_size", 5)
 
         # Pre-build circuit pool
         self._nodes = self._initialize_onion_nodes()
@@ -647,17 +658,36 @@ class AdvancedStealthManager:
     def _initialize_onion_nodes(self) -> List[Dict[str, Any]]:
         """Initialize pool of onion nodes"""
         nodes = [
-            {'id': f'entry-{i}', 'type': 'entry', 'location': random.choice(['US', 'EU', 'CA']), 'bandwidth': random.randint(10, 100)}
+            {
+                "id": f"entry-{i}",
+                "type": "entry",
+                "location": random.choice(["US", "EU", "CA"]),
+                "bandwidth": random.randint(10, 100),
+            }
             for i in range(5)
         ]
-        nodes.extend([
-            {'id': f'middle-{i}', 'type': 'middle', 'location': random.choice(['DE', 'CH', 'NL', 'SE']), 'bandwidth': random.randint(10, 100)}
-            for i in range(10)
-        ])
-        nodes.extend([
-            {'id': f'exit-{i}', 'type': 'exit', 'location': random.choice(['IS', 'NO', 'CH', 'NL']), 'bandwidth': random.randint(10, 100)}
-            for i in range(5)
-        ])
+        nodes.extend(
+            [
+                {
+                    "id": f"middle-{i}",
+                    "type": "middle",
+                    "location": random.choice(["DE", "CH", "NL", "SE"]),
+                    "bandwidth": random.randint(10, 100),
+                }
+                for i in range(10)
+            ]
+        )
+        nodes.extend(
+            [
+                {
+                    "id": f"exit-{i}",
+                    "type": "exit",
+                    "location": random.choice(["IS", "NO", "CH", "NL"]),
+                    "bandwidth": random.randint(10, 100),
+                }
+                for i in range(5)
+            ]
+        )
         return nodes
 
     def integrate_vpn(self, vpn_manager):
@@ -713,9 +743,7 @@ class AdvancedStealthManager:
         """Establish all enabled transports"""
         # Connect transports in priority order
         sorted_transports = sorted(
-            self.transports.items(),
-            key=lambda x: x[1].config.priority,
-            reverse=True
+            self.transports.items(), key=lambda x: x[1].config.priority, reverse=True
         )
 
         for transport_type, transport in sorted_transports:
@@ -741,16 +769,22 @@ class AdvancedStealthManager:
         """Build a single onion circuit"""
         try:
             # Select nodes
-            entry_nodes = [n for n in self._nodes if n['type'] == 'entry']
-            middle_nodes = [n for n in self._nodes if n['type'] == 'middle']
-            exit_nodes = [n for n in self._nodes if n['type'] == 'exit']
+            entry_nodes = [n for n in self._nodes if n["type"] == "entry"]
+            middle_nodes = [n for n in self._nodes if n["type"] == "middle"]
+            exit_nodes = [n for n in self._nodes if n["type"] == "exit"]
 
             if not (entry_nodes and middle_nodes and exit_nodes):
                 return None
 
             # Select by bandwidth
-            entry = max(random.sample(entry_nodes, min(3, len(entry_nodes))), key=lambda x: x['bandwidth'])
-            exit_node = max(random.sample(exit_nodes, min(3, len(exit_nodes))), key=lambda x: x['bandwidth'])
+            entry = max(
+                random.sample(entry_nodes, min(3, len(entry_nodes))),
+                key=lambda x: x["bandwidth"],
+            )
+            exit_node = max(
+                random.sample(exit_nodes, min(3, len(exit_nodes))),
+                key=lambda x: x["bandwidth"],
+            )
 
             # Multiple middle nodes for longer path
             middle_count = random.randint(2, 4)
@@ -761,7 +795,7 @@ class AdvancedStealthManager:
                 entry_node=entry,
                 middle_nodes=middle,
                 exit_node=exit_node,
-                established_at=time.time()
+                established_at=time.time(),
             )
 
             self.logger.debug(f"Circuit built: {circuit.get_path()}")
@@ -792,16 +826,14 @@ class AdvancedStealthManager:
         """Select best transport for request"""
         # Get active transports
         active_transports = [
-            (tt, t) for tt, t in self.transports.items()
-            if t.is_active()
+            (tt, t) for tt, t in self.transports.items() if t.is_active()
         ]
 
         if not active_transports:
             # Try to establish a transport
             self._establish_transports()
             active_transports = [
-                (tt, t) for tt, t in self.transports.items()
-                if t.is_active()
+                (tt, t) for tt, t in self.transports.items() if t.is_active()
             ]
 
         if not active_transports:
@@ -810,7 +842,7 @@ class AdvancedStealthManager:
         # Select by priority and success rate
         transport = max(
             active_transports,
-            key=lambda x: x[1].config.priority * x[1].config.success_rate
+            key=lambda x: x[1].config.priority * x[1].config.success_rate,
         )[1]
 
         return transport
@@ -842,33 +874,41 @@ class AdvancedStealthManager:
                 if self.per_request_routing:
                     circuit = self._select_circuit()
                     if circuit:
-                        processed_request['circuit_id'] = circuit.circuit_id
-                        processed_request['circuit_path'] = circuit.get_path()
-                        self.logger.debug(f"Request routed via circuit {circuit.circuit_id}")
+                        processed_request["circuit_id"] = circuit.circuit_id
+                        processed_request["circuit_path"] = circuit.get_path()
+                        self.logger.debug(
+                            f"Request routed via circuit {circuit.circuit_id}"
+                        )
 
                     # Fallback to external onion router
                     elif self._onion_router and self._onion_router.is_active():
-                        processed_request = self._onion_router.route_request(processed_request)
+                        processed_request = self._onion_router.route_request(
+                            processed_request
+                        )
 
                 # Step 2: Select transport
                 transport = self._select_transport()
                 if transport:
-                    processed_request['transport'] = transport.config.transport_type.value
-                    self._metrics.transports_used[transport.config.transport_type.value] += 1
+                    processed_request["transport"] = (
+                        transport.config.transport_type.value
+                    )
+                    self._metrics.transports_used[
+                        transport.config.transport_type.value
+                    ] += 1
 
                 # Step 3: Apply obfuscation
-                if 'data' in processed_request:
-                    data = processed_request['data']
+                if "data" in processed_request:
+                    data = processed_request["data"]
                     if isinstance(data, str):
                         data = data.encode()
 
                     obfuscated = self.obfuscation.obfuscate_request(data)
-                    processed_request['data'] = obfuscated
-                    processed_request['obfuscated'] = True
-                    self._metrics.obfuscation_applied['padding'] += 1
+                    processed_request["data"] = obfuscated
+                    processed_request["obfuscated"] = True
+                    self._metrics.obfuscation_applied["padding"] += 1
 
                 # Step 4: Domain fronting
-                target_domain = processed_request.get('domain')
+                target_domain = processed_request.get("domain")
                 if target_domain and self.domain_fronting.enabled:
                     front_domain = self.domain_fronting.setup_front(target_domain)
                     if front_domain:
@@ -878,45 +918,50 @@ class AdvancedStealthManager:
                         self._metrics.domain_fronting_used += 1
 
                 # Step 5: Protocol mimicry
-                protocol = processed_request.get('mimic_protocol', ProtocolMimicry.HTTPS)
-                if 'data' in processed_request and isinstance(processed_request['data'], bytes):
+                protocol = processed_request.get(
+                    "mimic_protocol", ProtocolMimicry.HTTPS
+                )
+                if "data" in processed_request and isinstance(
+                    processed_request["data"], bytes
+                ):
                     mimicked = self.obfuscation.mimic_protocol(
-                        processed_request['data'],
-                        protocol
+                        processed_request["data"], protocol
                     )
-                    processed_request['data'] = mimicked
+                    processed_request["data"] = mimicked
                     self._metrics.protocols_mimicked[protocol.value] += 1
 
                 # Step 6: Timing randomization
                 delay_ms = self.obfuscation.apply_timing_delay()
-                processed_request['timing_delay_ms'] = delay_ms
+                processed_request["timing_delay_ms"] = delay_ms
 
                 # Encrypt with transport
-                if transport and 'data' in processed_request:
-                    if isinstance(processed_request['data'], bytes):
-                        encrypted = transport.transmit(processed_request['data'])
-                        processed_request['data'] = encrypted
-                        processed_request['transport_encrypted'] = True
+                if transport and "data" in processed_request:
+                    if isinstance(processed_request["data"], bytes):
+                        encrypted = transport.transmit(processed_request["data"])
+                        processed_request["data"] = encrypted
+                        processed_request["transport_encrypted"] = True
 
                 # Update metrics
                 self._metrics.requests_routed += 1
-                if 'data' in processed_request:
-                    self._metrics.bytes_transmitted += len(processed_request['data'])
+                if "data" in processed_request:
+                    self._metrics.bytes_transmitted += len(processed_request["data"])
 
                 # Track latency
                 latency_ms = (time.time() - start_time) * 1000
                 self._metrics.update_latency(latency_ms)
 
-                self._request_queue.append({
-                    'timestamp': time.time(),
-                    'circuit': processed_request.get('circuit_id'),
-                    'transport': processed_request.get('transport')
-                })
+                self._request_queue.append(
+                    {
+                        "timestamp": time.time(),
+                        "circuit": processed_request.get("circuit_id"),
+                        "transport": processed_request.get("transport"),
+                    }
+                )
 
         except Exception as e:
             self.logger.error(f"Request routing failed: {e}")
             self._metrics.failed_requests += 1
-            processed_request['stealth_error'] = str(e)
+            processed_request["stealth_error"] = str(e)
 
         return processed_request
 
@@ -958,38 +1003,38 @@ class AdvancedStealthManager:
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive stealth status"""
         return {
-            'active': self._active,
-            'enabled': self.enabled,
-            'per_request_routing': self.per_request_routing,
-            'circuits': {
-                'total': len(self._circuits),
-                'active': sum(1 for c in self._circuits if c.is_active),
-                'pool_size': self._circuit_pool_size
+            "active": self._active,
+            "enabled": self.enabled,
+            "per_request_routing": self.per_request_routing,
+            "circuits": {
+                "total": len(self._circuits),
+                "active": sum(1 for c in self._circuits if c.is_active),
+                "pool_size": self._circuit_pool_size,
             },
-            'transports': {
+            "transports": {
                 tt.value: {
-                    'active': t.is_active(),
-                    'priority': t.config.priority,
-                    'success_rate': t.config.success_rate,
-                    'failures': t.config.failure_count
+                    "active": t.is_active(),
+                    "priority": t.config.priority,
+                    "success_rate": t.config.success_rate,
+                    "failures": t.config.failure_count,
                 }
                 for tt, t in self.transports.items()
             },
-            'obfuscation': {
-                'enabled': self.obfuscation.enabled,
-                'padding': self.obfuscation.padding_enabled,
-                'timing': self.obfuscation.timing_enabled,
-                'shaping': self.obfuscation.shaping_enabled,
-                'mimicry': self.obfuscation.mimicry_enabled
+            "obfuscation": {
+                "enabled": self.obfuscation.enabled,
+                "padding": self.obfuscation.padding_enabled,
+                "timing": self.obfuscation.timing_enabled,
+                "shaping": self.obfuscation.shaping_enabled,
+                "mimicry": self.obfuscation.mimicry_enabled,
             },
-            'domain_fronting': {
-                'enabled': self.domain_fronting.enabled,
-                'active_fronts': len(self.domain_fronting.get_active_fronts())
+            "domain_fronting": {
+                "enabled": self.domain_fronting.enabled,
+                "active_fronts": len(self.domain_fronting.get_active_fronts()),
             },
-            'integration': {
-                'vpn': self._vpn_manager is not None,
-                'onion_router': self._onion_router is not None
-            }
+            "integration": {
+                "vpn": self._vpn_manager is not None,
+                "onion_router": self._onion_router is not None,
+            },
         }
 
     def get_metrics(self) -> StealthMetrics:
@@ -1001,18 +1046,18 @@ class AdvancedStealthManager:
         obf_metrics = self.obfuscation.get_metrics()
 
         return {
-            'requests_routed': self._metrics.requests_routed,
-            'circuits_built': self._metrics.circuits_built,
-            'bytes_transmitted': self._metrics.bytes_transmitted,
-            'bytes_received': self._metrics.bytes_received,
-            'average_latency_ms': self._metrics.average_latency_ms,
-            'failed_requests': self._metrics.failed_requests,
-            'transport_switches': self._metrics.transport_switches,
-            'transports_used': dict(self._metrics.transports_used),
-            'obfuscation_applied': dict(self._metrics.obfuscation_applied),
-            'protocols_mimicked': dict(self._metrics.protocols_mimicked),
-            'domain_fronting_used': self._metrics.domain_fronting_used,
-            'obfuscation_details': obf_metrics
+            "requests_routed": self._metrics.requests_routed,
+            "circuits_built": self._metrics.circuits_built,
+            "bytes_transmitted": self._metrics.bytes_transmitted,
+            "bytes_received": self._metrics.bytes_received,
+            "average_latency_ms": self._metrics.average_latency_ms,
+            "failed_requests": self._metrics.failed_requests,
+            "transport_switches": self._metrics.transport_switches,
+            "transports_used": dict(self._metrics.transports_used),
+            "obfuscation_applied": dict(self._metrics.obfuscation_applied),
+            "protocols_mimicked": dict(self._metrics.protocols_mimicked),
+            "domain_fronting_used": self._metrics.domain_fronting_used,
+            "obfuscation_details": obf_metrics,
         }
 
     def is_active(self) -> bool:

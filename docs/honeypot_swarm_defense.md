@@ -10,7 +10,7 @@ The **weakest link** in security is *always* humans:
 - Mistakes (misconfiguration)
 - Predictability (known attack patterns)
 
-**Traditional approach**: Try to eliminate weakness  
+**Traditional approach**: Try to eliminate weakness
 **Our approach**: Turn weakness into **BAIT** 🍯
 
 ---
@@ -62,9 +62,13 @@ Attacker gives up or gets trapped
 
 ```python
 swarm_defense.detect_policy_violation(attacker_ip, "brute_force")
+
 # → Escalates from 10 decoys to 810+ decoys
+
 # → Attacker lost in maze of fake targets
+
 # → Can't find real system
+
 ```
 
 ---
@@ -115,9 +119,11 @@ We're the FIRST to apply this to cybersecurity at scale! 🚀
 from thirstys_waterfall.firewalls.honeypot_swarm import ThirstysHoneypotSwarmDefense
 
 # Initialize (THSD for short!)
+
 swarm = ThirstysHoneypotSwarmDefense({'base_decoy_count': 10})
 
 # Attacker violates policy
+
 result = swarm.detect_policy_violation(
     source_ip="203.0.113.42",
     violation_type="unauthorized_access",
@@ -125,14 +131,21 @@ result = swarm.detect_policy_violation(
 )
 
 # Get decoys to show attacker
+
 decoys = swarm.get_decoy_recommendations("203.0.113.42")
+
 # Returns: 10 decoys for first violation
+
 #          810+ decoys after 21 violations (SWARM mode)
 
 # Attacker accesses fake admin panel
+
 swarm.access_decoy(decoys[0], "203.0.113.42")
+
 # → Tracked! Now we know their tactics
+
 # → Serve them MORE believable fakes
+
 ```
 
 ---
@@ -140,7 +153,9 @@ swarm.access_decoy(decoys[0], "203.0.113.42")
 ## Integration with Existing Firewalls
 
 ```python
+
 # Add to Thirsty's Waterfall firewall manager
+
 from thirstys_waterfall.firewalls import FirewallManager
 from thirstys_waterfall.firewalls.honeypot_swarm import ThirstysHoneypotSwarmDefense
 
@@ -148,12 +163,15 @@ manager = FirewallManager()
 swarm = ThirstysHoneypotSwarmDefense()  # THSD!
 
 # On policy violation, redirect to swarm instead of blocking
+
 @manager.on_violation
 def handle_violation(source_ip, violation):
     swarm_response = swarm.detect_policy_violation(source_ip, violation, {})
-    
+
     if swarm_response['swarm_active']:
+
         # Don't block - CONFUSE!
+
         return {'action': 'redirect_to_decoys'}
 ```
 
@@ -163,15 +181,15 @@ def handle_violation(source_ip, violation):
 
 ### Before
 
-❌ Human error = security breach  
-❌ Trust = exploitable weakness  
-❌ Predictability = easy to attack  
+❌ Human error = security breach
+❌ Trust = exploitable weakness
+❌ Predictability = easy to attack
 
-### After  
+### After
 
-✅ Human error = BAIT for trap  
-✅ Trust = attractiveness of decoys  
-✅ Predictability = attacker's downfall  
+✅ Human error = BAIT for trap
+✅ Trust = attractiveness of decoys
+✅ Predictability = attacker's downfall
 
 **The thing that made you vulnerable now makes you INVINCIBLE!** 💪
 
@@ -250,10 +268,12 @@ When attacker realizes they've been **attacking fakes for hours**:
 
 ```
 Attacker view:
+
 - admin.example.com/login     ← Real? Fake?
 - admin2.example.com/login    ← Real? Fake?
 - admin-backup.example.com    ← Real? Fake?
 - admin.prod.example.com      ← Real? Fake?
+
 ... (800+ more)
 
 Attacker: "WHICH ONE IS REAL?!" 😵

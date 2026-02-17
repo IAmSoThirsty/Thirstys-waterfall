@@ -48,14 +48,13 @@ class GodTierEncryption:
         self._rsa_private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=4096,  # GOD TIER: 4096-bit RSA
-            backend=default_backend()
+            backend=default_backend(),
         )
         self._rsa_public_key = self._rsa_private_key.public_key()
 
         # Layer 5: Elliptic Curve (ECC-521)
         self._ecc_private_key = ec.generate_private_key(
-            ec.SECP521R1(),  # 521-bit curve - highest security
-            default_backend()
+            ec.SECP521R1(), default_backend()  # 521-bit curve - highest security
         )
         self._ecc_public_key = self._ecc_private_key.public_key()
 
@@ -85,7 +84,7 @@ class GodTierEncryption:
             Encrypted data with 7 layers of protection
         """
         if not data:
-            return b''
+            return b""
 
         # Layer 1: Add integrity hash
         data_hash = hashlib.sha512(data).digest()
@@ -110,7 +109,9 @@ class GodTierEncryption:
         # Layer 7: Final authentication MAC
         layer7 = self._add_authentication_mac(layer6)
 
-        self.logger.debug(f"Encrypted {len(data)} bytes to {len(layer7)} bytes (7 layers)")
+        self.logger.debug(
+            f"Encrypted {len(data)} bytes to {len(layer7)} bytes (7 layers)"
+        )
         return layer7
 
     def decrypt_god_tier(self, encrypted_data: bytes) -> bytes:
@@ -124,7 +125,7 @@ class GodTierEncryption:
             Original decrypted data
         """
         if not encrypted_data:
-            return b''
+            return b""
 
         try:
             # Layer 7: Verify authentication MAC
@@ -164,9 +165,7 @@ class GodTierEncryption:
         """AES-256-GCM encryption (military-grade)"""
         nonce = os.urandom(12)  # 96-bit nonce for GCM
         cipher = Cipher(
-            algorithms.AES(self._aes_key),
-            modes.GCM(nonce),
-            backend=default_backend()
+            algorithms.AES(self._aes_key), modes.GCM(nonce), backend=default_backend()
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
@@ -183,7 +182,7 @@ class GodTierEncryption:
         cipher = Cipher(
             algorithms.AES(self._aes_key),
             modes.GCM(nonce, tag),
-            backend=default_backend()
+            backend=default_backend(),
         )
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()
@@ -192,9 +191,7 @@ class GodTierEncryption:
         """AES-256-GCM encryption with custom key"""
         nonce = os.urandom(12)
         cipher = Cipher(
-            algorithms.AES(key),
-            modes.GCM(nonce),
-            backend=default_backend()
+            algorithms.AES(key), modes.GCM(nonce), backend=default_backend()
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
@@ -207,9 +204,7 @@ class GodTierEncryption:
         ciphertext = encrypted_data[28:]
 
         cipher = Cipher(
-            algorithms.AES(key),
-            modes.GCM(nonce, tag),
-            backend=default_backend()
+            algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend()
         )
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()
@@ -220,7 +215,7 @@ class GodTierEncryption:
         cipher = Cipher(
             algorithms.ChaCha20(self._chacha_key, nonce),
             mode=None,
-            backend=default_backend()
+            backend=default_backend(),
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
@@ -234,7 +229,7 @@ class GodTierEncryption:
         cipher = Cipher(
             algorithms.ChaCha20(self._chacha_key, nonce),
             mode=None,
-            backend=default_backend()
+            backend=default_backend(),
         )
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()
@@ -247,7 +242,7 @@ class GodTierEncryption:
             n=2**20,  # Very high cost factor for quantum resistance
             r=8,
             p=1,
-            backend=default_backend()
+            backend=default_backend(),
         )
         return kdf.derive(key + self._pepper)
 
@@ -258,22 +253,22 @@ class GodTierEncryption:
         padding = secrets.token_bytes(padding_size)
 
         # Prepend length of padding (4 bytes)
-        length_bytes = padding_size.to_bytes(4, 'big')
+        length_bytes = padding_size.to_bytes(4, "big")
 
         return length_bytes + padding + data
 
     def _remove_quantum_resistant_padding(self, data: bytes) -> bytes:
         """Remove quantum-resistant padding"""
-        padding_size = int.from_bytes(data[:4], 'big')
-        return data[4 + padding_size:]
+        padding_size = int.from_bytes(data[:4], "big")
+        return data[4 + padding_size :]
 
     def _add_authentication_mac(self, data: bytes) -> bytes:
         """Add HMAC-SHA512 authentication"""
         mac = hashlib.pbkdf2_hmac(
-            'sha512',
+            "sha512",
             data,
             self._salt + self._pepper,
-            iterations=500000  # High iteration count
+            iterations=500000,  # High iteration count
         )
         return mac + data
 
@@ -283,10 +278,7 @@ class GodTierEncryption:
         actual_data = data[64:]
 
         expected_mac = hashlib.pbkdf2_hmac(
-            'sha512',
-            actual_data,
-            self._salt + self._pepper,
-            iterations=500000
+            "sha512", actual_data, self._salt + self._pepper, iterations=500000
         )
 
         if not secrets.compare_digest(mac, expected_mac):
@@ -297,28 +289,28 @@ class GodTierEncryption:
     def get_encryption_strength(self) -> dict:
         """Get information about encryption strength"""
         return {
-            'tier': 'GOD TIER',
-            'layers': 7,
-            'algorithms': [
-                'Fernet (AES-128 + HMAC-SHA256)',
-                'AES-256-GCM (military-grade)',
-                'ChaCha20-Poly1305',
-                'AES-256-GCM Double Encryption',
-                'RSA-4096 (quantum-resistant)',
-                'ECC-521 (highest elliptic curve)',
-                'HMAC-SHA512 Authentication'
+            "tier": "GOD TIER",
+            "layers": 7,
+            "algorithms": [
+                "Fernet (AES-128 + HMAC-SHA256)",
+                "AES-256-GCM (military-grade)",
+                "ChaCha20-Poly1305",
+                "AES-256-GCM Double Encryption",
+                "RSA-4096 (quantum-resistant)",
+                "ECC-521 (highest elliptic curve)",
+                "HMAC-SHA512 Authentication",
             ],
-            'key_sizes': {
-                'AES': '256-bit',
-                'RSA': '4096-bit',
-                'ECC': '521-bit',
-                'ChaCha20': '256-bit'
+            "key_sizes": {
+                "AES": "256-bit",
+                "RSA": "4096-bit",
+                "ECC": "521-bit",
+                "ChaCha20": "256-bit",
             },
-            'quantum_resistant': True,
-            'perfect_forward_secrecy': True,
-            'zero_knowledge': True,
-            'authentication': 'HMAC-SHA512 with 500,000 iterations',
-            'key_derivation': 'Scrypt with n=2^20'
+            "quantum_resistant": True,
+            "perfect_forward_secrecy": True,
+            "zero_knowledge": True,
+            "authentication": "HMAC-SHA512 with 500,000 iterations",
+            "key_derivation": "Scrypt with n=2^20",
         }
 
 
@@ -350,16 +342,14 @@ class QuantumResistantEncryption:
             n=2**20,  # Quantum-resistant parameters
             r=8,
             p=1,
-            backend=default_backend()
+            backend=default_backend(),
         )
         derived_key = kdf.derive(self._quantum_key)
 
         # Layer 2: AES-256 with quantum-resistant mode
         nonce = secrets.token_bytes(16)
         cipher = Cipher(
-            algorithms.AES(derived_key),
-            modes.CTR(nonce),
-            backend=default_backend()
+            algorithms.AES(derived_key), modes.CTR(nonce), backend=default_backend()
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
@@ -371,20 +361,11 @@ class QuantumResistantEncryption:
         nonce = encrypted_data[:16]
         ciphertext = encrypted_data[16:]
 
-        kdf = Scrypt(
-            salt=salt,
-            length=32,
-            n=2**20,
-            r=8,
-            p=1,
-            backend=default_backend()
-        )
+        kdf = Scrypt(salt=salt, length=32, n=2**20, r=8, p=1, backend=default_backend())
         derived_key = kdf.derive(self._quantum_key)
 
         cipher = Cipher(
-            algorithms.AES(derived_key),
-            modes.CTR(nonce),
-            backend=default_backend()
+            algorithms.AES(derived_key), modes.CTR(nonce), backend=default_backend()
         )
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()

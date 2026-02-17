@@ -5,4 +5,4 @@ from .multi_hop import MultiHopRouter
 from .kill_switch import KillSwitch
 from .dns_protection import DNSProtection
 
-__all__ = ['VPNManager', 'MultiHopRouter', 'KillSwitch', 'DNSProtection']
+__all__ = ["VPNManager", "MultiHopRouter", "KillSwitch", "DNSProtection"]

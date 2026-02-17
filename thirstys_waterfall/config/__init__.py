@@ -3,4 +3,4 @@
 from .registry import ConfigRegistry
 from .validator import ConfigValidator
 
-__all__ = ['ConfigRegistry', 'ConfigValidator']
+__all__ = ["ConfigRegistry", "ConfigValidator"]

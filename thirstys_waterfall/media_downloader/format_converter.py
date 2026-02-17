@@ -14,8 +14,8 @@ class FormatConverter:
         self.god_tier_encryption = god_tier_encryption
 
         self.supported_conversions = {
-            'audio': ['mp3', 'aac', 'flac', 'opus'],
-            'video': ['mp4', 'webm', 'mkv']
+            "audio": ["mp3", "aac", "flac", "opus"],
+            "video": ["mp4", "webm", "mkv"],
         }
 
     def convert(self, input_file: str, output_format: str) -> Dict[str, Any]:
@@ -32,14 +32,16 @@ class FormatConverter:
         self.logger.info(f"Converting to {output_format}")
 
         # In production, would use ffmpeg or similar
-        output_file = input_file.rsplit('.', 1)[0] + '.' + output_format
+        output_file = input_file.rsplit(".", 1)[0] + "." + output_format
 
         # Encrypt output path
-        encrypted_output = self.god_tier_encryption.encrypt_god_tier(output_file.encode())
+        encrypted_output = self.god_tier_encryption.encrypt_god_tier(
+            output_file.encode()
+        )
 
         return {
-            'status': 'completed',
-            'output_format': output_format,
-            'encrypted_output_path': encrypted_output,
-            'god_tier_encrypted': True
+            "status": "completed",
+            "output_format": output_format,
+            "encrypted_output_path": encrypted_output,
+            "god_tier_encrypted": True,
         }

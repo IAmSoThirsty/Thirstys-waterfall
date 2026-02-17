@@ -360,9 +360,11 @@ class CompromiseDetector:
             kernel_modules=self.kernel_interface.get_loaded_kernel_modules(),
             syscall_table_hash=self.kernel_interface.get_syscall_table_hash(),
             memory_regions=self.kernel_interface.scan_memory_regions(),
-            process_list=set(int(pid) for pid in os.listdir("/proc") if pid.isdigit())
-            if os.path.exists("/proc")
-            else set(),
+            process_list=(
+                set(int(pid) for pid in os.listdir("/proc") if pid.isdigit())
+                if os.path.exists("/proc")
+                else set()
+            ),
             network_connections=[],
             loaded_libraries=set(),
             pcr_values={},

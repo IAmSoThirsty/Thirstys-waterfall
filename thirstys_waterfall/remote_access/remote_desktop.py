@@ -31,11 +31,11 @@ class RemoteDesktop:
         self._cipher = Fernet(Fernet.generate_key())
 
         # Remote desktop settings
-        self.host = config.get('remote_desktop_host', '0.0.0.0')
-        self.port = config.get('remote_desktop_port', 9001)
+        self.host = config.get("remote_desktop_host", "0.0.0.0")
+        self.port = config.get("remote_desktop_port", 9001)
 
         # Screen resolution
-        self.resolution = config.get('resolution', '1920x1080')
+        self.resolution = config.get("resolution", "1920x1080")
 
         # Active connections (encrypted)
         self._connections: Dict[str, Dict[str, Any]] = {}
@@ -62,7 +62,7 @@ class RemoteDesktop:
     def connect(self, client_id: str, auth_token: str) -> Dict[str, Any]:
         """Connect remote desktop client with encrypted credentials"""
         if not self._active:
-            return {'error': 'Remote desktop not active'}
+            return {"error": "Remote desktop not active"}
 
         # Encrypt credentials
         encrypted_client = self.god_tier_encryption.encrypt_god_tier(client_id.encode())
@@ -71,11 +71,11 @@ class RemoteDesktop:
         conn_id = f"conn_{len(self._connections)}"
 
         connection = {
-            'id': conn_id,
-            'encrypted_client': encrypted_client,
-            'created_time': time.time(),
-            'status': 'connected',
-            'god_tier_encrypted': True
+            "id": conn_id,
+            "encrypted_client": encrypted_client,
+            "created_time": time.time(),
+            "status": "connected",
+            "god_tier_encrypted": True,
         }
 
         self._connections[conn_id] = connection
@@ -83,10 +83,10 @@ class RemoteDesktop:
         self.logger.info(f"Remote desktop connection established: {conn_id}")
 
         return {
-            'connection_id': conn_id,
-            'status': 'connected',
-            'god_tier_encrypted': True,
-            'encryption_layers': 7
+            "connection_id": conn_id,
+            "status": "connected",
+            "god_tier_encrypted": True,
+            "encryption_layers": 7,
         }
 
     def disconnect(self, conn_id: str):
@@ -98,8 +98,8 @@ class RemoteDesktop:
     def get_status(self) -> Dict[str, Any]:
         """Get remote desktop status"""
         return {
-            'active': self._active,
-            'god_tier_encrypted': True,
-            'encryption_layers': 7,
-            'active_connections': len(self._connections)
+            "active": self._active,
+            "god_tier_encrypted": True,
+            "encryption_layers": 7,
+            "active_connections": len(self._connections),
         }

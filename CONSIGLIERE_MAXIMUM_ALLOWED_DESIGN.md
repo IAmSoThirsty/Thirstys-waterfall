@@ -40,14 +40,17 @@ ThirstyConsigliere (Main Engine)
 ## Core Principles: Code of Omertà
 
 ### 1. Data Minimization (ALWAYS ACTIVE)
+
 **Invariant**: Only collect data strictly necessary for processing
 **Implementation**:
+
 - URL → Domain only (strip paths, parameters)
 - IP addresses → Boolean flag (not stored)
 - User agents → Stripped completely
 - Timestamps → Rounded to hour (if needed)
 
 **Edge Cases**:
+
 - Malformed URLs: Extract whatever domain component exists
 - Missing fields: Skip gracefully (don't error)
 - None values: Treat as absent (defensive programming)
@@ -55,40 +58,49 @@ ThirstyConsigliere (Main Engine)
 **Complexity**: O(n) where n = number of context keys
 
 ### 2. Zero Accept All (ALWAYS ACTIVE)
+
 **Invariant**: All capabilities start disabled, require explicit grant
 **Implementation**:
+
 - Initialize all capabilities to False
 - High-risk capabilities: Require user approval (currently auto-denied)
 - Low-risk capabilities: Auto-grant with logging
 - Unknown capabilities: Always deny
 
 **Risk Levels**:
+
 - **High Risk**: browsing_history, filesystem, clipboard, remote_desktop
 - **Medium Risk**: page_content, network_access, bookmarks, ai_assistant
 - **Low Risk**: search, downloads, media_download
 
 ### 3. On-Device Only (ALWAYS ACTIVE)
+
 **Invariant**: No data ever sent off-device
 **Implementation**:
+
 - All processing in `_process_locally()`
 - No external API calls
 - No network requests during query processing
 - Response includes transparency about processing location
 
 **Verification**:
+
 - `data_sent_off_device`: Always False
 - `processed_locally`: Always True
 - `on_device`: Always True (alias)
 
 ### 4. No Training (ALWAYS ACTIVE)
+
 **Invariant**: User data never used for model training
 **Implementation**:
+
 - No data persistence beyond session
 - Ephemeral context window (memory only)
 - Context cleared on stop()
 - No logging of query content (only metadata)
 
 ### 5. Full Transparency (ALWAYS ACTIVE)
+
 **Invariant**: Every response includes transparency information
 **Implementation**:
 ```python
@@ -110,12 +122,14 @@ ThirstyConsigliere (Main Engine)
 **Signature**: `__init__(config: Dict[str, Any], god_tier_encryption)`
 
 **Invariants**:
+
 - All components initialized before start()
 - Ephemeral context ALWAYS memory-only (never disk)
 - All capabilities start locked-down
 - God tier encryption active on all data
 
 **Parameters**:
+
 - `config`: Configuration dict
   - `on_device_only`: bool (default: True)
   - `max_context_size`: int (default: 10, min: 1)
@@ -123,16 +137,19 @@ ThirstyConsigliere (Main Engine)
 - `god_tier_encryption`: GodTierEncryption instance (MANDATORY)
 
 **Failure Modes**:
+
 - Missing god_tier_encryption: Raises ValueError (cannot proceed)
 - Component init failure: Logs warning, continues with available components
 - Invalid config: Uses safe defaults (maximum security)
 
 **Edge Cases**:
+
 - None/empty config: All defaults (locked down)
 - Negative max_context_size: Clamped to 1
 - Missing config keys: Safe defaults used
 
 **Attributes Created**:
+
 - `self.privacy_checker`: Public access to PrivacyChecker
 - `self._privacy_checker`: Alias for backward compatibility
 - `self._context_window`: Primary ephemeral context storage
@@ -149,6 +166,7 @@ ThirstyConsigliere (Main Engine)
 **Signature**: `assist(query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]`
 
 **Invariants**:
+
 - Privacy audit ALWAYS runs before processing
 - Query ALWAYS encrypted before storage (God tier)
 - Unsafe queries return privacy_concerns dict
@@ -188,11 +206,13 @@ ThirstyConsigliere (Main Engine)
 ```
 
 **Edge Cases**:
+
 - Empty query: Treated as safe, returns default response
 - None context: Treated as empty dict
 - Audit failure: Denies processing (fail-safe)
 
 **Failure Modes**:
+
 - Encryption failure: Aborts processing, returns error
 - Audit failure: Denies processing with generic message
 - Processing error: Returns error in response, maintains structure
@@ -207,6 +227,7 @@ ThirstyConsigliere (Main Engine)
 **Signature**: `get_status() -> Dict[str, Any]`
 
 **Invariants**:
+
 - `active`: Reflects current _active state
 - `god_tier_encrypted`: ALWAYS True
 - `encryption_layers`: ALWAYS 7
@@ -244,6 +265,7 @@ ThirstyConsigliere (Main Engine)
 ```
 
 **Edge Cases**:
+
 - Called before start(): Returns status with active=False
 - Called after stop(): context_window_size=0
 
@@ -257,24 +279,28 @@ ThirstyConsigliere (Main Engine)
 **Signature**: `request_capability(capability: str, reason: str) -> bool`
 
 **Invariants**:
+
 - All requests logged (encrypted)
 - Risk level determines auto-grant
 - Unknown capabilities always denied
 - Logged even if denied
 
 **Parameters**:
+
 - `capability`: One of 11 defined capabilities
 - `reason`: Human-readable justification (shown to user)
 
 **Returns**: `True` if granted, `False` if denied
 
 **Auto-Grant Logic**:
+
 - Low risk: Auto-granted with logging
 - Medium risk: Currently auto-granted (production: user prompt)
 - High risk: Denied (production: user prompt)
 - Unknown: Always denied
 
 **Failure Modes**:
+
 - Consigliere not active: Returns False
 - Unknown capability: Logs error, returns False
 - Logging failure: Continues (capability still granted/denied)
@@ -289,12 +315,14 @@ ThirstyConsigliere (Main Engine)
 **Signature**: `wipe_everything() -> None`
 
 **Invariants**:
+
 - HARD DELETE - no recovery possible
 - Clears all ephemeral context
 - Clears all ledger entries
 - Resets to locked-down state
 
 **Effect**:
+
 1. `_context_window` cleared
 2. `_ephemeral_context` cleared (same as above)
 3. `action_ledger` cleared (0 entries)
@@ -302,6 +330,7 @@ ThirstyConsigliere (Main Engine)
 5. Reinitialized to locked-down state
 
 **Edge Cases**:
+
 - Called when already empty: No-op, logs confirmation
 - Called when not active: Still executes wipe
 
@@ -354,6 +383,7 @@ ThirstyConsigliere (Main Engine)
 4. **Safe Determination**: Query safe IFF no patterns found
 
 **Edge Cases**:
+
 - Empty query: Safe (no patterns to match)
 - Malformed patterns: Regex handles gracefully (no match)
 - Multiple occurrences: Each type counted once
@@ -380,21 +410,25 @@ ThirstyConsigliere (Main Engine)
 ### Operations
 
 **add_entry(action, details)**
+
 - Complexity: O(1) amortized (may pop old entries)
 - Encryption: Details encrypted with Fernet cipher
 - Max entries: Enforced (FIFO eviction)
 
 **get_entries(include_redacted=False)**
+
 - Complexity: O(n) where n = number of entries
 - Returns: Copy of entries (safe from mutation)
 - Filter: Can exclude redacted entries
 
 **redact_entry(entry_id)**
+
 - Complexity: O(n) scan to find entry
 - Effect: Sets redacted=True, clears details
 - Irreversible: Original details lost
 
 **clear()**
+
 - Complexity: O(1)
 - Effect: Clears all entries, resets counter
 - Hard delete: No recovery possible
@@ -451,6 +485,7 @@ Return granted/denied
 ### Threat Model
 
 **Threats Mitigated**:
+
 1. ✅ Data exfiltration (on-device only, no network)
 2. ✅ Training data leakage (no training, ephemeral context)
 3. ✅ Sensitive data exposure (privacy audit, data minimization)
@@ -458,6 +493,7 @@ Return granted/denied
 5. ✅ Audit trail tampering (encrypted ledger, immutable after entry)
 
 **Threats NOT Mitigated**:
+
 1. ❌ Physical access to memory (RAM inspection)
 2. ❌ OS-level keylogging (outside scope)
 3. ❌ Side-channel attacks (timing, power analysis)
@@ -476,6 +512,7 @@ Return granted/denied
 ### Privacy Guarantees
 
 **What is GUARANTEED**:
+
 - ✅ No query content leaves device
 - ✅ No training on user data
 - ✅ Context wiped on stop()
@@ -483,6 +520,7 @@ Return granted/denied
 - ✅ Full transparency in responses
 
 **What is NOT GUARANTEED**:
+
 - ❌ Protection against memory inspection
 - ❌ Protection against OS compromise
 - ❌ Protection against physical access
@@ -493,21 +531,25 @@ Return granted/denied
 ## Performance Characteristics
 
 ### Initialization
+
 - **Time**: O(1)
 - **Space**: O(1)
 - **Bottleneck**: Fernet key generation (~1ms)
 
 ### Query Processing
+
 - **Time**: O(n) where n = query length
 - **Space**: O(k) where k = context size
 - **Bottleneck**: Privacy audit regex matching
 
 ### Status Retrieval
+
 - **Time**: O(c) where c = capability count (max 11)
 - **Space**: O(1)
 - **Bottleneck**: List comprehension over capabilities
 
 ### Context Management
+
 - **Time**: O(1) amortized (FIFO eviction)
 - **Space**: O(m) where m = max_context_size
 - **Bottleneck**: Pop operation when exceeding max
@@ -517,21 +559,25 @@ Return granted/denied
 ## Testing Strategy
 
 ### Unit Tests (20 tests)
+
 - CapabilityManager: 6 tests (100% coverage)
 - ActionLedger: 5 tests (100% coverage)
 - PrivacyChecker: 7 tests (100% coverage)
 - Component integration: 2 tests
 
 ### Integration Tests (14 tests)
+
 - ThirstyConsigliere: 12 tests (100% coverage)
 - Full workflow: 2 tests (100% coverage)
 
 ### Test Coverage
+
 - **Lines**: 89% (109/123 lines covered)
 - **Branches**: 85% estimated
 - **Edge cases**: All documented cases tested
 
 ### Test Patterns
+
 1. **Initialization**: Verify locked-down state
 2. **State transitions**: start() → active → stop() → inactive
 3. **Privacy violations**: Ensure blocking unsafe queries
@@ -543,6 +589,7 @@ Return granted/denied
 ## Deployment Considerations
 
 ### Resource Requirements
+
 - **Memory**: ~1MB base + (context_size * avg_entry_size)
 - **CPU**: Negligible (regex matching dominant)
 - **Disk**: None (all in-memory)
@@ -582,11 +629,13 @@ config = {
 ### Monitoring
 
 **Key Metrics**:
+
 - `active_capabilities`: Track capability grants
 - `ledger_entries`: Monitor audit log growth
 - `context_window_size`: Track context accumulation
 
 **Alerts**:
+
 - High-risk capability granted (unexpected)
 - Privacy audit failures (trend detection)
 - Context window approaching max (performance)
@@ -596,17 +645,20 @@ config = {
 ## Future Enhancements
 
 ### Planned Features
+
 1. **User Consent UI**: Interactive capability approval (high-risk)
 2. **Privacy Score**: Quantitative privacy rating per query
 3. **Context Expiration**: Time-based context eviction (not just size)
 4. **Federated Learning**: Privacy-preserving model updates (optional)
 
 ### Potential Optimizations
+
 1. **Regex Compilation**: Pre-compile privacy patterns (minor gain)
 2. **Context Compression**: LZ4 compression for old context (space saving)
 3. **Async Processing**: Non-blocking query processing (UX improvement)
 
 ### Research Areas
+
 1. **Differential Privacy**: Add noise to responses (formal guarantees)
 2. **Homomorphic Encryption**: Encrypt during processing (not just storage)
 3. **Zero-Knowledge Proofs**: Prove compliance without revealing data

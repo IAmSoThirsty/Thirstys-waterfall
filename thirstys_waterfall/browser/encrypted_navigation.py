@@ -57,10 +57,10 @@ class EncryptedNavigationHistory:
 
         # Store encrypted entry
         entry = {
-            'encrypted_url': encrypted_url,
-            'encrypted_tab_id': encrypted_tab_id,
-            'timestamp': time.time(),
-            'hash': url_hash
+            "encrypted_url": encrypted_url,
+            "encrypted_tab_id": encrypted_tab_id,
+            "timestamp": time.time(),
+            "hash": url_hash,
         }
 
         self._encrypted_history.append(entry)

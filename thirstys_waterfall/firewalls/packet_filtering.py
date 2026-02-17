@@ -12,7 +12,7 @@ class PacketFilteringFirewall(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.default_policy = config.get('default_policy', 'deny')
+        self.default_policy = config.get("default_policy", "deny")
         self._packet_rules = []
 
     def start(self):
@@ -29,23 +29,23 @@ class PacketFilteringFirewall(FirewallBase):
     def _load_default_rules(self):
         """Load default packet filtering rules"""
         # Allow established connections
-        self.add_rule({
-            'id': 'default_established',
-            'action': 'allow',
-            'state': 'established'
-        })
+        self.add_rule(
+            {"id": "default_established", "action": "allow", "state": "established"}
+        )
 
         # Block known malicious IPs (example)
-        self.add_rule({
-            'id': 'block_malicious',
-            'action': 'deny',
-            'src_ip': ['0.0.0.0/8', '127.0.0.0/8']
-        })
+        self.add_rule(
+            {
+                "id": "block_malicious",
+                "action": "deny",
+                "src_ip": ["0.0.0.0/8", "127.0.0.0/8"],
+            }
+        )
 
     def add_rule(self, rule: Dict[str, Any]):
         """Add packet filtering rule"""
-        if 'id' not in rule:
-            rule['id'] = f"rule_{len(self._packet_rules)}"
+        if "id" not in rule:
+            rule["id"] = f"rule_{len(self._packet_rules)}"
 
         self._rules.append(rule)
         self._packet_rules.append(rule)
@@ -53,8 +53,8 @@ class PacketFilteringFirewall(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove packet filtering rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
-        self._packet_rules = [r for r in self._packet_rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
+        self._packet_rules = [r for r in self._packet_rules if r.get("id") != rule_id]
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """
@@ -76,41 +76,41 @@ class PacketFilteringFirewall(FirewallBase):
         # Check each rule
         for rule in self._packet_rules:
             if self._match_rule(packet, rule):
-                allowed = rule.get('action', 'deny') == 'allow'
+                allowed = rule.get("action", "deny") == "allow"
                 self._update_statistics(allowed)
                 return allowed
 
         # Apply default policy
-        allowed = self.default_policy == 'allow'
+        allowed = self.default_policy == "allow"
         self._update_statistics(allowed)
         return allowed
 
     def _match_rule(self, packet: Dict[str, Any], rule: Dict[str, Any]) -> bool:
         """Check if packet matches rule criteria"""
         # Match protocol
-        if 'protocol' in rule and packet.get('protocol') != rule['protocol']:
+        if "protocol" in rule and packet.get("protocol") != rule["protocol"]:
             return False
 
         # Match source IP
-        if 'src_ip' in rule:
-            if not self._match_ip(packet.get('src_ip'), rule['src_ip']):
+        if "src_ip" in rule:
+            if not self._match_ip(packet.get("src_ip"), rule["src_ip"]):
                 return False
 
         # Match destination IP
-        if 'dst_ip' in rule:
-            if not self._match_ip(packet.get('dst_ip'), rule['dst_ip']):
+        if "dst_ip" in rule:
+            if not self._match_ip(packet.get("dst_ip"), rule["dst_ip"]):
                 return False
 
         # Match source port
-        if 'src_port' in rule and packet.get('src_port') != rule['src_port']:
+        if "src_port" in rule and packet.get("src_port") != rule["src_port"]:
             return False
 
         # Match destination port
-        if 'dst_port' in rule and packet.get('dst_port') != rule['dst_port']:
+        if "dst_port" in rule and packet.get("dst_port") != rule["dst_port"]:
             return False
 
         # Match state
-        if 'state' in rule and packet.get('state') != rule['state']:
+        if "state" in rule and packet.get("state") != rule["state"]:
             return False
 
         return True
@@ -122,7 +122,11 @@ class PacketFilteringFirewall(FirewallBase):
 
         # Simplified IP matching (production would use ipaddress module)
         for rule_ip in rule_ips:
-            if ip == rule_ip or rule_ip.endswith('/8') and ip.startswith(rule_ip.split('/')[0].rsplit('.', 3)[0]):
+            if (
+                ip == rule_ip
+                or rule_ip.endswith("/8")
+                and ip.startswith(rule_ip.split("/")[0].rsplit(".", 3)[0])
+            ):
                 return True
 
         return False

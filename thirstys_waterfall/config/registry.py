@@ -29,15 +29,16 @@ class ConfigRegistry:
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, 'initialized'):
+        if not hasattr(self, "initialized"):
             self._config: Dict[str, Any] = {}
             self._encrypted_config: Dict[str, bytes] = {}
             self._cipher: Optional[Fernet] = None
             self._observers: Dict[str, list] = {}
             self.initialized = True
 
-    def initialize(self, config_path: Optional[str] = None,
-                   encryption_key: Optional[bytes] = None):
+    def initialize(
+        self, config_path: Optional[str] = None, encryption_key: Optional[bytes] = None
+    ):
         """
         Initialize registry with optional config file and encryption key.
 
@@ -49,7 +50,7 @@ class ConfigRegistry:
             self._cipher = Fernet(encryption_key)
 
         if config_path and os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 self._config = json.load(f)
         else:
             self._load_defaults()
@@ -57,68 +58,68 @@ class ConfigRegistry:
     def _load_defaults(self):
         """Load default configuration values"""
         self._config = {
-            'global': {
-                'privacy_mode': 'maximum',
-                'kill_switch_enabled': True,
-                'telemetry_disabled': True,
-                'log_level': 'INFO'
+            "global": {
+                "privacy_mode": "maximum",
+                "kill_switch_enabled": True,
+                "telemetry_disabled": True,
+                "log_level": "INFO",
             },
-            'firewalls': {
-                'packet_filtering': {'enabled': True, 'default_policy': 'deny'},
-                'circuit_level': {'enabled': True, 'proxy_timeout': 30},
-                'stateful_inspection': {'enabled': True, 'connection_timeout': 3600},
-                'proxy': {'enabled': True, 'cache_enabled': False},
-                'next_generation': {'enabled': True, 'ai_detection': True},
-                'software': {'enabled': True, 'user_space': True},
-                'hardware': {'enabled': True, 'bypass_mode': False},
-                'cloud': {'enabled': True, 'distributed': True}
+            "firewalls": {
+                "packet_filtering": {"enabled": True, "default_policy": "deny"},
+                "circuit_level": {"enabled": True, "proxy_timeout": 30},
+                "stateful_inspection": {"enabled": True, "connection_timeout": 3600},
+                "proxy": {"enabled": True, "cache_enabled": False},
+                "next_generation": {"enabled": True, "ai_detection": True},
+                "software": {"enabled": True, "user_space": True},
+                "hardware": {"enabled": True, "bypass_mode": False},
+                "cloud": {"enabled": True, "distributed": True},
             },
-            'vpn': {
-                'enabled': True,
-                'multi_hop': True,
-                'hop_count': 3,
-                'kill_switch': True,
-                'dns_leak_protection': True,
-                'ipv6_leak_protection': True,
-                'split_tunneling': False,
-                'stealth_mode': True,
-                'logging': 'never',
-                'protocol_fallback': ['wireguard', 'openvpn', 'ikev2'],
-                'exit_node_selection': 'user'
+            "vpn": {
+                "enabled": True,
+                "multi_hop": True,
+                "hop_count": 3,
+                "kill_switch": True,
+                "dns_leak_protection": True,
+                "ipv6_leak_protection": True,
+                "split_tunneling": False,
+                "stealth_mode": True,
+                "logging": "never",
+                "protocol_fallback": ["wireguard", "openvpn", "ikev2"],
+                "exit_node_selection": "user",
             },
-            'browser': {
-                'incognito_mode': True,
-                'no_history': True,
-                'no_cache': True,
-                'no_cookies': True,
-                'tab_isolation': True,
-                'sandbox_enabled': True,
-                'fingerprint_protection': True,
-                'tracker_blocking': True,
-                'extension_whitelist': [],
-                'download_isolation': True,
-                'keyboard_cloaking': True,
-                'mouse_cloaking': True
+            "browser": {
+                "incognito_mode": True,
+                "no_history": True,
+                "no_cache": True,
+                "no_cookies": True,
+                "tab_isolation": True,
+                "sandbox_enabled": True,
+                "fingerprint_protection": True,
+                "tracker_blocking": True,
+                "extension_whitelist": [],
+                "download_isolation": True,
+                "keyboard_cloaking": True,
+                "mouse_cloaking": True,
             },
-            'privacy': {
-                'anti_fingerprint': True,
-                'anti_tracker': True,
-                'anti_phishing': True,
-                'anti_malware': True,
-                'dns_over_https': True,
-                'onion_routing': True,
-                'ephemeral_storage': True,
-                'forensic_resistance': True,
-                'session_auditing': True,
-                'leak_auditing': True,
-                'privacy_vault_enabled': True
+            "privacy": {
+                "anti_fingerprint": True,
+                "anti_tracker": True,
+                "anti_phishing": True,
+                "anti_malware": True,
+                "dns_over_https": True,
+                "onion_routing": True,
+                "ephemeral_storage": True,
+                "forensic_resistance": True,
+                "session_auditing": True,
+                "leak_auditing": True,
+                "privacy_vault_enabled": True,
             },
-            'storage': {
-                'encrypted': True,
-                'ephemeral_mode': True,
-                'secure_delete': True,
-                'memory_only': False
-            }
+            "storage": {
+                "encrypted": True,
+                "ephemeral_mode": True,
+                "secure_delete": True,
+                "memory_only": False,
+            },
         }
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -132,7 +133,7 @@ class ConfigRegistry:
         Returns:
             Configuration value
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
 
         for k in keys:
@@ -153,7 +154,7 @@ class ConfigRegistry:
             notify: Whether to notify observers
         """
         with self._lock:
-            keys = key.split('.')
+            keys = key.split(".")
             config = self._config
 
             for k in keys[:-1]:
@@ -201,7 +202,7 @@ class ConfigRegistry:
 
     def save(self, config_path: str):
         """Save configuration to file"""
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(self._config, f, indent=2)
 
     def export_config(self) -> Dict[str, Any]:

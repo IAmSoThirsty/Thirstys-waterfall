@@ -73,12 +73,15 @@ The DOS (Denial-of-Service) Trap Mode is a production-grade security module that
 from thirstys_waterfall.security import create_dos_trap
 
 # Create DOS trap instance
+
 dos_trap = create_dos_trap()
 
 # Enable monitoring
+
 dos_trap.enable()
 
 # Check status
+
 status = dos_trap.get_status()
 print(f"Active: {status['active']}")
 print(f"Threat Level: {status['threat_level']}")
@@ -92,6 +95,7 @@ from thirstys_waterfall.security.hardware_root_of_trust import HardwareRootOfTru
 from thirstys_waterfall.kill_switch import GlobalKillSwitch
 
 # Initialize hardware components
+
 hw_trust = HardwareRootOfTrust()
 hw_trust.initialize()
 
@@ -99,16 +103,19 @@ kill_switch = GlobalKillSwitch()
 kill_switch.enable()
 
 # Create DOS trap with integrations
+
 dos_trap = create_dos_trap(
     hardware_root_of_trust=hw_trust,
     kill_switch=kill_switch
 )
 
 # Configure auto-response
+
 dos_trap.config['auto_respond'] = True
 dos_trap.config['response_threshold'] = ThreatLevel.MODERATE
 
 # Enable monitoring
+
 dos_trap.enable()
 ```
 
@@ -120,6 +127,7 @@ from thirstys_waterfall.security import create_dos_trap
 dos_trap = create_dos_trap()
 
 # Perform comprehensive scan
+
 events = dos_trap.compromise_detector.comprehensive_scan()
 
 if events:
@@ -145,12 +153,15 @@ dos_trap.enable()
 ### Secret Wiping
 
 ```python
+
 # Wipe specific secrets
+
 dos_trap.secret_wiper.wipe_master_keys(master_key_storage)
 dos_trap.secret_wiper.wipe_session_keys(session_storage)
 dos_trap.secret_wiper.wipe_credentials(credential_store)
 
 # Emergency wipe everything
+
 dos_trap.secret_wiper.emergency_wipe_all()
 ```
 
@@ -160,15 +171,19 @@ dos_trap.secret_wiper.emergency_wipe_all()
 from thirstys_waterfall.security import SanitizationMode
 
 # Single-pass (fast)
+
 dos_trap.memory_sanitizer.sanitize_ram(SanitizationMode.SINGLE_PASS)
 
 # Three-pass (standard)
+
 dos_trap.memory_sanitizer.sanitize_ram(SanitizationMode.THREE_PASS)
 
 # DoD 5220.22-M (7 passes)
+
 dos_trap.memory_sanitizer.sanitize_ram(SanitizationMode.SEVEN_PASS_DOD)
 
 # Gutmann method (35 passes - maximum security)
+
 dos_trap.memory_sanitizer.sanitize_ram(SanitizationMode.GUTMANN)
 ```
 
@@ -178,12 +193,14 @@ dos_trap.memory_sanitizer.sanitize_ram(SanitizationMode.GUTMANN)
 from thirstys_waterfall.security import SanitizationMode
 
 # Securely delete file
+
 dos_trap.disk_sanitizer.sanitize_file(
     '/path/to/sensitive/file',
     SanitizationMode.THREE_PASS
 )
 
 # Securely delete directory
+
 dos_trap.disk_sanitizer.sanitize_directory(
     '/path/to/sensitive/dir',
     SanitizationMode.SEVEN_PASS_DOD
@@ -193,7 +210,9 @@ dos_trap.disk_sanitizer.sanitize_directory(
 ### Manual Trigger
 
 ```python
+
 # Manually trigger DOS trap for testing or emergency
+
 dos_trap.manual_trigger("Emergency shutdown initiated by administrator")
 ```
 
@@ -253,16 +272,20 @@ dos_trap.config = {
 ## Threat Reporting
 
 ```python
+
 # Get current status
+
 status = dos_trap.get_status()
 
 # Get comprehensive threat report
+
 report = dos_trap.get_threat_report()
 print(f"Total Threats: {report['total_threats']}")
 print(f"Current Level: {report['current_threat_level']}")
 print(f"System Compromised: {report['system_compromised']}")
 
 # Get threats by type
+
 for threat_type, count in report['threats_by_type'].items():
     print(f"{threat_type}: {count}")
 ```
@@ -315,6 +338,7 @@ Always review alerts before taking destructive actions.
 ### Hardware Root-of-Trust
 
 DOS Trap Mode integrates with Hardware Root-of-Trust for:
+
 - Attestation monitoring
 - TPM key destruction
 - Secure enclave integration
@@ -323,6 +347,7 @@ DOS Trap Mode integrates with Hardware Root-of-Trust for:
 ### Global Kill Switch
 
 Integrates with Global Kill Switch for:
+
 - Coordinated emergency response
 - Network traffic blocking
 - System-wide shutdown procedures
@@ -339,6 +364,7 @@ from thirstys_waterfall.security.hardware_root_of_trust import HardwareRootOfTru
 from thirstys_waterfall.kill_switch import GlobalKillSwitch
 
 # Initialize components
+
 hw_trust = HardwareRootOfTrust()
 hw_trust.initialize()
 
@@ -346,12 +372,14 @@ kill_switch = GlobalKillSwitch()
 kill_switch.enable()
 
 # Create DOS trap
+
 dos_trap = create_dos_trap(
     hardware_root_of_trust=hw_trust,
     kill_switch=kill_switch
 )
 
 # Configure
+
 dos_trap.config['auto_respond'] = True
 dos_trap.config['response_threshold'] = ThreatLevel.HIGH
 dos_trap.config['monitor_interval'] = 30
@@ -359,20 +387,28 @@ dos_trap.config['auto_sanitize'] = False  # Require manual approval
 dos_trap.config['emergency_shutdown'] = True
 
 # Register callback
+
 def security_alert(events):
     for event in events:
+
         # Send to SIEM
+
         # Alert security team
+
         # Log to audit trail
+
         pass
 
 dos_trap.register_response_callback(security_alert)
 
 # Enable monitoring
+
 dos_trap.enable()
 
 # Monitor runs in background thread
+
 # Automatic detection and response based on configuration
+
 ```
 
 ## Testing
@@ -430,6 +466,7 @@ All operations are comprehensively logged:
 - Integration events
 
 Log levels:
+
 - `INFO`: Normal operations
 - `WARNING`: Suspicious activity
 - `CRITICAL`: Confirmed threats and response actions

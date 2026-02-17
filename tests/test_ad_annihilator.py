@@ -277,7 +277,7 @@ class TestTrackerDestroyer(unittest.TestCase):
         tracking_urls = [
             "https://google-analytics.com/analytics.js",
             "https://mixpanel.com/tracking.js",
-            "https://segment.com/pixel.js"
+            "https://segment.com/pixel.js",
         ]
 
         for url in tracking_urls:

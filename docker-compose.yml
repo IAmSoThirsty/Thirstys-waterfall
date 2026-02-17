@@ -28,10 +28,13 @@ services:
     env_file:
       - .env
 
-    # Volumes for persistent data
+    # Volumes for persistent data and development
     volumes:
       - thirstys_data:/home/thirsty/.thirstys_waterfall
       - ./config:/app/config:ro
+      # Development volume mounts for live code updates
+      - ./web:/app/web:rw
+      - ./thirstys_waterfall:/app/thirstys_waterfall:rw
 
     # Network configuration
     networks:

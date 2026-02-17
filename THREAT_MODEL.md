@@ -1,6 +1,7 @@
 # Threat Model - Thirstys Waterfall
 
 ## Document Version
+
 - **Version**: 1.0
 - **Last Updated**: 2026-02-03
 - **Status**: Living Document
@@ -12,6 +13,7 @@ Thirstys Waterfall is a privacy-first security system designed to protect users 
 ## 1. System Overview
 
 Thirstys Waterfall provides:
+
 - Multi-layered firewall protection (8 firewall types)
 - Built-in VPN with multi-hop routing
 - Privacy-focused browser with anti-fingerprinting
@@ -84,24 +86,28 @@ Thirstys Waterfall provides:
 ### In Scope
 
 #### 1. Network-Based Adversaries
+
 - **Capability Level**: Medium to High
 - **Examples**: ISPs, network administrators, man-in-the-middle attackers
 - **Objectives**: Monitor traffic, track users, inject content
 - **Defenses**: VPN encryption, DNS protection, traffic obfuscation
 
 #### 2. Web-Based Trackers
+
 - **Capability Level**: Low to Medium
 - **Examples**: Advertising networks, analytics platforms, fingerprinting services
 - **Objectives**: Track user behavior, build profiles, correlate identities
 - **Defenses**: Anti-fingerprinting, anti-tracking, cookie blocking
 
 #### 3. Malicious Websites
+
 - **Capability Level**: Medium
 - **Examples**: Phishing sites, malware distribution, exploit kits
 - **Objectives**: Steal credentials, install malware, exploit vulnerabilities
 - **Defenses**: Browser sandbox, URL filtering, firewall rules
 
 #### 4. Local Network Attackers
+
 - **Capability Level**: Low to Medium
 - **Examples**: Malicious WiFi hotspots, ARP poisoning, packet sniffing
 - **Objectives**: Intercept traffic, redirect connections, inject malware
@@ -110,18 +116,22 @@ Thirstys Waterfall provides:
 ### Out of Scope
 
 #### 1. Nation-State Advanced Persistent Threats (APTs)
+
 - **Reason**: Requires defense-in-depth beyond this application's scope
 - **Mitigation**: Users requiring this level of protection should use dedicated secure operating systems (Tails, Qubes OS)
 
 #### 2. Physical Access Attackers
+
 - **Reason**: Cannot defend against attackers with physical device access
 - **Mitigation**: Users should use full-disk encryption, secure boot, and physical security measures
 
 #### 3. Compromised Operating System
+
 - **Reason**: Application-level security cannot defend against OS-level rootkits
 - **Mitigation**: Users should maintain OS security updates and use endpoint protection
 
 #### 4. Supply Chain Attacks
+
 - **Reason**: Beyond scope of runtime protection
 - **Mitigation**: Use package verification, code signing, and trusted repositories
 
@@ -132,11 +142,13 @@ Thirstys Waterfall provides:
 **Attack**: ISP or network administrator monitoring user traffic
 
 **Attack Vector**:
+
 - Deep packet inspection
 - DNS query logging
 - Traffic pattern analysis
 
 **Defenses**:
+
 - ✅ VPN encryption (all traffic encrypted end-to-end)
 - ✅ DNS-over-HTTPS (encrypted DNS queries)
 - ✅ Multi-hop routing (traffic correlation resistance)
@@ -151,12 +163,14 @@ Thirstys Waterfall provides:
 **Attack**: Websites tracking users via unique browser characteristics
 
 **Attack Vector**:
+
 - Canvas fingerprinting
 - WebGL fingerprinting
 - Font enumeration
 - Hardware detection
 
 **Defenses**:
+
 - ✅ Anti-fingerprinting engine (randomized characteristics)
 - ✅ Canvas noise injection
 - ✅ WebGL protection
@@ -171,11 +185,13 @@ Thirstys Waterfall provides:
 **Attack**: Network disruption exposing real IP address
 
 **Attack Vector**:
+
 - VPN server failure
 - Network disconnection
 - Protocol blocking
 
 **Defenses**:
+
 - ✅ Kill switch (blocks all traffic if VPN drops)
 - ✅ Automatic reconnection
 - ✅ Protocol fallback (WireGuard → OpenVPN → IKEv2)
@@ -190,11 +206,13 @@ Thirstys Waterfall provides:
 **Attack**: DNS queries bypass VPN, exposing browsing history
 
 **Attack Vector**:
+
 - System DNS resolver misconfiguration
 - IPv6 DNS bypass
 - Split tunneling leaks
 
 **Defenses**:
+
 - ✅ DNS leak protection (forces all DNS through VPN)
 - ✅ IPv6 leak protection
 - ✅ DNS-over-HTTPS
@@ -209,12 +227,14 @@ Thirstys Waterfall provides:
 **Attack**: Attacker injects malicious content into traffic
 
 **Attack Vector**:
+
 - HTTP downgrade attacks
 - Script injection
 - Malware delivery
 - Man-in-the-middle
 
 **Defenses**:
+
 - ✅ VPN encryption (prevents content injection)
 - ✅ HTTPS enforcement
 - ✅ Content Security Policy
@@ -229,11 +249,13 @@ Thirstys Waterfall provides:
 **Attack**: Malicious website exploits browser to escape sandbox
 
 **Attack Vector**:
+
 - Memory corruption vulnerabilities
 - JavaScript engine exploits
 - Plugin vulnerabilities
 
 **Defenses**:
+
 - ✅ Browser tab isolation
 - ✅ Sandboxed execution
 - ✅ Limited system access
@@ -248,11 +270,13 @@ Thirstys Waterfall provides:
 **Attack**: Adversary correlates VPN entry and exit traffic
 
 **Attack Vector**:
+
 - Timing analysis
 - Volume analysis
 - Global network observation
 
 **Defenses**:
+
 - ✅ Multi-hop routing (increases correlation difficulty)
 - ✅ Traffic padding (limited)
 - ⚠️ Cannot fully defend against global passive adversaries
@@ -298,12 +322,14 @@ Master Key (User-derived or Hardware-backed)
 ```
 
 **Key Storage**:
+
 - Master keys: Environment variables, OS keychain, or Hardware Security Module (HSM)
 - Session keys: Memory only (never persisted)
 - Storage keys: Encrypted with master key
 - Key rotation: Automatic rotation of session keys; manual rotation of persistent keys
 
 **Key Derivation**:
+
 - Algorithm: PBKDF2-HMAC-SHA256 (minimum 100,000 iterations) or scrypt
 - Salt: Cryptographically random (32 bytes)
 - Output: 256-bit keys
@@ -313,7 +339,7 @@ Master Key (User-derived or Hardware-backed)
 1. **Generation**: Cryptographically secure random generation (256+ bits)
 2. **Distribution**: Keys never transmitted; derived locally or from secure vault
 3. **Usage**: Keys loaded into memory only when needed
-4. **Rotation**: 
+4. **Rotation**:
    - VPN session keys: Per-connection
    - Storage keys: Every 90 days or on compromise
    - Master key: Yearly or on compromise
@@ -322,6 +348,7 @@ Master Key (User-derived or Hardware-backed)
 ### 5.4 Key Compromise Response
 
 **If a key is compromised**:
+
 1. Immediately revoke compromised key
 2. Generate new key with fresh randomness
 3. Re-encrypt all data encrypted with old key
@@ -430,19 +457,19 @@ Master Key (User-derived or Hardware-backed)
 
 ### What We Do Well
 
-✅ **Network Privacy**: Strong VPN encryption and multi-hop routing  
-✅ **Browser Privacy**: Anti-fingerprinting and tracking protection  
-✅ **Kill Switch**: Prevents leaks during connection failures  
-✅ **Encryption**: End-to-end encryption of user data  
-✅ **Firewall Protection**: Multi-layered packet filtering  
+✅ **Network Privacy**: Strong VPN encryption and multi-hop routing
+✅ **Browser Privacy**: Anti-fingerprinting and tracking protection
+✅ **Kill Switch**: Prevents leaks during connection failures
+✅ **Encryption**: End-to-end encryption of user data
+✅ **Firewall Protection**: Multi-layered packet filtering
 
 ### Current Limitations
 
-⚠️ **Browser Engine**: Depends on underlying browser security (not custom engine)  
-⚠️ **OS Integration**: Limited protection if OS is compromised  
-⚠️ **Advanced Adversaries**: Cannot fully protect against nation-state attackers  
-⚠️ **Metadata**: Traffic timing/volume metadata may leak  
-⚠️ **Zero-Days**: Vulnerable to unknown exploits like any software  
+⚠️ **Browser Engine**: Depends on underlying browser security (not custom engine)
+⚠️ **OS Integration**: Limited protection if OS is compromised
+⚠️ **Advanced Adversaries**: Cannot fully protect against nation-state attackers
+⚠️ **Metadata**: Traffic timing/volume metadata may leak
+⚠️ **Zero-Days**: Vulnerable to unknown exploits like any software
 
 ### Roadmap for Improvement
 
@@ -460,12 +487,14 @@ Master Key (User-derived or Hardware-backed)
 Thirstys Waterfall is a privacy and security tool intended for lawful use. Users are responsible for compliance with applicable laws and regulations in their jurisdiction.
 
 **Acceptable Use**:
+
 - ✅ Protecting personal privacy
 - ✅ Securing sensitive communications
 - ✅ Bypassing censorship (where legal)
 - ✅ Security research and testing
 
 **Prohibited Use**:
+
 - ❌ Illegal activities
 - ❌ Unauthorized access to systems
 - ❌ Copyright infringement
@@ -474,6 +503,7 @@ Thirstys Waterfall is a privacy and security tool intended for lawful use. Users
 ### User Responsibilities
 
 Users must:
+
 1. Keep software updated
 2. Use strong master passwords
 3. Verify VPN connection before sensitive activities

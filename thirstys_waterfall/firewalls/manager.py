@@ -24,14 +24,20 @@ class FirewallManager:
 
         # Initialize all firewall types
         self.firewalls = {
-            'packet_filtering': PacketFilteringFirewall(config.get('packet_filtering', {})),
-            'circuit_level': CircuitLevelGateway(config.get('circuit_level', {})),
-            'stateful_inspection': StatefulInspectionFirewall(config.get('stateful_inspection', {})),
-            'proxy': ProxyFirewall(config.get('proxy', {})),
-            'next_generation': NextGenerationFirewall(config.get('next_generation', {})),
-            'software': SoftwareFirewall(config.get('software', {})),
-            'hardware': HardwareFirewall(config.get('hardware', {})),
-            'cloud': CloudFirewall(config.get('cloud', {}))
+            "packet_filtering": PacketFilteringFirewall(
+                config.get("packet_filtering", {})
+            ),
+            "circuit_level": CircuitLevelGateway(config.get("circuit_level", {})),
+            "stateful_inspection": StatefulInspectionFirewall(
+                config.get("stateful_inspection", {})
+            ),
+            "proxy": ProxyFirewall(config.get("proxy", {})),
+            "next_generation": NextGenerationFirewall(
+                config.get("next_generation", {})
+            ),
+            "software": SoftwareFirewall(config.get("software", {})),
+            "hardware": HardwareFirewall(config.get("hardware", {})),
+            "cloud": CloudFirewall(config.get("cloud", {})),
         }
 
         self._active = False

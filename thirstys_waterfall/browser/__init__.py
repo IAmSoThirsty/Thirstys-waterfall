@@ -8,10 +8,10 @@ from .encrypted_search import EncryptedSearchEngine
 from .encrypted_navigation import EncryptedNavigationHistory
 
 __all__ = [
-    'IncognitoBrowser',
-    'TabManager',
-    'BrowserSandbox',
-    'ContentBlocker',
-    'EncryptedSearchEngine',
-    'EncryptedNavigationHistory'
+    "IncognitoBrowser",
+    "TabManager",
+    "BrowserSandbox",
+    "ContentBlocker",
+    "EncryptedSearchEngine",
+    "EncryptedNavigationHistory",
 ]

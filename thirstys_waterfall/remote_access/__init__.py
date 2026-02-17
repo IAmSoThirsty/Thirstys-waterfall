@@ -6,4 +6,4 @@ from .remote_browser import RemoteBrowser
 from .remote_desktop import RemoteDesktop
 from .secure_tunnel import SecureTunnel
 
-__all__ = ['RemoteBrowser', 'RemoteDesktop', 'SecureTunnel']
+__all__ = ["RemoteBrowser", "RemoteDesktop", "SecureTunnel"]

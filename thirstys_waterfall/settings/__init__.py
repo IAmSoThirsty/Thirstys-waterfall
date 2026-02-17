@@ -7,4 +7,4 @@ from .qa_system import QASystem
 from .contact_system import ContactSystem
 from .feedback_manager import FeedbackManager
 
-__all__ = ['SettingsManager', 'QASystem', 'ContactSystem', 'FeedbackManager']
+__all__ = ["SettingsManager", "QASystem", "ContactSystem", "FeedbackManager"]

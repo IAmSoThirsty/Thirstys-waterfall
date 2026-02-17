@@ -1,3 +1,5 @@
+# Architecture
+
 """
 Thirstys Waterfall Documentation
 
@@ -57,6 +59,7 @@ Thirstys Waterfall Documentation
 ### Encryption
 
 **EVERYTHING is encrypted:**
+
 - All search queries encrypted before processing
 - All visited URLs encrypted in storage
 - All network traffic encrypted end-to-end
@@ -96,6 +99,7 @@ Thirstys Waterfall Documentation
 ### Usage Examples
 
 See `examples/` directory for complete examples:
+
 - `basic_usage.py` - Basic system usage
 - `advanced_usage.py` - Advanced features
 - `config.json` - Configuration template

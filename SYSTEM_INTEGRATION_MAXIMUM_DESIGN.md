@@ -1,4 +1,5 @@
 # Thirstys Waterfall - System Integration & Architecture
+
 ## MAXIMUM ALLOWED DESIGN Specification
 
 **Version**: 1.0.0
@@ -61,6 +62,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 ### 1.2 Layer Responsibilities
 
 #### Layer 1: Orchestration (orchestrator.py)
+
 - **Purpose**: Central coordination and lifecycle management
 - **Key Components**:
   - Global kill switch coordinator
@@ -71,6 +73,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: Thread-safe with global locks
 
 #### Layer 2: Foundation (utils/*)
+
 - **Purpose**: Core utilities used by all components
 - **Key Components**:
   - `god_tier_encryption.py`: 7-layer encryption stack (391 lines)
@@ -81,6 +84,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: Thread-safe encryption operations
 
 #### Layer 3: Network Security (firewalls/*, vpn/*)
+
 - **Purpose**: Network-level protection and anonymization
 - **Key Components**:
   - 8 firewall types (11 modules, 612+ lines in backends)
@@ -92,6 +96,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: Process-based isolation, file-based coordination
 
 #### Layer 4: Privacy Protection (privacy/*, browser/*, ad_annihilator/*)
+
 - **Purpose**: User privacy and tracking prevention
 - **Key Components**:
   - Privacy browser with tab isolation (7 modules)
@@ -103,6 +108,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: Per-tab isolation, encrypted context windows
 
 #### Layer 5: Security & Compliance (security/*)
+
 - **Purpose**: Advanced security features and audit compliance
 - **Key Components**:
   - Privacy Ledger (909 lines, immutable audit log)
@@ -115,6 +121,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: Thread-safe with RLock for critical sections
 
 #### Layer 6: Storage & Persistence (storage/*)
+
 - **Purpose**: Encrypted storage and ephemeral data management
 - **Key Components**:
   - Privacy Vault (118 lines, encrypted persistent storage)
@@ -123,6 +130,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 - **Thread Safety**: File-level locking for atomic operations
 
 #### Layer 7: Application Services (ai_assistant/*, media_downloader/*, remote_access/*)
+
 - **Purpose**: High-level application features
 - **Key Components**:
   - AI Assistant (226 lines, on-device inference)
@@ -140,6 +148,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 **Central Component**: `utils/god_tier_encryption.py` (391 lines)
 
 **7-Layer Encryption Stack**:
+
 1. **Layer 1**: SHA-512 integrity hash
 2. **Layer 2**: Fernet (AES-128-CBC + HMAC-SHA256)
 3. **Layer 3**: AES-256-GCM (military-grade AEAD)
@@ -149,6 +158,7 @@ Thirstys Waterfall is a production-grade, privacy-first system integrating **8 f
 7. **Layer 7**: HMAC-SHA512 authentication (500,000 iterations)
 
 **Additional Algorithms**:
+
 - RSA-4096: Quantum-resistant asymmetric encryption
 - ECC-521: Highest elliptic curve security
 - Scrypt: Key derivation (n=2^20, very high cost factor)
@@ -178,23 +188,30 @@ firewalls/manager.py         → Firewall rule encryption
 
 **Integration Pattern**:
 ```python
+
 # Initialization (in orchestrator)
+
 from thirstys_waterfall.utils.god_tier_encryption import GodTierEncryption
 
 self._master_cipher = GodTierEncryption(master_key)
 
 # Usage (in any module)
+
 encrypted_data = self._cipher.encrypt(plaintext_data)
 decrypted_data = self._cipher.decrypt(encrypted_data)
 
 # Verification
+
 strength = self._cipher.get_encryption_strength()
+
 # Returns: {'layers': 7, 'algorithms': [...], 'quantum_resistant': True}
+
 ```
 
 **Thread Safety**: All encryption operations are thread-safe (stateless operations)
 
 **Performance Characteristics**:
+
 - **Encryption**: O(n) where n = data size (average 50-100 μs for 1KB)
 - **Decryption**: O(n) with 7 layers (average 70-120 μs for 1KB)
 - **Key Derivation**: O(1) with high cost (2^20 iterations, ~2-3 seconds)
@@ -240,6 +257,7 @@ Global Kill Switch (kill_switch.py)
 ```
 
 **Trigger Conditions**:
+
 1. User-initiated (manual trigger)
 2. VPN connection failure (automatic)
 3. DNS leak detected (automatic)
@@ -249,27 +267,34 @@ Global Kill Switch (kill_switch.py)
 
 **Integration Flow**:
 ```python
+
 # Trigger (from any component)
+
 self.orchestrator.trigger_kill_switch(reason="VPN connection failed")
 
 # Propagation (orchestrator coordinates)
+
 def trigger_kill_switch(self, reason):
     self._log_emergency(f"Kill switch: {reason}")
 
     # Phase 1: Stop all network (most urgent)
+
     self.vpn_manager.kill_switch_activate()
     self.firewall_manager.panic_mode()
 
     # Phase 2: Close applications
+
     self.browser.emergency_shutdown()
     self.ai_assistant.stop()
     self.consigliere.wipe_everything()
 
     # Phase 3: Secure storage
+
     self.storage.secure_wipe()
     self.privacy_vault.lock()
 
     # Phase 4: Notify and log
+
     self.privacy_ledger.log_kill_switch(reason)
 ```
 
@@ -280,6 +305,7 @@ def trigger_kill_switch(self, reason):
 **Architecture**: Strategy pattern with platform-specific backends
 
 **Components**:
+
 1. **Manager** (`firewalls/manager.py`, 63 lines)
    - Orchestrates 8 firewall types
    - Coordinates rule application
@@ -310,27 +336,36 @@ def trigger_kill_switch(self, reason):
 
 **Integration Flow**:
 ```python
+
 # Initialization
+
 from thirstys_waterfall.firewalls.manager import FirewallManager
 
 firewall_mgr = FirewallManager(config)
 
 # Platform detection and backend creation
+
 backend = FirewallBackendFactory.create_backend()
+
 # Automatically selects: NftablesBackend (Linux) | WindowsFirewallBackend | PFBackend (macOS)
 
 # Rule application
+
 firewall_mgr.apply_rules([
     {'action': 'block', 'source': '0.0.0.0/0', 'dest': '192.168.1.0/24'},
     {'action': 'allow', 'port': 443, 'protocol': 'tcp'}
 ])
 
 # Status check
+
 status = firewall_mgr.get_status()
+
 # {'active': True, 'rules_count': 42, 'backend': 'nftables', 'platform': 'linux'}
+
 ```
 
 **Cross-Module Dependencies**:
+
 - **VPN Kill Switch** → Firewall Manager: Block all non-VPN traffic
 - **DOS Trap** → Firewall Manager: Auto-blacklist attackers
 - **Orchestrator** → Firewall Manager: System-wide rule coordination
@@ -338,6 +373,7 @@ status = firewall_mgr.get_status()
 **Thread Safety**: File-based coordination with exclusive locks
 
 **Performance**:
+
 - Rule application: O(n) where n = number of rules (typically < 100ms for 100 rules)
 - Platform command execution: 50-200ms per command (subprocess overhead)
 - Backend availability check: < 10ms (cached after first check)
@@ -347,6 +383,7 @@ status = firewall_mgr.get_status()
 **Architecture**: Protocol abstraction with native OS integration
 
 **Components**:
+
 1. **VPN Manager** (`vpn/vpn_manager.py`, 97 lines)
    - VPN lifecycle management
    - Connection monitoring
@@ -372,7 +409,9 @@ status = firewall_mgr.get_status()
 
 **Configuration Generation**:
 ```python
+
 # WireGuard configuration (Linux/macOS)
+
 [Interface]
 PrivateKey = <generated_key>
 Address = 10.0.0.2/24
@@ -385,6 +424,7 @@ AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 
 # OpenVPN configuration
+
 client
 dev tun
 proto udp
@@ -412,28 +452,37 @@ Destination
 
 **Integration with Kill Switch**:
 ```python
+
 # VPN Manager monitors connection
+
 def _monitor_connection(self):
     while self._running:
         if not self._check_vpn_alive():
+
             # VPN failed - trigger kill switch
+
             self.orchestrator.trigger_kill_switch("VPN connection lost")
         time.sleep(5)
 
 # Kill switch blocks all non-VPN traffic
+
 def activate_kill_switch(self):
+
     # Block all traffic except to VPN server
+
     self.firewall.block_all_except([self.vpn_server_ip])
     self.network_interfaces.disable_all_except('tun0')
 ```
 
 **DNS Leak Protection**:
+
 1. Override system DNS with VPN DNS
 2. Block direct DNS queries to ISP servers
 3. Force DNS-over-HTTPS through VPN tunnel
 4. Verify DNS responses come from VPN server
 
 **Performance**:
+
 - Connection establishment: 2-5 seconds (protocol-dependent)
 - Protocol fallback: WireGuard → OpenVPN → IKEv2 (30s timeout each)
 - Multi-hop overhead: ~50-100ms per hop (latency increase)
@@ -443,6 +492,7 @@ def activate_kill_switch(self):
 **Architecture**: Privacy-first browser with multi-layer protection
 
 **Components**:
+
 1. **Browser Engine** (`browser/browser_engine.py`, 265 lines)
    - Tab lifecycle management
    - Navigation control
@@ -475,6 +525,7 @@ def activate_kill_switch(self):
    - Encrypted site metadata
 
 **Privacy Guarantees**:
+
 - ✅ No history (never stored)
 - ✅ No cache (never persisted)
 - ✅ No cookies (session only, wiped on close)
@@ -486,30 +537,41 @@ def activate_kill_switch(self):
 
 **Integration with Ad Annihilator**:
 ```python
+
 # Browser Engine delegates to Ad Annihilator
+
 def navigate(self, tab_id, url):
+
     # Check if URL should be blocked
+
     decision = self.ad_annihilator.should_block_url(url)
     if decision['should_block']:
         return {'blocked': True, 'reason': 'Ad domain'}
 
     # Proceed with navigation
+
     encrypted_url = self.encrypted_navigation.encrypt_url(url)
     self.tabs[tab_id].navigate(encrypted_url)
 ```
 
 **Integration with Consigliere**:
 ```python
+
 # Browser queries Consigliere for AI assistance
+
 def get_search_suggestions(self, query):
+
     # Consigliere audits query for privacy concerns
+
     response = self.consigliere.assist(query, context={
         'capability': 'search',
         'tab_count': len(self.tabs)
     })
 
     if 'privacy_concerns' in response:
+
         # Privacy issue detected
+
         return {'suggestions': [], 'warning': response['privacy_concerns']}
 
     return response
@@ -528,6 +590,7 @@ RESOURCE_LIMITS = {
 ```
 
 **6 Security Boundaries**:
+
 1. **Process Isolation**: Each tab in separate process
 2. **Memory Isolation**: No shared memory between tabs
 3. **Network Isolation**: Per-tab network namespace (Linux)
@@ -538,6 +601,7 @@ RESOURCE_LIMITS = {
 ### 2.6 Privacy System Integration
 
 **Components**:
+
 1. **Anti-Tracking** (`privacy/anti_tracker.py`, 131 lines)
    - 8 tracker categories blocked
    - Third-party cookie blocking
@@ -566,25 +630,34 @@ RESOURCE_LIMITS = {
 
 **Integration with Browser**:
 ```python
+
 # Browser Engine initializes privacy subsystems
+
 self.anti_tracker = AntiTracker(config)
 self.anti_fingerprint = AntiFingerprint(config)
 
 # On navigation
+
 def navigate(self, tab_id, url):
+
     # Apply anti-tracking
+
     sanitized_url = self.anti_tracker.sanitize_url(url)
 
     # Apply anti-fingerprinting
+
     fingerprint = self.anti_fingerprint.generate_random_fingerprint()
 
     # Navigate with privacy protections
+
     self.tabs[tab_id].navigate(sanitized_url, fingerprint)
 ```
 
 **Privacy Audit Flow**:
 ```python
+
 # Periodic privacy audit (every 60 seconds)
+
 def run_privacy_audit(self):
     results = {
         'dns_leak': self.privacy_auditor.check_dns_leak(),
@@ -595,9 +668,11 @@ def run_privacy_audit(self):
     }
 
     # Log to Privacy Ledger
+
     self.privacy_ledger.log_audit(results)
 
     # Trigger kill switch if critical leak
+
     if results['dns_leak'] or results['webrtc_leak']:
         self.orchestrator.trigger_kill_switch("Privacy leak detected")
 
@@ -607,6 +682,7 @@ def run_privacy_audit(self):
 ### 2.7 Security System Integration
 
 **Components**:
+
 1. **Privacy Ledger** (`security/privacy_ledger.py`, 909 lines)
    - Immutable append-only audit log
    - Zero-knowledge encryption (Fernet + AES-GCM)
@@ -650,7 +726,9 @@ def run_privacy_audit(self):
 
 **Privacy Ledger Integration**:
 ```python
+
 # All system events logged to Privacy Ledger
+
 class PrivacyLedger:
     def log_event(self, event_type, data, severity='INFO'):
         entry = {
@@ -663,29 +741,38 @@ class PrivacyLedger:
         }
 
         # Append-only write (immutable)
+
         self._append_entry(entry)
 
         # Update Merkle tree root
+
         self._update_merkle_tree(entry)
 
         return entry['id']
 
 # Consumers (19 integration points):
+
 orchestrator.log_event('system_start')
 browser.log_event('navigation', {'url': encrypted_url})
 vpn.log_event('connection_established', {'protocol': 'wireguard'})
 firewall.log_event('rule_applied', {'rule_count': 42})
 consigliere.log_event('query_processed', {'query_hash': hash})
+
 # ... all 19 modules log to Privacy Ledger
+
 ```
 
 **Privacy Risk Engine Integration**:
 ```python
+
 # Real-time threat detection and automatic response
+
 class PrivacyRiskEngine:
     def monitor_system(self):
         while self._running:
+
             # Collect metrics from all subsystems
+
             metrics = {
                 'vpn_connected': self.vpn.is_connected(),
                 'dns_leaks': self.privacy_auditor.check_dns_leak(),
@@ -695,15 +782,21 @@ class PrivacyRiskEngine:
             }
 
             # AI risk scoring
+
             risk_score = self._calculate_risk(metrics)
             risk_level = self._get_risk_level(risk_score)  # 0-5
 
             # Automatic escalation
+
             if risk_level >= 4:
+
                 # High risk - activate DOS trap
+
                 self.dos_trap.activate()
             if risk_level >= 5:
+
                 # Critical risk - kill switch
+
                 self.orchestrator.trigger_kill_switch("Critical threat detected")
 
             time.sleep(1)  # 1-second monitoring interval
@@ -711,38 +804,49 @@ class PrivacyRiskEngine:
 
 **DOS Trap Integration**:
 ```python
+
 # Multi-layer defense with automatic response
+
 class DOSTrap:
     def detect_compromise(self):
         threats = []
 
         # Layer 1: Rootkit detection
+
         if self._detect_rootkit():
             threats.append('rootkit')
 
         # Layer 2: Kernel anomaly
+
         if self._detect_kernel_anomaly():
             threats.append('kernel_compromise')
 
         # Layer 3: Process injection
+
         if self._detect_process_injection():
             threats.append('process_injection')
 
         # Automated response
+
         if threats:
+
             # Log to Privacy Ledger
+
             self.privacy_ledger.log_event('compromise_detected', {
                 'threats': threats,
                 'timestamp': time.time()
             }, severity='CRITICAL')
 
             # Wipe secrets
+
             self._wipe_master_keys()
 
             # Memory sanitization
+
             self._sanitize_memory()
 
             # Trigger kill switch
+
             self.orchestrator.trigger_kill_switch("System compromise detected")
 ```
 
@@ -1043,7 +1147,9 @@ security/mfa_auth.py
 
 **Pattern 1: Process Isolation (Browser Tabs)**
 ```python
+
 # Each tab runs in separate process
+
 class TabManager:
     def create_tab(self):
         process = subprocess.Popen([
@@ -1063,13 +1169,17 @@ class PrivacyLedger:
 
     def append_entry(self, entry):
         with self._write_lock:
+
             # Exclusive write access
+
             self._entries.append(entry)
             self._update_merkle_tree(entry)
 
     def read_entries(self):
         with self._read_lock:
+
             # Shared read access
+
             return self._entries.copy()
 ```
 
@@ -1097,20 +1207,28 @@ class PrivacyRiskEngine:
 
 **Pattern 4: Stateless Operations (God-Tier Encryption)**
 ```python
+
 # No shared state - all operations are stateless
+
 class GodTierEncryption:
     def encrypt(self, data):
+
         # Each encryption is independent
+
         # No shared state, no locks needed
+
         layer1 = self._sha512(data)
         layer2 = self._fernet_encrypt(layer1)
+
         # ... 7 layers
+
         return layer7
 ```
 
 ### 5.3 Lock Acquisition Order (Deadlock Prevention)
 
 **Global Lock Order** (always acquire in this order):
+
 1. `orchestrator._global_lock` (highest precedence)
 2. `privacy_ledger._write_lock`
 3. `privacy_risk_engine._risk_lock`
@@ -1118,6 +1236,7 @@ class GodTierEncryption:
 5. Component-specific locks (lowest precedence)
 
 **Deadlock Prevention Rules**:
+
 - Always acquire locks in the same order
 - Release locks in reverse order
 - Use timeout on lock acquisition (5 seconds)
@@ -1167,17 +1286,20 @@ class GodTierEncryption:
 ### 6.4 Scalability Characteristics
 
 **Linear Scalability** (O(n)):
+
 - Encryption/decryption with data size
 - Privacy Ledger writes with entry count
 - Firewall rule application with rule count
 - Ad blocking with blocklist size
 
 **Logarithmic Scalability** (O(log n)):
+
 - Merkle tree verification (Privacy Ledger)
 - Rule lookup in firewall (hash table)
 - Entry search in Privacy Ledger (indexed)
 
 **Constant Time** (O(1)):
+
 - Kill switch activation
 - Risk score calculation
 - VPN status check
@@ -1218,12 +1340,16 @@ def connect(self, protocol='wireguard'):
             }, severity='WARNING')
 
             if attempt == 2:
+
                 # Final attempt failed - try fallback protocol
+
                 fallback = self._get_fallback_protocol(protocol)
                 if fallback:
                     return self.connect(fallback)
                 else:
+
                     # No fallback - trigger kill switch
+
                     self.orchestrator.trigger_kill_switch("VPN connection failed")
                     raise
 ```
@@ -1232,19 +1358,25 @@ def connect(self, protocol='wireguard'):
 ```python
 def navigate(self, tab_id, url):
     try:
+
         # Check if URL should be blocked
+
         decision = self.content_blocker.should_block(url)
         if decision['should_block']:
             return {'blocked': True, 'reason': decision['reason']}
 
         # Encrypt URL
+
         encrypted_url = self.encrypted_navigation.encrypt_url(url)
 
         # Navigate
+
         self.tabs[tab_id].navigate(encrypted_url)
 
     except TabCrashError as e:
+
         # Tab crashed - restart tab
+
         self.privacy_ledger.log_event('tab_crashed', {
             'tab_id': tab_id,
             'error': str(e)
@@ -1253,7 +1385,9 @@ def navigate(self, tab_id, url):
         self._restart_tab(tab_id)
 
     except EncryptionError as e:
+
         # Critical encryption failure - kill switch
+
         self.privacy_ledger.log_event('encryption_failed', {
             'component': 'encrypted_navigation',
             'error': str(e)
@@ -1268,40 +1402,54 @@ def navigate(self, tab_id, url):
 def append_entry(self, entry):
     try:
         with self._write_lock:
+
             # Encrypt entry
+
             encrypted_entry = self._encrypt_entry(entry)
 
             # Write to disk (atomic)
+
             self._atomic_write(encrypted_entry)
 
             # Update Merkle tree
+
             self._update_merkle_tree(encrypted_entry)
 
     except EncryptionError as e:
+
         # Encryption failed - critical error
+
         # DO NOT write plaintext entry
+
         raise
 
     except DiskFullError as e:
+
         # Disk full - archive old entries
+
         self._archive_old_entries()
 
         # Retry write
+
         self.append_entry(entry)
 
     except MerkleTreeError as e:
+
         # Merkle tree integrity failure - CRITICAL
+
         self.privacy_ledger.log_event('merkle_tree_integrity_failure', {
             'error': str(e)
         }, severity='CRITICAL')
 
         # Rebuild Merkle tree from entries
+
         self._rebuild_merkle_tree()
 ```
 
 ### 7.3 Recovery Procedures
 
 **VPN Connection Recovery**:
+
 1. Detect connection failure (5-second timeout)
 2. Activate VPN kill switch (block all non-VPN traffic)
 3. Attempt reconnection (3 attempts, 30-second timeout each)
@@ -1309,6 +1457,7 @@ def append_entry(self, entry):
 5. If all fail: Trigger global kill switch
 
 **Privacy Ledger Corruption Recovery**:
+
 1. Detect Merkle tree integrity failure
 2. Lock ledger for writes
 3. Verify all entries (O(n) scan)
@@ -1316,6 +1465,7 @@ def append_entry(self, entry):
 5. Resume writes
 
 **Browser Tab Crash Recovery**:
+
 1. Detect tab crash (process exit with error code)
 2. Log crash to Privacy Ledger
 3. Wipe tab-specific encrypted data
@@ -1329,6 +1479,7 @@ def append_entry(self, entry):
 ### 8.1 Defense-in-Depth Layers
 
 **Layer 1: Network Security**
+
 - 8 firewall types (packet filtering, stateful, NGFW, etc.)
 - VPN encryption (WireGuard, OpenVPN, IKEv2)
 - Multi-hop routing (up to 5 hops)
@@ -1336,6 +1487,7 @@ def append_entry(self, entry):
 - Kill switch (network-level)
 
 **Layer 2: Application Security**
+
 - Browser sandbox (6 security boundaries)
 - Process isolation (per-tab)
 - Content blocking (ads, trackers, pop-ups)
@@ -1343,6 +1495,7 @@ def append_entry(self, entry):
 - Anti-tracking
 
 **Layer 3: Data Security**
+
 - 7-layer God-tier encryption
 - Encrypted storage (all data at rest)
 - Ephemeral storage (auto-wipe)
@@ -1350,6 +1503,7 @@ def append_entry(self, entry):
 - Zero-knowledge design
 
 **Layer 4: Authentication & Access Control**
+
 - Multi-factor authentication (5 methods)
 - Risk-based authentication
 - Capability-based access control (Consigliere)
@@ -1357,6 +1511,7 @@ def append_entry(self, entry):
 - Hardware root of trust (TPM/HSM)
 
 **Layer 5: Monitoring & Detection**
+
 - Privacy Risk Engine (AI threat detection)
 - DOS Trap Mode (rootkit detection)
 - Privacy Auditor (leak detection)
@@ -1364,6 +1519,7 @@ def append_entry(self, entry):
 - Behavioral anomaly detection
 
 **Layer 6: Audit & Compliance**
+
 - Privacy Ledger (immutable audit log)
 - Merkle tree tamper detection
 - Forensic logging
@@ -1371,6 +1527,7 @@ def append_entry(self, entry):
 - Retention policies
 
 **Layer 7: Incident Response**
+
 - Automated response (DOS Trap)
 - Kill switch (emergency shutdown)
 - Secret wiping (master key destruction)
@@ -1380,6 +1537,7 @@ def append_entry(self, entry):
 ### 8.2 Threat Model
 
 **Threats Mitigated**:
+
 1. ✅ Network surveillance (VPN + multi-hop + encryption)
 2. ✅ ISP tracking (VPN + DNS-over-HTTPS + kill switch)
 3. ✅ Ad tracking (Ad Annihilator + anti-tracker)
@@ -1392,6 +1550,7 @@ def append_entry(self, entry):
 10. ✅ Unauthorized access (MFA + risk-based auth)
 
 **Threats NOT Mitigated**:
+
 1. ❌ Physical access to device (out of scope)
 2. ❌ Compromised OS kernel (partial mitigation with DOS Trap)
 3. ❌ Side-channel attacks (timing, power analysis)
@@ -1401,6 +1560,7 @@ def append_entry(self, entry):
 ### 8.3 Security Assumptions
 
 **Assumed Trusted**:
+
 - Operating system kernel (partial trust with DOS Trap monitoring)
 - Python runtime (CPython)
 - Cryptography library (industry-standard)
@@ -1408,6 +1568,7 @@ def append_entry(self, entry):
 - User's physical device security
 
 **NOT Assumed Trusted**:
+
 - Network infrastructure (ISP, DNS, routers)
 - Remote servers (VPN, websites)
 - Third-party applications
@@ -1546,6 +1707,7 @@ System Configuration
 FROM python:3.11-slim
 
 # Install system dependencies
+
 RUN apt-get update && apt-get install -y \
     wireguard-tools \
     openvpn \
@@ -1554,24 +1716,30 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application
+
 WORKDIR /app
 COPY . /app
 
 # Install Python dependencies
+
 RUN pip install -e .
 
 # Non-root user
+
 RUN useradd -m -u 1000 thirsty
 USER thirsty
 
 # Expose ports (if needed)
+
 # EXPOSE 8080
 
 # Health check
+
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD python -c "from thirstys_waterfall import ThirstysWaterfall; print('OK')"
 
 # Start orchestrator
+
 CMD ["python", "-m", "thirstys_waterfall.orchestrator"]
 ```
 
@@ -1591,6 +1759,7 @@ RestartSec=10
 Environment="THIRSTY_CONFIG=/etc/thirstys_waterfall/config.json"
 
 # Security hardening
+
 PrivateTmp=yes
 NoNewPrivileges=yes
 ProtectSystem=strict
@@ -1610,6 +1779,7 @@ pip install thirstys-waterfall
 **Horizontal Scaling**: Not applicable (single-user system)
 
 **Vertical Scaling** (Resource Requirements):
+
 - **Minimum**: 2 CPU cores, 4 GB RAM, 10 GB disk
 - **Recommended**: 4 CPU cores, 8 GB RAM, 50 GB disk
 - **High Performance**: 8+ CPU cores, 16+ GB RAM, 100+ GB disk
@@ -1634,12 +1804,14 @@ Other components:   5% CPU,  256 MB RAM
 ### 11.1 Key Metrics
 
 **System Health Metrics**:
+
 - `system.uptime`: System uptime in seconds
 - `system.cpu_percent`: Overall CPU usage
 - `system.memory_percent`: Overall memory usage
 - `system.disk_usage_percent`: Disk usage percentage
 
 **VPN Metrics**:
+
 - `vpn.connected`: Boolean (is VPN connected?)
 - `vpn.protocol`: Current protocol (wireguard/openvpn/ikev2)
 - `vpn.latency_ms`: Round-trip latency
@@ -1647,24 +1819,28 @@ Other components:   5% CPU,  256 MB RAM
 - `vpn.reconnect_count`: Number of reconnections
 
 **Browser Metrics**:
+
 - `browser.tab_count`: Number of open tabs
 - `browser.memory_usage_mb`: Total browser memory
 - `browser.tabs_crashed_count`: Number of tab crashes
 - `browser.searches_encrypted_count`: Total encrypted searches
 
 **Privacy Metrics**:
+
 - `privacy.trackers_blocked_count`: Total trackers blocked
 - `privacy.ads_blocked_count`: Total ads blocked
 - `privacy.dns_leaks_detected_count`: DNS leaks detected
 - `privacy.privacy_score`: Privacy score (0-100)
 
 **Security Metrics**:
+
 - `security.risk_score`: Current risk score (0-5)
 - `security.threats_detected_count`: Threats detected
 - `security.kill_switch_activations_count`: Kill switch activations
 - `security.mfa_auth_failures_count`: Failed MFA attempts
 
 **Privacy Ledger Metrics**:
+
 - `ledger.entries_count`: Total audit log entries
 - `ledger.size_mb`: Ledger size in MB
 - `ledger.merkle_tree_integrity`: Boolean (integrity verified?)
@@ -1680,6 +1856,7 @@ def check_health(self):
     }
 
     # VPN health
+
     vpn_healthy = self.vpn_manager.is_connected()
     health['components']['vpn'] = {
         'status': 'healthy' if vpn_healthy else 'unhealthy',
@@ -1687,6 +1864,7 @@ def check_health(self):
     }
 
     # Firewall health
+
     firewall_healthy = self.firewall_manager.is_active()
     health['components']['firewall'] = {
         'status': 'healthy' if firewall_healthy else 'unhealthy',
@@ -1694,6 +1872,7 @@ def check_health(self):
     }
 
     # Browser health
+
     browser_healthy = self.browser.get_status()['active']
     health['components']['browser'] = {
         'status': 'healthy' if browser_healthy else 'unhealthy',
@@ -1701,6 +1880,7 @@ def check_health(self):
     }
 
     # Privacy Ledger health
+
     ledger_healthy = self.privacy_ledger.verify_integrity()
     health['components']['privacy_ledger'] = {
         'status': 'healthy' if ledger_healthy else 'critical',
@@ -1708,6 +1888,7 @@ def check_health(self):
     }
 
     # Overall status
+
     all_healthy = all(c['status'] == 'healthy' for c in health['components'].values())
     health['status'] = 'healthy' if all_healthy else 'degraded'
 
@@ -1717,6 +1898,7 @@ def check_health(self):
 ### 11.3 Logging
 
 **Log Levels**:
+
 - **DEBUG**: Detailed diagnostic information (disabled in production)
 - **INFO**: General informational messages
 - **WARNING**: Warning messages (potential issues)
@@ -1724,6 +1906,7 @@ def check_health(self):
 - **CRITICAL**: Critical failures (system-level issues)
 
 **Log Destinations**:
+
 1. **Privacy Ledger**: All security/privacy events (encrypted)
 2. **Console**: User-facing messages (INFO and above)
 3. **File**: Debug logs (if enabled, encrypted)
@@ -1752,6 +1935,7 @@ def check_health(self):
 **Overall Test Coverage**: 100% test pass rate (309/309 tests)
 
 **By Module Category**:
+
 - ✅ Consigliere: 34/34 tests (100%)
 - ✅ Browser: 47/47 tests (100%)
 - ✅ VPN: 35/35 tests (100%)
@@ -1765,21 +1949,25 @@ def check_health(self):
 ### 12.2 Test Categories
 
 **Unit Tests (200+ tests)**:
+
 - Test individual functions and methods
 - Mock external dependencies
 - Fast execution (< 1 second per test)
 
 **Integration Tests (50+ tests)**:
+
 - Test cross-module interactions
 - Real subsystem integration
 - Medium execution time (1-5 seconds per test)
 
 **End-to-End Tests (30+ tests)**:
+
 - Test complete workflows
 - Real platform tools (VPN, firewalls)
 - Slower execution (5-30 seconds per test)
 
 **Security Tests (29+ tests)**:
+
 - Test encryption/decryption
 - Test audit logging
 - Test kill switch functionality
@@ -1788,6 +1976,7 @@ def check_health(self):
 ### 12.3 Continuous Integration
 
 **CI Pipeline**:
+
 1. **Linting**: flake8, black, mypy
 2. **Unit Tests**: pytest with coverage
 3. **Integration Tests**: Platform-specific tests
@@ -1795,11 +1984,13 @@ def check_health(self):
 5. **Documentation**: Sphinx documentation build
 
 **Platforms Tested**:
+
 - Ubuntu 20.04, 22.04 (Linux)
 - Windows Server 2019, 2022
 - macOS 11, 12, 13
 
 **Python Versions**:
+
 - Python 3.8, 3.9, 3.10, 3.11
 
 ---
@@ -1812,28 +2003,41 @@ def check_health(self):
 from thirstys_waterfall import ThirstysWaterfall
 
 # Initialize
+
 waterfall = ThirstysWaterfall(config=None)  # Uses default config
 
 # Start all subsystems
+
 waterfall.start()
 
 # Get status
+
 status = waterfall.get_status()
+
 # Returns: {
+
 #   'active': True,
+
 #   'vpn': {'connected': True, 'protocol': 'wireguard'},
+
 #   'browser': {'tab_count': 3},
+
 #   'privacy_score': 95,
+
 #   'risk_score': 2.1
+
 # }
 
 # Run privacy audit
+
 audit = waterfall.run_privacy_audit()
 
 # Trigger kill switch
+
 waterfall.trigger_kill_switch(reason="User requested")
 
 # Stop system
+
 waterfall.stop()
 ```
 
@@ -1843,22 +2047,28 @@ waterfall.stop()
 from thirstys_waterfall.browser import IncognitoBrowser
 
 # Create browser
+
 browser = IncognitoBrowser(config)
 browser.start()
 
 # Create tab
+
 tab_id = browser.create_tab()
 
 # Navigate (URL automatically encrypted)
+
 browser.navigate(tab_id, "https://example.com")
 
 # Search (query automatically encrypted)
+
 results = browser.search("privacy search")
 
 # Close tab
+
 browser.close_tab(tab_id)
 
 # Stop browser (all data wiped)
+
 browser.stop()
 ```
 
@@ -1868,16 +2078,21 @@ browser.stop()
 from thirstys_waterfall.vpn import VPNManager
 
 # Create VPN manager
+
 vpn = VPNManager(config)
 
 # Connect (automatic protocol selection)
+
 vpn.connect()
 
 # Check status
+
 status = vpn.get_status()
+
 # Returns: {'connected': True, 'protocol': 'wireguard', 'latency_ms': 42}
 
 # Disconnect
+
 vpn.disconnect()
 ```
 
@@ -1887,22 +2102,32 @@ vpn.disconnect()
 from thirstys_waterfall.consigliere import ThirstyConsigliere
 
 # Create Consigliere
+
 consigliere = ThirstyConsigliere(config, god_tier_encryption)
 consigliere.start()
 
 # Assist with query (privacy-first)
+
 response = consigliere.assist("query", context={'tab_count': 3})
+
 # Returns: {
+
 #   'response': '...',
+
 #   'processed_locally': True,
+
 #   'god_tier_encrypted': True,
+
 #   'transparency': {...}
+
 # }
 
 # Get status
+
 status = consigliere.get_status()
 
 # Wipe everything (hard delete)
+
 consigliere.wipe_everything()
 ```
 
@@ -1913,16 +2138,19 @@ consigliere.wipe_everything()
 ### 14.1 Planned Features
 
 **Phase 1** (Q2 2026):
+
 1. ✅ Complete MAXIMUM ALLOWED DESIGN for Tier 1 modules
 2. ✅ External security audit (cryptographic implementations)
 3. ✅ Performance optimization (encryption, VPN, browser)
 
 **Phase 2** (Q3 2026):
+
 1. Quantum-resistant encryption upgrade (CRYSTALS-Kyber)
 2. Decentralized VPN network (peer-to-peer)
 3. Hardware acceleration (GPU encryption)
 
 **Phase 3** (Q4 2026):
+
 1. Mobile support (Android, iOS)
 2. Browser extension (Firefox, Chrome)
 3. Advanced threat intelligence integration
@@ -1943,6 +2171,7 @@ consigliere.wipe_everything()
 **Production Readiness**: ✅ READY FOR PRODUCTION
 
 **Evidence**:
+
 - ✅ 100% test pass rate (309/309 tests)
 - ✅ 97 production-ready Python modules
 - ✅ No incomplete implementations

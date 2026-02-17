@@ -26,9 +26,9 @@ class SecureTunnel:
         self._tunnel_active = True
 
         return {
-            'status': 'established',
-            'god_tier_encrypted': True,
-            'encryption_layers': 7
+            "status": "established",
+            "god_tier_encrypted": True,
+            "encryption_layers": 7,
         }
 
     def close(self):
@@ -38,7 +38,4 @@ class SecureTunnel:
 
     def get_status(self) -> Dict[str, Any]:
         """Get tunnel status"""
-        return {
-            'active': self._tunnel_active,
-            'god_tier_encrypted': True
-        }
+        return {"active": self._tunnel_active, "god_tier_encrypted": True}

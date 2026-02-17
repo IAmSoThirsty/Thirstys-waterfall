@@ -13,7 +13,7 @@ class CircuitLevelGateway(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.proxy_timeout = config.get('proxy_timeout', 30)
+        self.proxy_timeout = config.get("proxy_timeout", 30)
         self._sessions = {}
 
     def start(self):
@@ -33,7 +33,7 @@ class CircuitLevelGateway(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove circuit-level rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet through circuit-level inspection"""
@@ -45,7 +45,7 @@ class CircuitLevelGateway(FirewallBase):
         # Check if session exists and is valid
         if session_id in self._sessions:
             session = self._sessions[session_id]
-            if time.time() - session['established'] > self.proxy_timeout:
+            if time.time() - session["established"] > self.proxy_timeout:
                 # Session expired
                 del self._sessions[session_id]
                 self._update_statistics(False)
@@ -55,13 +55,13 @@ class CircuitLevelGateway(FirewallBase):
             return True
 
         # Check if this is a new connection attempt (SYN)
-        if packet.get('flags') == 'SYN':
+        if packet.get("flags") == "SYN":
             # Validate handshake
             if self._validate_handshake(packet):
                 self._sessions[session_id] = {
-                    'established': time.time(),
-                    'src': packet.get('src_ip'),
-                    'dst': packet.get('dst_ip')
+                    "established": time.time(),
+                    "src": packet.get("src_ip"),
+                    "dst": packet.get("dst_ip"),
                 }
                 self._update_statistics(True)
                 return True
@@ -76,7 +76,7 @@ class CircuitLevelGateway(FirewallBase):
     def _validate_handshake(self, packet: Dict[str, Any]) -> bool:
         """Validate TCP handshake"""
         # Simplified validation
-        return packet.get('protocol') == 'tcp'
+        return packet.get("protocol") == "tcp"
 
     def get_active_sessions(self) -> Dict[str, Any]:
         """Get all active sessions"""

@@ -65,7 +65,9 @@ class GlobalKillSwitch:
                 return
 
             self._triggered = True
-            self.logger.critical(f"GLOBAL KILL SWITCH TRIGGERED by {component}: {reason}")
+            self.logger.critical(
+                f"GLOBAL KILL SWITCH TRIGGERED by {component}: {reason}"
+            )
 
             # Emergency shutdown of all components
             self._emergency_shutdown(component)
@@ -81,7 +83,7 @@ class GlobalKillSwitch:
         self._block_all_traffic()
 
         # Close browser
-        if self._browser_kill_switch and source_component != 'browser':
+        if self._browser_kill_switch and source_component != "browser":
             try:
                 self._browser_kill_switch.stop()
                 self.logger.info("Browser stopped")
@@ -89,7 +91,7 @@ class GlobalKillSwitch:
                 self.logger.error(f"Failed to stop browser: {e}")
 
         # Trigger VPN kill switch
-        if self._vpn_kill_switch and source_component != 'vpn':
+        if self._vpn_kill_switch and source_component != "vpn":
             try:
                 self._vpn_kill_switch.trigger("Global kill switch")
                 self.logger.info("VPN kill switch triggered")
@@ -97,7 +99,7 @@ class GlobalKillSwitch:
                 self.logger.error(f"Failed to trigger VPN kill switch: {e}")
 
         # Block firewall
-        if self._firewall_kill_switch and source_component != 'firewall':
+        if self._firewall_kill_switch and source_component != "firewall":
             try:
                 self._firewall_kill_switch.stop()
                 self.logger.info("Firewall stopped")
@@ -114,7 +116,7 @@ class GlobalKillSwitch:
 
     def _on_vpn_failure(self, reason: str):
         """Callback for VPN failure"""
-        self.trigger(reason, 'vpn')
+        self.trigger(reason, "vpn")
 
     def register_callback(self, callback: Callable):
         """Register callback for kill switch trigger"""

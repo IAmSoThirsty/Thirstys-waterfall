@@ -8,4 +8,4 @@ from .ad_database import AdBlockDatabase
 from .tracker_destroyer import TrackerDestroyer
 from .autoplay_killer import AutoplayKiller
 
-__all__ = ['AdAnnihilator', 'AdBlockDatabase', 'TrackerDestroyer', 'AutoplayKiller']
+__all__ = ["AdAnnihilator", "AdBlockDatabase", "TrackerDestroyer", "AutoplayKiller"]

@@ -29,10 +29,7 @@ class DNSProtection:
         self._original_dns = self._get_system_dns()
 
         # Set VPN DNS servers
-        self._dns_servers = [
-            '10.200.200.1',  # VPN DNS 1
-            '10.200.200.2'   # VPN DNS 2
-        ]
+        self._dns_servers = ["10.200.200.1", "10.200.200.2"]  # VPN DNS 1  # VPN DNS 2
         self._set_dns_servers(self._dns_servers)
 
         # Block IPv6 if protection enabled
@@ -61,7 +58,7 @@ class DNSProtection:
     def _get_system_dns(self) -> List[str]:
         """Get current system DNS servers"""
         # In production, would read from /etc/resolv.conf or registry
-        return ['8.8.8.8', '8.8.4.4']
+        return ["8.8.8.8", "8.8.4.4"]
 
     def _set_dns_servers(self, servers: List[str]):
         """Set system DNS servers"""

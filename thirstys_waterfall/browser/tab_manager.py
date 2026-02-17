@@ -39,8 +39,8 @@ class TabManager:
                 - max_tabs: int (default 100)
         """
         config = config or {}
-        self.isolation_enabled = config.get('tab_isolation', True)
-        self.max_tabs = config.get('max_tabs', 100)
+        self.isolation_enabled = config.get("tab_isolation", True)
+        self.max_tabs = config.get("max_tabs", 100)
         self.logger = logging.getLogger(__name__)
         self._tabs: Dict[str, Dict[str, Any]] = {}
         self._active = False
@@ -50,8 +50,8 @@ class TabManager:
 
         # MAXIMUM ALLOWED DESIGN: Configuration dict
         self.config = {
-            'tab_isolation': self.isolation_enabled,
-            'max_tabs': self.max_tabs
+            "tab_isolation": self.isolation_enabled,
+            "max_tabs": self.max_tabs,
         }
 
     def start(self):
@@ -98,14 +98,14 @@ class TabManager:
         tab_id = str(uuid.uuid4())
 
         self._tabs[tab_id] = {
-            'id': tab_id,
-            'url': url or 'about:blank',
-            'title': 'New Tab',
-            'isolated': self.isolation_enabled,
-            'config': {},
-            'storage': {},  # Empty - no persistent storage
-            'cookies': {},  # Empty - no cookies
-            'history': []   # Empty - no history
+            "id": tab_id,
+            "url": url or "about:blank",
+            "title": "New Tab",
+            "isolated": self.isolation_enabled,
+            "config": {},
+            "storage": {},  # Empty - no persistent storage
+            "cookies": {},  # Empty - no cookies
+            "history": [],  # Empty - no history
         }
 
         self.logger.debug(f"Created tab: {tab_id}")
@@ -115,9 +115,9 @@ class TabManager:
         """Close tab and destroy all its data"""
         if tab_id in self._tabs:
             # Clear all tab data
-            self._tabs[tab_id]['storage'].clear()
-            self._tabs[tab_id]['cookies'].clear()
-            self._tabs[tab_id]['history'].clear()
+            self._tabs[tab_id]["storage"].clear()
+            self._tabs[tab_id]["cookies"].clear()
+            self._tabs[tab_id]["history"].clear()
 
             # Remove tab
             del self._tabs[tab_id]
@@ -141,7 +141,7 @@ class TabManager:
             return False
 
         tab = self._tabs[tab_id]
-        tab['url'] = url
+        tab["url"] = url
 
         # Don't store in history (privacy-first)
         self.logger.debug(f"Tab {tab_id} navigated to {url} (not stored in history)")
@@ -177,10 +177,10 @@ class TabManager:
     def set_tab_config(self, tab_id: str, config: Dict[str, Any]):
         """Set tab configuration"""
         if tab_id in self._tabs:
-            self._tabs[tab_id]['config'].update(config)
+            self._tabs[tab_id]["config"].update(config)
 
     def is_isolated(self, tab_id: str) -> bool:
         """Check if tab is isolated"""
         if tab_id in self._tabs:
-            return self._tabs[tab_id]['isolated']
+            return self._tabs[tab_id]["isolated"]
         return False

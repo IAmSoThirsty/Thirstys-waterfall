@@ -29,7 +29,7 @@ class AutoplayKiller:
 
     def get_stats(self):
         """Get kill statistics"""
-        return {'autoplay_killed': self.killed_count}
+        return {"autoplay_killed": self.killed_count}
 
     def block_autoplay(self) -> bool:
         """Block autoplay globally"""
@@ -41,4 +41,4 @@ class AutoplayKiller:
         if not element:
             return False
         element_lower = element.lower()
-        return 'autoplay' in element_lower or 'auto-play' in element_lower
+        return "autoplay" in element_lower or "auto-play" in element_lower

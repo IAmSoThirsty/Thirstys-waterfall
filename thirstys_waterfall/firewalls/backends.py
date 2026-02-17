@@ -54,9 +54,9 @@ class FirewallBackend(ABC):
     def get_statistics(self) -> Dict[str, Any]:
         """Get firewall statistics"""
         return {
-            'active': self.active,
-            'rules_count': len(self.rules),
-            'platform': self.platform
+            "active": self.active,
+            "rules_count": len(self.rules),
+            "platform": self.platform,
         }
 
 
@@ -68,18 +68,16 @@ class NftablesBackend(FirewallBackend):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.table_name = config.get('table', 'thirstys_filter')
-        self.chain_name = config.get('chain', 'thirstys_input')
+        self.table_name = config.get("table", "thirstys_filter")
+        self.chain_name = config.get("chain", "thirstys_input")
 
     def check_availability(self) -> bool:
         """Check if nftables is available"""
-        if self.platform != 'Linux':
+        if self.platform != "Linux":
             return False
 
         try:
-            result = subprocess.run(['which', 'nft'],
-                                  capture_output=True,
-                                  timeout=5)
+            result = subprocess.run(["which", "nft"], capture_output=True, timeout=5)
             return result.returncode == 0
         except Exception as e:
             self.logger.debug(f"nftables check failed: {e}")
@@ -89,7 +87,7 @@ class NftablesBackend(FirewallBackend):
         """Initialize nftables table and chain"""
         try:
             # Create table
-            cmd = ['sudo', 'nft', 'add', 'table', 'ip', self.table_name]
+            cmd = ["sudo", "nft", "add", "table", "ip", self.table_name]
             result = subprocess.run(cmd, capture_output=True, timeout=10)
 
             if result.returncode not in [0, 1]:  # 1 = already exists
@@ -97,9 +95,24 @@ class NftablesBackend(FirewallBackend):
                 return False
 
             # Create chain
-            cmd = ['sudo', 'nft', 'add', 'chain', 'ip', self.table_name,
-                   self.chain_name, '{', 'type', 'filter', 'hook', 'input',
-                   'priority', '0', ';', '}']
+            cmd = [
+                "sudo",
+                "nft",
+                "add",
+                "chain",
+                "ip",
+                self.table_name,
+                self.chain_name,
+                "{",
+                "type",
+                "filter",
+                "hook",
+                "input",
+                "priority",
+                "0",
+                ";",
+                "}",
+            ]
             result = subprocess.run(cmd, capture_output=True, timeout=10)
 
             if result.returncode not in [0, 1]:
@@ -127,31 +140,38 @@ class NftablesBackend(FirewallBackend):
         }
         """
         try:
-            rule_id = rule.get('id', f"rule_{len(self.rules)}")
-            action = rule.get('action', 'accept')
-            protocol = rule.get('protocol', 'tcp')
+            rule_id = rule.get("id", f"rule_{len(self.rules)}")
+            action = rule.get("action", "accept")
+            protocol = rule.get("protocol", "tcp")
 
             # Build nftables rule command
             nft_rule = []
 
-            if 'src_ip' in rule:
-                nft_rule.extend(['ip', 'saddr', rule['src_ip']])
+            if "src_ip" in rule:
+                nft_rule.extend(["ip", "saddr", rule["src_ip"]])
 
-            if 'dst_port' in rule:
-                nft_rule.extend([protocol, 'dport', str(rule['dst_port'])])
+            if "dst_port" in rule:
+                nft_rule.extend([protocol, "dport", str(rule["dst_port"])])
             elif protocol:
                 nft_rule.extend([protocol])
 
             nft_rule.append(action)
 
             # Execute nft command
-            cmd = ['sudo', 'nft', 'add', 'rule', 'ip', self.table_name,
-                   self.chain_name] + nft_rule
+            cmd = [
+                "sudo",
+                "nft",
+                "add",
+                "rule",
+                "ip",
+                self.table_name,
+                self.chain_name,
+            ] + nft_rule
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
-                self.rules.append({'id': rule_id, 'rule': rule})
+                self.rules.append({"id": rule_id, "rule": rule})
                 self.logger.info(f"nftables rule added: {rule_id}")
                 return True
             else:
@@ -166,14 +186,14 @@ class NftablesBackend(FirewallBackend):
         """Remove nftables rule by ID"""
         try:
             # Find rule in our tracking
-            rule_entry = next((r for r in self.rules if r['id'] == rule_id), None)
+            rule_entry = next((r for r in self.rules if r["id"] == rule_id), None)
             if not rule_entry:
                 self.logger.warning(f"Rule {rule_id} not found")
                 return False
 
             # For simplicity, flush and re-add all rules except this one
             # In production, would use rule handles
-            self.rules = [r for r in self.rules if r['id'] != rule_id]
+            self.rules = [r for r in self.rules if r["id"] != rule_id]
             self.logger.info(f"nftables rule removed: {rule_id}")
             return True
 
@@ -194,7 +214,7 @@ class NftablesBackend(FirewallBackend):
         """Disable nftables firewall"""
         try:
             # Delete table (removes all rules)
-            cmd = ['sudo', 'nft', 'delete', 'table', 'ip', self.table_name]
+            cmd = ["sudo", "nft", "delete", "table", "ip", self.table_name]
             subprocess.run(cmd, capture_output=True, timeout=10)
 
             self.active = False
@@ -215,18 +235,17 @@ class WindowsFirewallBackend(FirewallBackend):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.rule_prefix = config.get('rule_prefix', 'ThirstysWaterfall')
+        self.rule_prefix = config.get("rule_prefix", "ThirstysWaterfall")
 
     def check_availability(self) -> bool:
         """Check if Windows Firewall is available"""
-        if self.platform != 'Windows':
+        if self.platform != "Windows":
             return False
 
         try:
-            result = subprocess.run(['where', 'netsh'],
-                                  capture_output=True,
-                                  timeout=5,
-                                  shell=True)
+            result = subprocess.run(
+                ["where", "netsh"], capture_output=True, timeout=5, shell=True
+            )
             return result.returncode == 0
         except Exception as e:
             self.logger.debug(f"Windows Firewall check failed: {e}")
@@ -236,9 +255,10 @@ class WindowsFirewallBackend(FirewallBackend):
         """Initialize Windows Firewall"""
         try:
             # Ensure Windows Firewall is running
-            cmd = ['netsh', 'advfirewall', 'show', 'allprofiles', 'state']
-            result = subprocess.run(cmd, capture_output=True, text=True,
-                                  timeout=10, shell=True)
+            cmd = ["netsh", "advfirewall", "show", "allprofiles", "state"]
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=10, shell=True
+            )
 
             if result.returncode == 0:
                 self.logger.info("Windows Firewall is available")
@@ -265,41 +285,48 @@ class WindowsFirewallBackend(FirewallBackend):
         }
         """
         try:
-            rule_id = rule.get('id', f"rule_{len(self.rules)}")
+            rule_id = rule.get("id", f"rule_{len(self.rules)}")
             rule_name = f"{self.rule_prefix}_{rule_id}"
 
-            action = rule.get('action', 'allow')
-            protocol = rule.get('protocol', 'tcp').upper()
-            direction = rule.get('direction', 'in')
+            action = rule.get("action", "allow")
+            protocol = rule.get("protocol", "tcp").upper()
+            direction = rule.get("direction", "in")
 
             # Build netsh command
             cmd = [
-                'netsh', 'advfirewall', 'firewall', 'add', 'rule',
-                f'name={rule_name}',
-                f'dir={direction}',
-                f'action={action}',
-                f'protocol={protocol}'
+                "netsh",
+                "advfirewall",
+                "firewall",
+                "add",
+                "rule",
+                f"name={rule_name}",
+                f"dir={direction}",
+                f"action={action}",
+                f"protocol={protocol}",
             ]
 
-            if 'port' in rule:
-                port = rule['port']
-                if direction == 'in':
-                    cmd.append(f'localport={port}')
+            if "port" in rule:
+                port = rule["port"]
+                if direction == "in":
+                    cmd.append(f"localport={port}")
                 else:
-                    cmd.append(f'remoteport={port}')
+                    cmd.append(f"remoteport={port}")
 
-            if 'program' in rule:
+            if "program" in rule:
                 cmd.append(f"program={rule['program']}")
 
-            result = subprocess.run(cmd, capture_output=True, text=True,
-                                  timeout=10, shell=True)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=10, shell=True
+            )
 
             if result.returncode == 0:
-                self.rules.append({'id': rule_id, 'name': rule_name, 'rule': rule})
+                self.rules.append({"id": rule_id, "name": rule_name, "rule": rule})
                 self.logger.info(f"Windows Firewall rule added: {rule_name}")
                 return True
             else:
-                self.logger.error(f"Failed to add Windows Firewall rule: {result.stderr}")
+                self.logger.error(
+                    f"Failed to add Windows Firewall rule: {result.stderr}"
+                )
                 return False
 
         except Exception as e:
@@ -309,20 +336,26 @@ class WindowsFirewallBackend(FirewallBackend):
     def remove_rule(self, rule_id: str) -> bool:
         """Remove Windows Firewall rule"""
         try:
-            rule_entry = next((r for r in self.rules if r['id'] == rule_id), None)
+            rule_entry = next((r for r in self.rules if r["id"] == rule_id), None)
             if not rule_entry:
                 self.logger.warning(f"Rule {rule_id} not found")
                 return False
 
-            rule_name = rule_entry['name']
+            rule_name = rule_entry["name"]
 
-            cmd = ['netsh', 'advfirewall', 'firewall', 'delete', 'rule',
-                   f'name={rule_name}']
+            cmd = [
+                "netsh",
+                "advfirewall",
+                "firewall",
+                "delete",
+                "rule",
+                f"name={rule_name}",
+            ]
 
             result = subprocess.run(cmd, capture_output=True, timeout=10, shell=True)
 
             if result.returncode == 0:
-                self.rules = [r for r in self.rules if r['id'] != rule_id]
+                self.rules = [r for r in self.rules if r["id"] != rule_id]
                 self.logger.info(f"Windows Firewall rule removed: {rule_name}")
                 return True
 
@@ -336,8 +369,8 @@ class WindowsFirewallBackend(FirewallBackend):
         """Enable Windows Firewall"""
         try:
             # Enable firewall for all profiles
-            for profile in ['domainprofile', 'privateprofile', 'publicprofile']:
-                cmd = ['netsh', 'advfirewall', 'set', profile, 'state', 'on']
+            for profile in ["domainprofile", "privateprofile", "publicprofile"]:
+                cmd = ["netsh", "advfirewall", "set", profile, "state", "on"]
                 subprocess.run(cmd, capture_output=True, timeout=10, shell=True)
 
             self.active = True
@@ -353,7 +386,7 @@ class WindowsFirewallBackend(FirewallBackend):
         try:
             # Remove all Thirstys rules
             for rule_entry in self.rules[:]:
-                self.remove_rule(rule_entry['id'])
+                self.remove_rule(rule_entry["id"])
 
             self.active = False
             self.logger.info("Thirstys Windows Firewall rules disabled")
@@ -372,28 +405,27 @@ class PFBackend(FirewallBackend):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.anchor_name = config.get('anchor', 'thirstys')
+        self.anchor_name = config.get("anchor", "thirstys")
         # Use more secure location than /tmp for firewall rules
         # Try user's home directory config first, fallback to /tmp only if needed
-        default_rules_dir = os.path.expanduser('~/.config/thirstys')
+        default_rules_dir = os.path.expanduser("~/.config/thirstys")
         if not os.path.exists(default_rules_dir):
             try:
                 os.makedirs(default_rules_dir, mode=0o700)  # User-only access
             except Exception:
                 # Fallback to /tmp if config dir creation fails
-                default_rules_dir = '/tmp'
-        self.rules_file = config.get('rules_file',
-                                     os.path.join(default_rules_dir, 'thirstys_pf.rules'))
+                default_rules_dir = "/tmp"
+        self.rules_file = config.get(
+            "rules_file", os.path.join(default_rules_dir, "thirstys_pf.rules")
+        )
 
     def check_availability(self) -> bool:
         """Check if PF is available"""
-        if self.platform != 'Darwin':
+        if self.platform != "Darwin":
             return False
 
         try:
-            result = subprocess.run(['which', 'pfctl'],
-                                  capture_output=True,
-                                  timeout=5)
+            result = subprocess.run(["which", "pfctl"], capture_output=True, timeout=5)
             return result.returncode == 0
         except Exception as e:
             self.logger.debug(f"PF check failed: {e}")
@@ -403,7 +435,7 @@ class PFBackend(FirewallBackend):
         """Initialize PF"""
         try:
             # Enable PF if not already enabled
-            cmd = ['sudo', 'pfctl', '-e']
+            cmd = ["sudo", "pfctl", "-e"]
             subprocess.run(cmd, capture_output=True, timeout=10)
 
             self.logger.info("PF initialized successfully")
@@ -417,13 +449,14 @@ class PFBackend(FirewallBackend):
         """Write PF rules to file with secure permissions"""
         try:
             # Create file with restrictive permissions (user read/write only)
-            with os.fdopen(os.open(self.rules_file,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                   0o600), 'w') as f:
+            with os.fdopen(
+                os.open(self.rules_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                "w",
+            ) as f:
                 for rule_entry in self.rules:
-                    rule = rule_entry['rule']
+                    rule = rule_entry["rule"]
                     pf_rule = self._convert_to_pf_rule(rule)
-                    f.write(pf_rule + '\n')
+                    f.write(pf_rule + "\n")
 
             return True
         except Exception as e:
@@ -436,22 +469,22 @@ class PFBackend(FirewallBackend):
 
         Example: "pass in proto tcp from any to any port 443"
         """
-        action = 'pass' if rule.get('action') == 'accept' else 'block'
-        direction = rule.get('direction', 'in')
-        protocol = rule.get('protocol', 'tcp')
+        action = "pass" if rule.get("action") == "accept" else "block"
+        direction = rule.get("direction", "in")
+        protocol = rule.get("protocol", "tcp")
 
         pf_rule = f"{action} {direction}"
 
         if protocol:
             pf_rule += f" proto {protocol}"
 
-        src_ip = rule.get('src_ip', 'any')
+        src_ip = rule.get("src_ip", "any")
         pf_rule += f" from {src_ip}"
 
-        dst_ip = rule.get('dst_ip', 'any')
+        dst_ip = rule.get("dst_ip", "any")
         pf_rule += f" to {dst_ip}"
 
-        if 'dst_port' in rule:
+        if "dst_port" in rule:
             pf_rule += f" port {rule['dst_port']}"
 
         return pf_rule
@@ -471,16 +504,16 @@ class PFBackend(FirewallBackend):
         }
         """
         try:
-            rule_id = rule.get('id', f"rule_{len(self.rules)}")
+            rule_id = rule.get("id", f"rule_{len(self.rules)}")
 
-            self.rules.append({'id': rule_id, 'rule': rule})
+            self.rules.append({"id": rule_id, "rule": rule})
 
             # Write all rules to file
             if not self._write_rules_file():
                 return False
 
             # Load rules from file into anchor
-            cmd = ['sudo', 'pfctl', '-a', self.anchor_name, '-f', self.rules_file]
+            cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-f", self.rules_file]
             result = subprocess.run(cmd, capture_output=True, timeout=10)
 
             if result.returncode == 0:
@@ -488,7 +521,7 @@ class PFBackend(FirewallBackend):
                 return True
             else:
                 self.logger.error(f"Failed to add PF rule: {result.stderr}")
-                self.rules = [r for r in self.rules if r['id'] != rule_id]
+                self.rules = [r for r in self.rules if r["id"] != rule_id]
                 return False
 
         except Exception as e:
@@ -498,16 +531,16 @@ class PFBackend(FirewallBackend):
     def remove_rule(self, rule_id: str) -> bool:
         """Remove PF rule"""
         try:
-            rule_entry = next((r for r in self.rules if r['id'] == rule_id), None)
+            rule_entry = next((r for r in self.rules if r["id"] == rule_id), None)
             if not rule_entry:
                 self.logger.warning(f"Rule {rule_id} not found")
                 return False
 
-            self.rules = [r for r in self.rules if r['id'] != rule_id]
+            self.rules = [r for r in self.rules if r["id"] != rule_id]
 
             # Rewrite rules file and reload
             if self._write_rules_file():
-                cmd = ['sudo', 'pfctl', '-a', self.anchor_name, '-f', self.rules_file]
+                cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-f", self.rules_file]
                 subprocess.run(cmd, capture_output=True, timeout=10)
 
                 self.logger.info(f"PF rule removed: {rule_id}")
@@ -532,7 +565,7 @@ class PFBackend(FirewallBackend):
         """Disable PF firewall (flush Thirstys anchor only)"""
         try:
             # Flush rules in our anchor
-            cmd = ['sudo', 'pfctl', '-a', self.anchor_name, '-F', 'all']
+            cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-F", "all"]
             subprocess.run(cmd, capture_output=True, timeout=10)
 
             self.active = False
@@ -569,18 +602,18 @@ class FirewallBackendFactory:
 
         system = platform.system()
 
-        if system == 'Linux':
+        if system == "Linux":
             backend = NftablesBackend(config)
             if backend.check_availability():
                 return backend
             # Could fallback to iptables here
 
-        elif system == 'Windows':
+        elif system == "Windows":
             backend = WindowsFirewallBackend(config)
             if backend.check_availability():
                 return backend
 
-        elif system == 'Darwin':
+        elif system == "Darwin":
             backend = PFBackend(config)
             if backend.check_availability():
                 return backend
@@ -593,19 +626,19 @@ class FirewallBackendFactory:
         available = []
         system = platform.system()
 
-        if system == 'Linux':
+        if system == "Linux":
             nft = NftablesBackend({})
             if nft.check_availability():
-                available.append('nftables')
+                available.append("nftables")
 
-        elif system == 'Windows':
+        elif system == "Windows":
             wf = WindowsFirewallBackend({})
             if wf.check_availability():
-                available.append('windows_firewall')
+                available.append("windows_firewall")
 
-        elif system == 'Darwin':
+        elif system == "Darwin":
             pf = PFBackend({})
             if pf.check_availability():
-                available.append('pf')
+                available.append("pf")
 
         return available

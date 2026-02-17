@@ -12,7 +12,7 @@ class ProxyFirewall(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.cache_enabled = config.get('cache_enabled', False)
+        self.cache_enabled = config.get("cache_enabled", False)
         self._proxy_cache = {}
         self._proxy_connections = {}
 
@@ -34,7 +34,7 @@ class ProxyFirewall(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove proxy rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet through proxy"""
@@ -49,7 +49,7 @@ class ProxyFirewall(FirewallBase):
         # Check proxy rules
         for rule in self._rules:
             if self._match_proxy_rule(packet, rule):
-                allowed = rule.get('action') == 'allow'
+                allowed = rule.get("action") == "allow"
                 self._update_statistics(allowed)
                 return allowed
 
@@ -59,12 +59,16 @@ class ProxyFirewall(FirewallBase):
 
     def _inspect_payload(self, packet: Dict[str, Any]) -> bool:
         """Inspect packet payload for threats"""
-        payload = packet.get('payload', '')
+        payload = packet.get("payload", "")
 
         # Check for malicious patterns
         malicious_patterns = [
-            'eval(', 'exec(', '<script>', 'DROP TABLE',
-            '../../../', 'etc/passwd'
+            "eval(",
+            "exec(",
+            "<script>",
+            "DROP TABLE",
+            "../../../",
+            "etc/passwd",
         ]
 
         for pattern in malicious_patterns:
@@ -77,13 +81,13 @@ class ProxyFirewall(FirewallBase):
     def _match_proxy_rule(self, packet: Dict[str, Any], rule: Dict[str, Any]) -> bool:
         """Match packet against proxy rule"""
         # Match based on application layer criteria
-        if 'url_pattern' in rule:
-            url = packet.get('url', '')
-            if rule['url_pattern'] in url:
+        if "url_pattern" in rule:
+            url = packet.get("url", "")
+            if rule["url_pattern"] in url:
                 return True
 
-        if 'content_type' in rule:
-            if packet.get('content_type') == rule['content_type']:
+        if "content_type" in rule:
+            if packet.get("content_type") == rule["content_type"]:
                 return True
 
         return False

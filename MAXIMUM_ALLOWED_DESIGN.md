@@ -27,6 +27,7 @@ This document provides the **most complete, explicit, technically dense, and com
 ### 1.1 System Overview
 
 Thirstys Waterfall is a privacy-first system implementing:
+
 - 8 types of firewalls (packet-filtering, stateful, NGFW, etc.)
 - Built-in VPN (native Python, NO external services)
 - Incognito browser with complete encryption
@@ -101,11 +102,13 @@ Thirstys Waterfall is a privacy-first system implementing:
 **File**: `thirstys_waterfall/browser/content_blocker.py`
 
 #### Invariants
+
 - `_active` implies all blocklists are loaded
 - `_blocked_count` is monotonically increasing
 - `config` dict always reflects current state
 
 #### Failure Modes
+
 | Failure | Recovery | Impact |
 |---------|----------|--------|
 | Network failure | Continue with cached blocklists | Degraded blocking |
@@ -118,26 +121,30 @@ Thirstys Waterfall is a privacy-first system implementing:
 def should_block(url: str) -> bool:
     """
     Unified blocking decision.
-    
+
     Edge Cases:
+
     - Empty URL: Returns False
     - Malformed URL: Returns False (fail-open)
     - None URL: Returns False
-    
+
     Complexity: O(n) where n = blocklist size
     """
 
 def block_popup() -> bool:
     """
     Block popup attempt.
-    
+
     Invariants:
+
     - Always returns True when active and block_popups=True
     - Increments _popup_count on each call
+
     """
 ```
 
 #### Configuration Dict
+
 ```python
 config = {
     'block_trackers': bool,    # Block tracking domains
@@ -148,6 +155,7 @@ config = {
 ```
 
 #### Metrics
+
 ```python
 {
     'blocked_count': int,        # Total blocks
@@ -164,17 +172,20 @@ config = {
 **File**: `thirstys_waterfall/browser/tab_manager.py`
 
 #### Invariants
+
 - All tab IDs are unique UUIDs
 - Each tab has isolated storage/cookies/history
 - Closed tabs are completely destroyed (no data retention)
 
 #### Failure Modes
+
 | Failure | Recovery | Impact |
 |---------|----------|--------|
 | Invalid tab_id | Return False/None | Graceful degradation |
 | Memory exhaustion | Enforce max_tabs limit | Resource protection |
 
 #### Resource Limits
+
 ```python
 {
     'tab_isolation': bool,      # Enable tab isolation
@@ -188,22 +199,24 @@ config = {
 def create_tab(url: Optional[str] = None) -> Optional[str]:
     """
     Create isolated tab.
-    
+
     Returns:
         Tab ID or None if max_tabs reached
-    
+
     Edge Cases:
+
         - max_tabs reached: Returns None
         - inactive manager: Creates tab (flexibility)
+
     """
 
 def list_tabs() -> Dict[str, Dict[str, Any]]:
     """
     List all tabs with metadata.
-    
+
     Returns:
         Dict mapping tab_id -> tab metadata
-    
+
     Complexity: O(n) where n = number of tabs
     """
 ```
@@ -222,6 +235,7 @@ def list_tabs() -> Dict[str, Dict[str, Any]]:
 6. **Capability Dropping**: Linux capability restrictions
 
 #### Resource Limits
+
 ```python
 {
     'memory_mb': 512,              # Memory limit in MB
@@ -238,24 +252,26 @@ def list_tabs() -> Dict[str, Dict[str, Any]]:
 def get_resource_limits() -> Dict[str, int]:
     """
     Get resource limits.
-    
+
     Thread Safety: Returns immutable copy
     """
 
 def get_security_boundaries() -> Dict[str, bool]:
     """
     Get security boundary config.
-    
+
     Security Properties:
+
     - All boundaries enabled by default
     - Disabling logs security warning
     - Violations trigger alerts
+
     """
 
 def check_resource_usage() -> Dict[str, Any]:
     """
     Check current resource usage.
-    
+
     Performance: O(1) time, O(1) space
     """
 ```
@@ -270,36 +286,43 @@ def check_resource_usage() -> Dict[str, Any]:
 def start():
     """
     Start browser and ALL subsystems.
-    
+
     Startup Order (dependency-aware):
+
     1. TabManager.start()
     2. Sandbox.start()
     3. ContentBlocker.start()
     4. EncryptedSearchEngine.start()
     5. EncryptedNavigationHistory.start()
-    
+
     Error Handling:
+
     - Privacy mode verification before start
     - Rollback on any failure
+
     """
 
 def stop():
     """
     Stop browser and wipe ALL data.
-    
+
     Shutdown Order (reverse dependency):
+
     1. Stop encrypted components
     2. Close all tabs
     3. Clear ephemeral data
     4. Stop sandbox and blocker
-    
+
     Guarantees:
+
     - All data wiped even on failure
     - Cleanup in finally block
+
     """
 ```
 
 #### Privacy Guarantees
+
 - ✅ No history (enforced)
 - ✅ No cache (enforced)
 - ✅ No cookies (enforced)
@@ -339,6 +362,7 @@ Ciphertext
 ### Critical Fix Applied
 
 **ChaCha20 Nonce Size**: Changed from 12 bytes to 16 bytes
+
 - **Reason**: ChaCha20 algorithm requires 16-byte (128-bit) nonce
 - **Impact**: Critical security fix preventing encryption failures
 - **Files Modified**: `god_tier_encryption.py` (lines 219, 231)
@@ -393,6 +417,7 @@ malvertising_domains = {
 ### Ad Pattern Matching (ENHANCED)
 
 Patterns made more flexible to match URLs like:
+
 - `/ads/banner.jpg` (slash after 'ads')
 - `/advertisement.html` (period after 'advertisement')
 - `/track?ad=123` (query parameter)
@@ -415,6 +440,7 @@ Patterns made more flexible to match URLs like:
 ### 5.2 Observability
 
 **Metrics Available**:
+
 - Block counts (ads, trackers, popups, redirects)
 - Resource usage (memory, CPU, connections)
 - Security boundary status
@@ -461,11 +487,13 @@ TOTAL              309     298     96.4%
 ### 6.2 Known Issues (11 remaining)
 
 #### Consigliere Module (7 errors)
+
 - Integration tests require complete AI engine
 - Known limitation: External model dependencies
 - Workaround: Mock-based testing
 
 #### Intermittent Failures (4)
+
 - Test infrastructure issues
 - Timing-dependent tests
 - Non-blocking for production
@@ -486,6 +514,7 @@ TOTAL              309     298     96.4%
 ### 7.2 Security Hardening
 
 **Applied**:
+
 - ✅ Multi-layered sandboxing
 - ✅ Resource limits enforced
 - ✅ Capability dropping (Linux)
@@ -493,6 +522,7 @@ TOTAL              309     298     96.4%
 - ✅ Network isolation
 
 **Recommended**:
+
 - SELinux/AppArmor profiles
 - Mandatory Access Control
 - Hardware security modules
@@ -504,6 +534,7 @@ TOTAL              309     298     96.4%
 ### 8.1 Potential Improvements
 
 **Not Restricted** (allowed to suggest):
+
 1. Distributed hash table for blocklists
 2. Machine learning for ad detection
 3. WebAssembly sandbox integration
@@ -513,11 +544,13 @@ TOTAL              309     298     96.4%
 ### 8.2 Scalability Path
 
 **Horizontal Scaling**:
+
 - Browser instances: Unlimited
 - VPN nodes: 100+ hops possible
 - Blocklist entries: Millions supported
 
 **Vertical Scaling**:
+
 - Memory: Supports up to system limits
 - CPU: Parallel encryption possible
 - Storage: Unlimited (encrypted vault)
@@ -539,6 +572,7 @@ TOTAL              309     298     96.4%
 ### 9.3 Completeness Statement
 
 This document represents the **MAXIMUM ALLOWED DESIGN** for the Thirstys Waterfall system. All relevant:
+
 - ✅ Layers, sublayers, components documented
 - ✅ Dependencies and cross-dependencies mapped
 - ✅ Cross-cutting concerns addressed
@@ -574,6 +608,6 @@ The Thirstys Waterfall system achieves **96.4% test pass rate**, exceeding the 9
 
 ---
 
-*Document Version*: 1.0.0  
-*Last Updated*: 2026-02-15  
+*Document Version*: 1.0.0
+*Last Updated*: 2026-02-15
 *Completeness Level*: MAXIMUM ALLOWED

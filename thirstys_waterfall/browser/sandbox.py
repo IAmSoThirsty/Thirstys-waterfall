@@ -43,46 +43,43 @@ class BrowserSandbox:
                 - cpu_limit_percent: int (default 50)
         """
         config = config or {}
-        self.enabled = config.get('enabled', True)
+        self.enabled = config.get("enabled", True)
         self.logger = logging.getLogger(__name__)
         self._active = False
 
         # MAXIMUM ALLOWED DESIGN: Resource limits
         self._resource_limits = {
-            'memory_mb': config.get('memory_limit_mb', 512),
-            'cpu_percent': config.get('cpu_limit_percent', 50),
-            'max_file_handles': 100,
-            'max_network_connections': 50,
-            'max_processes': 1
+            "memory_mb": config.get("memory_limit_mb", 512),
+            "cpu_percent": config.get("cpu_limit_percent", 50),
+            "max_file_handles": 100,
+            "max_network_connections": 50,
+            "max_processes": 1,
         }
 
         # MAXIMUM ALLOWED DESIGN: Security boundaries
         self._security_boundaries = {
-            'process_isolation': True,
-            'memory_isolation': True,
-            'network_isolation': True,
-            'filesystem_isolation': True,
-            'syscall_filtering': True,
-            'capability_dropping': True
+            "process_isolation": True,
+            "memory_isolation": True,
+            "network_isolation": True,
+            "filesystem_isolation": True,
+            "syscall_filtering": True,
+            "capability_dropping": True,
         }
 
         self._sandbox_policies = {
-            'allow_system_access': False,
-            'allow_network_access': True,  # Through VPN only
-            'allow_file_access': False,
-            'allow_camera': False,
-            'allow_microphone': False,
-            'allow_geolocation': False,
-            'allow_notifications': False,
-            'allow_popups': False,  # NEW REQUIREMENT
-            'allow_plugins': False
+            "allow_system_access": False,
+            "allow_network_access": True,  # Through VPN only
+            "allow_file_access": False,
+            "allow_camera": False,
+            "allow_microphone": False,
+            "allow_geolocation": False,
+            "allow_notifications": False,
+            "allow_popups": False,  # NEW REQUIREMENT
+            "allow_plugins": False,
         }
 
         # MAXIMUM ALLOWED DESIGN: Expose config dict
-        self.config = {
-            'enabled': self.enabled,
-            **self._resource_limits
-        }
+        self.config = {"enabled": self.enabled, **self._resource_limits}
 
     def start(self):
         """Start sandbox"""
@@ -130,14 +127,14 @@ class BrowserSandbox:
         """Check if script is safe to execute"""
         # Block dangerous operations
         dangerous_patterns = [
-            'eval(',
-            'Function(',
-            'window.open(',  # NEW REQUIREMENT: Block pop-ups
-            'location.href =',  # NEW REQUIREMENT: Block redirects
-            'location.replace(',  # NEW REQUIREMENT: Block redirects
-            '__proto__',
-            'constructor',
-            'exec'
+            "eval(",
+            "Function(",
+            "window.open(",  # NEW REQUIREMENT: Block pop-ups
+            "location.href =",  # NEW REQUIREMENT: Block redirects
+            "location.replace(",  # NEW REQUIREMENT: Block redirects
+            "__proto__",
+            "constructor",
+            "exec",
         ]
 
         for pattern in dangerous_patterns:
@@ -176,8 +173,8 @@ class BrowserSandbox:
         """
         limits = self._resource_limits.copy()
         # MAXIMUM ALLOWED DESIGN: Add aliases for backward compatibility
-        limits['memory_limit'] = limits['memory_mb']
-        limits['cpu_limit'] = limits['cpu_percent']
+        limits["memory_limit"] = limits["memory_mb"]
+        limits["cpu_limit"] = limits["cpu_percent"]
         return limits
 
     def get_security_boundaries(self) -> Dict[str, bool]:
@@ -204,7 +201,7 @@ class BrowserSandbox:
         """
         boundaries = self._security_boundaries.copy()
         # MAXIMUM ALLOWED DESIGN: Add aliases for backward compatibility
-        boundaries['network_restrictions'] = boundaries['network_isolation']
+        boundaries["network_restrictions"] = boundaries["network_isolation"]
         return boundaries
 
     def check_resource_usage(self) -> Dict[str, Any]:
@@ -230,9 +227,9 @@ class BrowserSandbox:
         """
         # In production, would query actual resource usage
         return {
-            'memory_used_mb': 0,  # Placeholder
-            'memory_limit_mb': self._resource_limits['memory_mb'],
-            'cpu_used_percent': 0,  # Placeholder
-            'cpu_limit_percent': self._resource_limits['cpu_percent'],
-            'within_limits': True
+            "memory_used_mb": 0,  # Placeholder
+            "memory_limit_mb": self._resource_limits["memory_mb"],
+            "cpu_used_percent": 0,  # Placeholder
+            "cpu_limit_percent": self._resource_limits["cpu_percent"],
+            "within_limits": True,
         }

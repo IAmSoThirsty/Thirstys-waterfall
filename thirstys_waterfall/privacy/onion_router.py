@@ -12,7 +12,7 @@ class OnionRouter:
     """
 
     def __init__(self, config: Dict[str, Any]):
-        self.enabled = config.get('onion_routing', True)
+        self.enabled = config.get("onion_routing", True)
         self.logger = logging.getLogger(__name__)
         self._active = False
 
@@ -39,12 +39,12 @@ class OnionRouter:
     def _initialize_nodes(self):
         """Initialize onion routing nodes"""
         self._nodes = [
-            {'id': 'entry1', 'type': 'entry', 'location': 'US', 'available': True},
-            {'id': 'entry2', 'type': 'entry', 'location': 'EU', 'available': True},
-            {'id': 'middle1', 'type': 'middle', 'location': 'Asia', 'available': True},
-            {'id': 'middle2', 'type': 'middle', 'location': 'EU', 'available': True},
-            {'id': 'exit1', 'type': 'exit', 'location': 'CH', 'available': True},
-            {'id': 'exit2', 'type': 'exit', 'location': 'IS', 'available': True},
+            {"id": "entry1", "type": "entry", "location": "US", "available": True},
+            {"id": "entry2", "type": "entry", "location": "EU", "available": True},
+            {"id": "middle1", "type": "middle", "location": "Asia", "available": True},
+            {"id": "middle2", "type": "middle", "location": "EU", "available": True},
+            {"id": "exit1", "type": "exit", "location": "CH", "available": True},
+            {"id": "exit2", "type": "exit", "location": "IS", "available": True},
         ]
 
     def _establish_circuits(self):
@@ -61,17 +61,21 @@ class OnionRouter:
         circuit = []
 
         # Select entry node
-        entry_nodes = [n for n in self._nodes if n['type'] == 'entry' and n['available']]
+        entry_nodes = [
+            n for n in self._nodes if n["type"] == "entry" and n["available"]
+        ]
         if entry_nodes:
             circuit.append(random.choice(entry_nodes))
 
         # Select middle node
-        middle_nodes = [n for n in self._nodes if n['type'] == 'middle' and n['available']]
+        middle_nodes = [
+            n for n in self._nodes if n["type"] == "middle" and n["available"]
+        ]
         if middle_nodes:
             circuit.append(random.choice(middle_nodes))
 
         # Select exit node
-        exit_nodes = [n for n in self._nodes if n['type'] == 'exit' and n['available']]
+        exit_nodes = [n for n in self._nodes if n["type"] == "exit" and n["available"]]
         if exit_nodes:
             circuit.append(random.choice(exit_nodes))
 
@@ -92,10 +96,12 @@ class OnionRouter:
 
         # Wrap request in multiple encryption layers
         encrypted_request = request.copy()
-        encrypted_request['circuit'] = [node['id'] for node in circuit]
-        encrypted_request['encrypted_layers'] = len(circuit)
+        encrypted_request["circuit"] = [node["id"] for node in circuit]
+        encrypted_request["encrypted_layers"] = len(circuit)
 
-        self.logger.debug(f"Request routed through circuit: {encrypted_request['circuit']}")
+        self.logger.debug(
+            f"Request routed through circuit: {encrypted_request['circuit']}"
+        )
         return encrypted_request
 
     def get_circuits(self) -> List[List[Dict[str, Any]]]:

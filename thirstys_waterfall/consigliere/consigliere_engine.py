@@ -78,8 +78,12 @@ class ThirstyConsigliere:
         # Ephemeral context window (memory only, never persisted)
         # MAXIMUM ALLOWED DESIGN: Dual naming for compatibility
         self._context_window: List[Dict[str, Any]] = []
-        self._ephemeral_context: List[Dict[str, Any]] = self._context_window  # Alias for tests
-        self._max_context_size = max(1, config.get("max_context_size", 10))  # Clamp to >= 1
+        self._ephemeral_context: List[Dict[str, Any]] = (
+            self._context_window
+        )  # Alias for tests
+        self._max_context_size = max(
+            1, config.get("max_context_size", 10)
+        )  # Clamp to >= 1
 
         # Active capabilities (user must explicitly enable)
         self._active_capabilities: Dict[str, bool] = {}
@@ -256,9 +260,9 @@ class ThirstyConsigliere:
             action="assist",
             details={
                 "query_length": len(query),
-                "context_used": list(minimized_context.keys())
-                if minimized_context
-                else [],
+                "context_used": (
+                    list(minimized_context.keys()) if minimized_context else []
+                ),
                 "capabilities_used": [
                     k for k, v in self._active_capabilities.items() if v
                 ],
@@ -287,7 +291,13 @@ class ThirstyConsigliere:
             elif key in ["page_title", "language"]:
                 minimized[key] = value
             # Skip identifiers and privacy-sensitive fields
-            elif key not in ["user_id", "session_id", "tracking_id", "user_agent", "timestamp"]:
+            elif key not in [
+                "user_id",
+                "session_id",
+                "tracking_id",
+                "user_agent",
+                "timestamp",
+            ]:
                 minimized[key] = value
 
         return minimized
@@ -365,12 +375,10 @@ class ThirstyConsigliere:
             "data_sent_off_device": False,
             "god_tier_encrypted": True,
             "capabilities_used": [k for k, v in self._active_capabilities.items() if v],
-
             # MAXIMUM ALLOWED DESIGN: Backward compatibility aliases
             "encrypted": True,  # Alias for god_tier_encrypted
             "on_device": True,  # Alias for processed_locally
             "data_used": context_keys_used,  # Explicit list of context keys used
-
             # Transparency information
             "transparency": {
                 "where": "on-device",
@@ -465,14 +473,12 @@ class ThirstyConsigliere:
             "encryption_layers": 7,
             "on_device_only": self.on_device_only,
             "data_minimization": self.data_minimization,
-
             # Active state
             "active_capabilities": [
                 k for k, v in self._active_capabilities.items() if v
             ],
             "ledger_entries": len(self.action_ledger.get_entries()),
             "context_window_size": len(self._context_window),
-
             # Principles (nested structure)
             "principles": {
                 "code_of_omerta": True,
@@ -481,7 +487,6 @@ class ThirstyConsigliere:
                 "default_locked": self.default_locked,
                 "god_tier_encryption": True,
             },
-
             # MAXIMUM ALLOWED DESIGN: Top-level code_of_omerta for backward compatibility
             # Tests expect this at top level, not just in principles
             "code_of_omerta": {

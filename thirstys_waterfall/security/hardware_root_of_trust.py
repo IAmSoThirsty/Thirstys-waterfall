@@ -19,6 +19,7 @@ import threading
 
 class HardwareType(Enum):
     """Supported hardware security module types"""
+
     TPM = "tpm"
     SECURE_ENCLAVE = "secure_enclave"
     HSM = "hsm"
@@ -27,6 +28,7 @@ class HardwareType(Enum):
 
 class AttestationStatus(Enum):
     """Attestation status indicators"""
+
     VALID = "valid"
     INVALID = "invalid"
     UNKNOWN = "unknown"
@@ -124,7 +126,7 @@ class TPMInterface(HardwareInterface):
             b"BOOTLOADER_MEASUREMENT",
             b"KERNEL_MEASUREMENT",
             b"INITRD_MEASUREMENT",
-            b"USERSPACE_MEASUREMENT"
+            b"USERSPACE_MEASUREMENT",
         ]
 
         for i, measurement in enumerate(boot_measurements):
@@ -250,7 +252,7 @@ class TPMInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._hardware_id.encode())
         return hmac.new(key, data, hashlib.sha256).digest() + data
@@ -266,7 +268,7 @@ class TPMInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._hardware_id.encode())
 
@@ -309,7 +311,9 @@ class SecureEnclaveInterface(HardwareInterface):
         self._keychain: Dict[str, bytes] = {}
         self._enclave_id = self._generate_enclave_id()
         # Generate unique salt from enclave ID instead of hard-coding
-        self._salt = hashlib.sha256(f"SECURE_ENCLAVE_{self._enclave_id}".encode()).digest()
+        self._salt = hashlib.sha256(
+            f"SECURE_ENCLAVE_{self._enclave_id}".encode()
+        ).digest()
         self._lock = threading.Lock()
 
     def initialize(self) -> bool:
@@ -387,7 +391,7 @@ class SecureEnclaveInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._enclave_id.encode())
         return hmac.new(key, data, hashlib.sha256).digest() + data
@@ -402,7 +406,7 @@ class SecureEnclaveInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._enclave_id.encode())
 
@@ -505,7 +509,7 @@ class HSMInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._hsm_id.encode())
         return hmac.new(key, data, hashlib.sha256).digest() + data
@@ -520,7 +524,7 @@ class HSMInterface(HardwareInterface):
             length=32,
             salt=self._salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         key = kdf.derive(self._hsm_id.encode())
 
@@ -553,8 +557,12 @@ class HardwareRootOfTrust:
                 return True
 
         # Try in order of security: HSM > TPM > Secure Enclave > Software
-        for hw_type in [HardwareType.HSM, HardwareType.TPM,
-                        HardwareType.SECURE_ENCLAVE, HardwareType.SOFTWARE_FALLBACK]:
+        for hw_type in [
+            HardwareType.HSM,
+            HardwareType.TPM,
+            HardwareType.SECURE_ENCLAVE,
+            HardwareType.SOFTWARE_FALLBACK,
+        ]:
             if self._try_initialize_type(hw_type):
                 return True
 
@@ -643,17 +651,13 @@ class HardwareRootOfTrust:
     def get_hardware_info(self) -> Dict[str, Any]:
         """Get information about active hardware security module"""
         if not self._interface:
-            return {
-                'active': False,
-                'type': None,
-                'hardware_id': None
-            }
+            return {"active": False, "type": None, "hardware_id": None}
 
         return {
-            'active': True,
-            'type': self._active_type.value if self._active_type else None,
-            'hardware_id': self._interface.get_hardware_id(),
-            'attestation_status': self._interface.attest_boot().value
+            "active": True,
+            "type": self._active_type.value if self._active_type else None,
+            "hardware_id": self._interface.get_hardware_id(),
+            "attestation_status": self._interface.attest_boot().value,
         }
 
     def wipe_all_keys(self) -> bool:

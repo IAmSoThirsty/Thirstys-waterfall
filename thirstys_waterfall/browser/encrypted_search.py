@@ -59,18 +59,20 @@ class EncryptedSearchEngine:
         self.logger.debug(f"Search hash: {query_hash[:16]}")
 
         # Store encrypted query in history
-        self._encrypted_search_history.append({
-            'encrypted_query': encrypted_query,
-            'timestamp': time.time(),
-            'hash': query_hash[:16]
-        })
+        self._encrypted_search_history.append(
+            {
+                "encrypted_query": encrypted_query,
+                "timestamp": time.time(),
+                "hash": query_hash[:16],
+            }
+        )
 
         # Check encrypted cache (using hash as key)
         if query_hash in self._encrypted_cache:
             self.logger.debug("Returning encrypted cached results")
             return {
-                'encrypted_results': self._encrypted_cache[query_hash],
-                'from_cache': True
+                "encrypted_results": self._encrypted_cache[query_hash],
+                "from_cache": True,
             }
 
         # Perform search (in production would use encrypted search API)
@@ -79,10 +81,7 @@ class EncryptedSearchEngine:
         # Cache encrypted results (using hash as key)
         self._encrypted_cache[query_hash] = encrypted_results
 
-        return {
-            'encrypted_results': encrypted_results,
-            'from_cache': False
-        }
+        return {"encrypted_results": encrypted_results, "from_cache": False}
 
     def _perform_encrypted_search(self, encrypted_query: bytes) -> bytes:
         """

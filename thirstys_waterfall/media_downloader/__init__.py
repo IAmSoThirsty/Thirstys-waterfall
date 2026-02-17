@@ -7,4 +7,4 @@ from .media_engine import MediaDownloader
 from .media_library import MediaLibrary
 from .format_converter import FormatConverter
 
-__all__ = ['MediaDownloader', 'MediaLibrary', 'FormatConverter']
+__all__ = ["MediaDownloader", "MediaLibrary", "FormatConverter"]

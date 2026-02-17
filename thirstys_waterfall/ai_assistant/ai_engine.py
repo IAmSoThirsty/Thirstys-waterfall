@@ -32,11 +32,11 @@ class GodTierAI:
 
         # AI capabilities
         self.capabilities = {
-            'text_generation': True,
-            'code_assistance': True,
-            'problem_solving': True,
-            'privacy_analysis': True,
-            'security_audit': True
+            "text_generation": True,
+            "code_assistance": True,
+            "problem_solving": True,
+            "privacy_analysis": True,
+            "security_audit": True,
         }
 
         # On-device only
@@ -45,7 +45,7 @@ class GodTierAI:
 
         # Encrypted context window
         self._context: List[Dict[str, Any]] = []
-        self._max_context = config.get('max_context', 20)
+        self._max_context = config.get("max_context", 20)
 
         # Conversation history (encrypted, ephemeral)
         self._conversation_history: List[Dict[str, Any]] = []
@@ -70,7 +70,9 @@ class GodTierAI:
 
         self._active = False
 
-    def ask(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def ask(
+        self, query: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Ask the AI assistant a question.
         All processing done on-device with God tier encryption.
@@ -83,7 +85,7 @@ class GodTierAI:
             AI response with transparency
         """
         if not self._active:
-            return {'error': 'AI assistant not active'}
+            return {"error": "AI assistant not active"}
 
         # Encrypt query with God tier encryption
         encrypted_query = self.god_tier_encryption.encrypt_god_tier(query.encode())
@@ -91,25 +93,28 @@ class GodTierAI:
         self.logger.info("Processing query on-device (no external API calls)")
 
         # Add to encrypted context
-        self._add_to_context({
-            'query_hash': encrypted_query[:32].hex(),
-            'timestamp': time.time()
-        })
+        self._add_to_context(
+            {"query_hash": encrypted_query[:32].hex(), "timestamp": time.time()}
+        )
 
         # Process with local inference
         response = self._process_with_local_ai(query, context)
 
         # Add to encrypted conversation history
-        self._conversation_history.append({
-            'query_hash': encrypted_query[:32].hex(),
-            'response_length': len(response.get('response', '')),
-            'timestamp': time.time(),
-            'god_tier_encrypted': True
-        })
+        self._conversation_history.append(
+            {
+                "query_hash": encrypted_query[:32].hex(),
+                "response_length": len(response.get("response", "")),
+                "timestamp": time.time(),
+                "god_tier_encrypted": True,
+            }
+        )
 
         return response
 
-    def _process_with_local_ai(self, query: str, context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _process_with_local_ai(
+        self, query: str, context: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Process query with local AI (on-device).
         No external API calls, no data sent off-device.
@@ -117,27 +122,27 @@ class GodTierAI:
         query_lower = query.lower()
 
         # Advanced reasoning (simplified for demonstration)
-        if 'privacy' in query_lower or 'security' in query_lower:
+        if "privacy" in query_lower or "security" in query_lower:
             response = self._privacy_analysis(query)
-        elif 'code' in query_lower or 'program' in query_lower:
+        elif "code" in query_lower or "program" in query_lower:
             response = self._code_assistance(query)
-        elif 'encrypt' in query_lower:
+        elif "encrypt" in query_lower:
             response = self._encryption_advice(query)
         else:
             response = self._general_assistance(query)
 
         return {
-            'response': response,
-            'processed_on_device': True,
-            'no_external_calls': True,
-            'god_tier_encrypted': True,
-            'encryption_layers': 7,
-            'transparency': {
-                'where': 'on-device',
-                'data_sent': 'none',
-                'apis_called': 'none',
-                'privacy_level': 'maximum'
-            }
+            "response": response,
+            "processed_on_device": True,
+            "no_external_calls": True,
+            "god_tier_encrypted": True,
+            "encryption_layers": 7,
+            "transparency": {
+                "where": "on-device",
+                "data_sent": "none",
+                "apis_called": "none",
+                "privacy_level": "maximum",
+            },
         }
 
     def _privacy_analysis(self, query: str) -> str:
@@ -214,12 +219,12 @@ class GodTierAI:
     def get_status(self) -> Dict[str, Any]:
         """Get AI assistant status"""
         return {
-            'active': self._active,
-            'god_tier_encrypted': True,
-            'encryption_layers': 7,
-            'on_device': self.on_device,
-            'no_external_calls': self.no_external_calls,
-            'capabilities': list(self.capabilities.keys()),
-            'context_size': len(self._context),
-            'conversation_entries': len(self._conversation_history)
+            "active": self._active,
+            "god_tier_encrypted": True,
+            "encryption_layers": 7,
+            "on_device": self.on_device,
+            "no_external_calls": self.no_external_calls,
+            "capabilities": list(self.capabilities.keys()),
+            "context_size": len(self._context),
+            "conversation_entries": len(self._conversation_history),
         }

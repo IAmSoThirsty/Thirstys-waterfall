@@ -13,7 +13,7 @@ class StatefulInspectionFirewall(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.connection_timeout = config.get('connection_timeout', 3600)
+        self.connection_timeout = config.get("connection_timeout", 3600)
         self._connection_table = {}
 
     def start(self):
@@ -33,7 +33,7 @@ class StatefulInspectionFirewall(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove stateful rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet with stateful inspection"""
@@ -52,8 +52,8 @@ class StatefulInspectionFirewall(FirewallBase):
 
             # Validate packet belongs to this connection
             if self._validate_connection_state(packet, conn):
-                conn['last_seen'] = current_time
-                conn['packet_count'] += 1
+                conn["last_seen"] = current_time
+                conn["packet_count"] += 1
                 self._update_statistics(True)
                 return True
             else:
@@ -61,15 +61,15 @@ class StatefulInspectionFirewall(FirewallBase):
                 return False
 
         # New connection
-        if packet.get('flags') in ['SYN', None]:
+        if packet.get("flags") in ["SYN", None]:
             self._connection_table[conn_id] = {
-                'state': 'new',
-                'established': current_time,
-                'last_seen': current_time,
-                'packet_count': 1,
-                'src_ip': packet.get('src_ip'),
-                'dst_ip': packet.get('dst_ip'),
-                'protocol': packet.get('protocol')
+                "state": "new",
+                "established": current_time,
+                "last_seen": current_time,
+                "packet_count": 1,
+                "src_ip": packet.get("src_ip"),
+                "dst_ip": packet.get("dst_ip"),
+                "protocol": packet.get("protocol"),
             }
             self._update_statistics(True)
             return True
@@ -82,16 +82,18 @@ class StatefulInspectionFirewall(FirewallBase):
         """Generate connection identifier"""
         return f"{packet.get('src_ip')}:{packet.get('src_port')}-{packet.get('dst_ip')}:{packet.get('dst_port')}"
 
-    def _validate_connection_state(self, packet: Dict[str, Any], connection: Dict[str, Any]) -> bool:
+    def _validate_connection_state(
+        self, packet: Dict[str, Any], connection: Dict[str, Any]
+    ) -> bool:
         """Validate packet matches connection state"""
         # Verify IPs match
-        if packet.get('src_ip') != connection['src_ip']:
+        if packet.get("src_ip") != connection["src_ip"]:
             return False
-        if packet.get('dst_ip') != connection['dst_ip']:
+        if packet.get("dst_ip") != connection["dst_ip"]:
             return False
 
         # Verify protocol matches
-        if packet.get('protocol') != connection['protocol']:
+        if packet.get("protocol") != connection["protocol"]:
             return False
 
         return True
@@ -99,8 +101,9 @@ class StatefulInspectionFirewall(FirewallBase):
     def _cleanup_expired_connections(self, current_time: float):
         """Remove expired connections"""
         expired = [
-            conn_id for conn_id, conn in self._connection_table.items()
-            if current_time - conn['last_seen'] > self.connection_timeout
+            conn_id
+            for conn_id, conn in self._connection_table.items()
+            if current_time - conn["last_seen"] > self.connection_timeout
         ]
 
         for conn_id in expired:

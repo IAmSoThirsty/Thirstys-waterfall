@@ -29,6 +29,7 @@ from cryptography.x509.oid import ExtensionOID
 
 class AuthMethod(Enum):
     """Supported authentication methods"""
+
     PASSWORD = "password"
     TOTP = "totp"
     FIDO2 = "fido2"
@@ -43,16 +44,18 @@ class AuthMethod(Enum):
 
 class AuthLevel(Enum):
     """Authentication security levels"""
+
     NONE = 0
-    BASIC = 1        # Single factor
-    STANDARD = 2     # Two-factor
-    ELEVATED = 3     # Two-factor with hardware
-    HIGH = 4         # Multi-factor with biometric
-    CRITICAL = 5     # All factors + hardware + biometric
+    BASIC = 1  # Single factor
+    STANDARD = 2  # Two-factor
+    ELEVATED = 3  # Two-factor with hardware
+    HIGH = 4  # Multi-factor with biometric
+    CRITICAL = 5  # All factors + hardware + biometric
 
 
 class RiskLevel(Enum):
     """Risk assessment levels"""
+
     MINIMAL = 0
     LOW = 1
     MODERATE = 2
@@ -63,6 +66,7 @@ class RiskLevel(Enum):
 
 class BiometricType(Enum):
     """Biometric authentication types"""
+
     FINGERPRINT = "fingerprint"
     FACE_ID = "face_id"
     IRIS_SCAN = "iris_scan"
@@ -76,6 +80,7 @@ class AuthContext:
     Context-aware authentication context.
     Tracks session state, risk factors, and authentication history.
     """
+
     user_id: str
     session_id: str
     ip_address: str
@@ -104,26 +109,27 @@ class AuthContext:
     def to_dict(self) -> Dict[str, Any]:
         """Serialize context to dictionary"""
         return {
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'ip_address': self.ip_address,
-            'user_agent': self.user_agent,
-            'timestamp': self.timestamp,
-            'risk_level': self.risk_level.name,
-            'risk_factors': self.risk_factors,
-            'auth_level': self.auth_level.name,
-            'authenticated_methods': [m.value for m in self.authenticated_methods],
-            'last_auth_time': self.last_auth_time,
-            'device_fingerprint': self.device_fingerprint,
-            'geolocation': self.geolocation,
+            "user_id": self.user_id,
+            "session_id": self.session_id,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "timestamp": self.timestamp,
+            "risk_level": self.risk_level.name,
+            "risk_factors": self.risk_factors,
+            "auth_level": self.auth_level.name,
+            "authenticated_methods": [m.value for m in self.authenticated_methods],
+            "last_auth_time": self.last_auth_time,
+            "device_fingerprint": self.device_fingerprint,
+            "geolocation": self.geolocation,
         }
 
 
 @dataclass
 class TOTPConfig:
     """TOTP configuration"""
+
     secret: bytes
-    algorithm: str = 'sha256'  # sha1, sha256, sha512
+    algorithm: str = "sha256"  # sha1, sha256, sha512
     digits: int = 6
     period: int = 30  # seconds
     issuer: str = "ThirstysWaterfall"
@@ -132,6 +138,7 @@ class TOTPConfig:
 @dataclass
 class FIDO2Credential:
     """FIDO2/WebAuthn credential"""
+
     credential_id: bytes
     public_key: bytes
     sign_count: int
@@ -146,6 +153,7 @@ class FIDO2Credential:
 @dataclass
 class PasskeyData:
     """Passkey storage"""
+
     passkey_id: str
     public_key: bytes
     private_key_encrypted: bytes  # Encrypted with device key
@@ -158,6 +166,7 @@ class PasskeyData:
 @dataclass
 class BiometricTemplate:
     """Biometric authentication template"""
+
     template_id: str
     biometric_type: BiometricType
     template_hash: bytes  # Never store raw biometric data
@@ -198,7 +207,9 @@ class TOTPProvider(AuthenticationProvider):
         self._used_tokens: deque = deque(maxlen=100)  # Prevent replay
         self._lock = threading.Lock()
 
-    def enroll(self, user_id: str, credential_data: Optional[bytes] = None) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    def enroll(
+        self, user_id: str, credential_data: Optional[bytes] = None
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
         Enroll user for TOTP authentication.
 
@@ -215,24 +226,23 @@ class TOTPProvider(AuthenticationProvider):
                 secret = credential_data if credential_data else secrets.token_bytes(20)
 
                 config = TOTPConfig(
-                    secret=secret,
-                    algorithm='sha256',
-                    digits=6,
-                    period=30
+                    secret=secret, algorithm="sha256", digits=6, period=30
                 )
 
                 self._secrets[user_id] = config
 
                 # Generate provisioning data
-                secret_b32 = base64.b32encode(secret).decode('utf-8')
+                secret_b32 = base64.b32encode(secret).decode("utf-8")
 
                 enrollment_data = {
-                    'secret': secret_b32,
-                    'algorithm': config.algorithm,
-                    'digits': config.digits,
-                    'period': config.period,
-                    'issuer': config.issuer,
-                    'provisioning_uri': self._generate_provisioning_uri(user_id, config)
+                    "secret": secret_b32,
+                    "algorithm": config.algorithm,
+                    "digits": config.digits,
+                    "period": config.period,
+                    "issuer": config.issuer,
+                    "provisioning_uri": self._generate_provisioning_uri(
+                        user_id, config
+                    ),
                 }
 
                 self.logger.info(f"TOTP enrolled for user {user_id}")
@@ -272,12 +282,16 @@ class TOTPProvider(AuthenticationProvider):
                 # Verify token with time window (±1 period for clock drift)
                 current_time = int(time.time())
                 for time_offset in [0, -1, 1]:
-                    counter = (current_time + time_offset * config.period) // config.period
+                    counter = (
+                        current_time + time_offset * config.period
+                    ) // config.period
                     expected_token = self._generate_totp(config, counter)
 
                     if secrets.compare_digest(credential, expected_token):
                         self._used_tokens.append(token_hash)
-                        self.logger.info(f"TOTP authentication successful for {context.user_id}")
+                        self.logger.info(
+                            f"TOTP authentication successful for {context.user_id}"
+                        )
                         return True
 
                 self.logger.warning(f"Invalid TOTP token for {context.user_id}")
@@ -299,35 +313,37 @@ class TOTPProvider(AuthenticationProvider):
     def _generate_totp(self, config: TOTPConfig, counter: int) -> str:
         """Generate TOTP token"""
         # Convert counter to 8-byte big-endian
-        counter_bytes = struct.pack('>Q', counter)
+        counter_bytes = struct.pack(">Q", counter)
 
         # HMAC-based OTP
         algorithm_map = {
-            'sha1': hashlib.sha1,
-            'sha256': hashlib.sha256,
-            'sha512': hashlib.sha512,
+            "sha1": hashlib.sha1,
+            "sha256": hashlib.sha256,
+            "sha512": hashlib.sha512,
         }
 
         hash_func = algorithm_map.get(config.algorithm, hashlib.sha256)
         hmac_hash = hmac.new(config.secret, counter_bytes, hash_func).digest()
 
         # Dynamic truncation
-        offset = hmac_hash[-1] & 0x0f
-        code = struct.unpack('>I', hmac_hash[offset:offset + 4])[0] & 0x7fffffff
+        offset = hmac_hash[-1] & 0x0F
+        code = struct.unpack(">I", hmac_hash[offset : offset + 4])[0] & 0x7FFFFFFF
 
         # Generate token
-        token = str(code % (10 ** config.digits)).zfill(config.digits)
+        token = str(code % (10**config.digits)).zfill(config.digits)
         return token
 
     def _generate_provisioning_uri(self, user_id: str, config: TOTPConfig) -> str:
         """Generate otpauth:// URI for QR code"""
-        secret_b32 = base64.b32encode(config.secret).decode('utf-8')
-        return (f"otpauth://totp/{config.issuer}:{user_id}?"
-                f"secret={secret_b32}&"
-                f"issuer={config.issuer}&"
-                f"algorithm={config.algorithm.upper()}&"
-                f"digits={config.digits}&"
-                f"period={config.period}")
+        secret_b32 = base64.b32encode(config.secret).decode("utf-8")
+        return (
+            f"otpauth://totp/{config.issuer}:{user_id}?"
+            f"secret={secret_b32}&"
+            f"issuer={config.issuer}&"
+            f"algorithm={config.algorithm.upper()}&"
+            f"digits={config.digits}&"
+            f"period={config.period}"
+        )
 
 
 class FIDO2Provider(AuthenticationProvider):
@@ -364,11 +380,13 @@ class FIDO2Provider(AuthenticationProvider):
         with self._lock:
             try:
                 credential = FIDO2Credential(
-                    credential_id=base64.b64decode(credential_data['credential_id']),
-                    public_key=base64.b64decode(credential_data['public_key']),
+                    credential_id=base64.b64decode(credential_data["credential_id"]),
+                    public_key=base64.b64decode(credential_data["public_key"]),
                     sign_count=0,
-                    aaguid=base64.b64decode(credential_data.get('aaguid', secrets.token_bytes(16))),
-                    user_id=user_id
+                    aaguid=base64.b64decode(
+                        credential_data.get("aaguid", secrets.token_bytes(16))
+                    ),
+                    user_id=user_id,
                 )
 
                 if user_id not in self._credentials:
@@ -403,7 +421,7 @@ class FIDO2Provider(AuthenticationProvider):
                     return False
 
                 # Find matching credential
-                credential_id = base64.b64decode(credential['credential_id'])
+                credential_id = base64.b64decode(credential["credential_id"])
                 matching_cred = None
 
                 for cred in user_credentials:
@@ -416,26 +434,32 @@ class FIDO2Provider(AuthenticationProvider):
                     return False
 
                 # Verify signature
-                authenticator_data = base64.b64decode(credential['authenticator_data'])
-                client_data_json = base64.b64decode(credential['client_data_json'])
-                signature = base64.b64decode(credential['signature'])
+                authenticator_data = base64.b64decode(credential["authenticator_data"])
+                client_data_json = base64.b64decode(credential["client_data_json"])
+                signature = base64.b64decode(credential["signature"])
 
                 # Reconstruct signed data
                 client_data_hash = hashlib.sha256(client_data_json).digest()
                 signed_data = authenticator_data + client_data_hash
 
                 # Verify with public key
-                if self._verify_signature(matching_cred.public_key, signed_data, signature):
+                if self._verify_signature(
+                    matching_cred.public_key, signed_data, signature
+                ):
                     # Check sign count (prevent credential cloning)
-                    new_sign_count = struct.unpack('>I', authenticator_data[33:37])[0]
+                    new_sign_count = struct.unpack(">I", authenticator_data[33:37])[0]
 
                     if new_sign_count > matching_cred.sign_count:
                         matching_cred.sign_count = new_sign_count
                         matching_cred.last_used = time.time()
-                        self.logger.info(f"FIDO2 authentication successful for {context.user_id}")
+                        self.logger.info(
+                            f"FIDO2 authentication successful for {context.user_id}"
+                        )
                         return True
                     else:
-                        self.logger.warning(f"Potential cloned authenticator for {context.user_id}")
+                        self.logger.warning(
+                            f"Potential cloned authenticator for {context.user_id}"
+                        )
                         return False
 
                 return False
@@ -451,7 +475,8 @@ class FIDO2Provider(AuthenticationProvider):
                 cred_id_bytes = base64.b64decode(credential_id)
                 initial_count = len(self._credentials[user_id])
                 self._credentials[user_id] = [
-                    c for c in self._credentials[user_id]
+                    c
+                    for c in self._credentials[user_id]
                     if not secrets.compare_digest(c.credential_id, cred_id_bytes)
                 ]
 
@@ -467,26 +492,21 @@ class FIDO2Provider(AuthenticationProvider):
         self._challenges[user_id] = challenge
         return challenge
 
-    def _verify_signature(self, public_key_bytes: bytes, data: bytes, signature: bytes) -> bool:
+    def _verify_signature(
+        self, public_key_bytes: bytes, data: bytes, signature: bytes
+    ) -> bool:
         """Verify FIDO2 signature"""
         try:
             # In production, decode COSE key format and verify with appropriate algorithm
             # This is a simplified verification
-            public_key = serialization.load_der_public_key(public_key_bytes, backend=default_backend())
+            public_key = serialization.load_der_public_key(
+                public_key_bytes, backend=default_backend()
+            )
 
             if isinstance(public_key, rsa.RSAPublicKey):
-                public_key.verify(
-                    signature,
-                    data,
-                    padding.PKCS1v15(),
-                    hashes.SHA256()
-                )
+                public_key.verify(signature, data, padding.PKCS1v15(), hashes.SHA256())
             elif isinstance(public_key, ec.EllipticCurvePublicKey):
-                public_key.verify(
-                    signature,
-                    data,
-                    ec.ECDSA(hashes.SHA256())
-                )
+                public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
 
             return True
 
@@ -516,25 +536,27 @@ class PasskeyProvider(AuthenticationProvider):
                 # Serialize keys
                 public_key_bytes = public_key.public_bytes(
                     encoding=serialization.Encoding.DER,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo,
                 )
 
                 private_key_bytes = private_key.private_bytes(
                     encoding=serialization.Encoding.DER,
                     format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption()
+                    encryption_algorithm=serialization.NoEncryption(),
                 )
 
                 # Encrypt private key with device key
-                device_key = credential_data.get('device_key', secrets.token_bytes(32))
+                device_key = credential_data.get("device_key", secrets.token_bytes(32))
                 encrypted_private_key = self._encrypt_key(private_key_bytes, device_key)
 
                 passkey = PasskeyData(
-                    passkey_id=base64.b64encode(secrets.token_bytes(16)).decode('utf-8'),
+                    passkey_id=base64.b64encode(secrets.token_bytes(16)).decode(
+                        "utf-8"
+                    ),
                     public_key=public_key_bytes,
                     private_key_encrypted=encrypted_private_key,
                     user_id=user_id,
-                    device_name=credential_data.get('device_name', 'Unknown Device')
+                    device_name=credential_data.get("device_name", "Unknown Device"),
                 )
 
                 if user_id not in self._passkeys:
@@ -553,7 +575,7 @@ class PasskeyProvider(AuthenticationProvider):
         with self._lock:
             try:
                 user_passkeys = self._passkeys.get(context.user_id, [])
-                passkey_id = credential.get('passkey_id')
+                passkey_id = credential.get("passkey_id")
 
                 matching_passkey = None
                 for pk in user_passkeys:
@@ -565,23 +587,22 @@ class PasskeyProvider(AuthenticationProvider):
                     return False
 
                 # Verify challenge signature
-                challenge = credential.get('challenge')
-                signature = base64.b64decode(credential.get('signature'))
+                challenge = credential.get("challenge")
+                signature = base64.b64decode(credential.get("signature"))
 
                 public_key = serialization.load_der_public_key(
-                    matching_passkey.public_key,
-                    backend=default_backend()
+                    matching_passkey.public_key, backend=default_backend()
                 )
 
                 try:
                     public_key.verify(
-                        signature,
-                        challenge.encode('utf-8'),
-                        ec.ECDSA(hashes.SHA256())
+                        signature, challenge.encode("utf-8"), ec.ECDSA(hashes.SHA256())
                     )
 
                     matching_passkey.last_used = time.time()
-                    self.logger.info(f"Passkey authentication successful for {context.user_id}")
+                    self.logger.info(
+                        f"Passkey authentication successful for {context.user_id}"
+                    )
                     return True
 
                 except Exception:
@@ -597,7 +618,8 @@ class PasskeyProvider(AuthenticationProvider):
             if user_id in self._passkeys:
                 initial_count = len(self._passkeys[user_id])
                 self._passkeys[user_id] = [
-                    pk for pk in self._passkeys[user_id]
+                    pk
+                    for pk in self._passkeys[user_id]
                     if pk.passkey_id != credential_id
                 ]
 
@@ -611,9 +633,7 @@ class PasskeyProvider(AuthenticationProvider):
         """Encrypt private key with device key"""
         iv = secrets.token_bytes(16)
         cipher = Cipher(
-            algorithms.AES(device_key[:32]),
-            modes.GCM(iv),
-            backend=default_backend()
+            algorithms.AES(device_key[:32]), modes.GCM(iv), backend=default_backend()
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(key_data) + encryptor.finalize()
@@ -636,7 +656,9 @@ class CertificateProvider(AuthenticationProvider):
         """Enroll X.509 certificate"""
         with self._lock:
             try:
-                cert = x509.load_pem_x509_certificate(credential_data, default_backend())
+                cert = x509.load_pem_x509_certificate(
+                    credential_data, default_backend()
+                )
 
                 # Validate certificate
                 if not self._validate_certificate(cert):
@@ -658,12 +680,16 @@ class CertificateProvider(AuthenticationProvider):
         """Authenticate with certificate"""
         with self._lock:
             try:
-                cert_pem = credential.get('certificate')
-                cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
+                cert_pem = credential.get("certificate")
+                cert = x509.load_pem_x509_certificate(
+                    cert_pem.encode(), default_backend()
+                )
 
                 # Check if certificate is revoked
                 if cert.serial_number in self._revoked_serials:
-                    self.logger.warning(f"Revoked certificate used for {context.user_id}")
+                    self.logger.warning(
+                        f"Revoked certificate used for {context.user_id}"
+                    )
                     return False
 
                 # Verify certificate chain and validity
@@ -671,27 +697,24 @@ class CertificateProvider(AuthenticationProvider):
                     return False
 
                 # Verify challenge signature
-                challenge = credential.get('challenge').encode('utf-8')
-                signature = base64.b64decode(credential.get('signature'))
+                challenge = credential.get("challenge").encode("utf-8")
+                signature = base64.b64decode(credential.get("signature"))
 
                 public_key = cert.public_key()
 
                 try:
                     if isinstance(public_key, rsa.RSAPublicKey):
                         public_key.verify(
-                            signature,
-                            challenge,
-                            padding.PKCS1v15(),
-                            hashes.SHA256()
+                            signature, challenge, padding.PKCS1v15(), hashes.SHA256()
                         )
                     elif isinstance(public_key, ec.EllipticCurvePublicKey):
                         public_key.verify(
-                            signature,
-                            challenge,
-                            ec.ECDSA(hashes.SHA256())
+                            signature, challenge, ec.ECDSA(hashes.SHA256())
                         )
 
-                    self.logger.info(f"Certificate authentication successful for {context.user_id}")
+                    self.logger.info(
+                        f"Certificate authentication successful for {context.user_id}"
+                    )
                     return True
 
                 except Exception:
@@ -751,18 +774,20 @@ class BiometricProvider(AuthenticationProvider):
         """Enroll biometric template"""
         with self._lock:
             try:
-                biometric_type = BiometricType(credential_data['type'])
+                biometric_type = BiometricType(credential_data["type"])
 
                 # Never store raw biometric data - only hash
-                raw_template = credential_data['template'].encode()
+                raw_template = credential_data["template"].encode()
                 template_hash = hashlib.sha512(raw_template).digest()
 
                 template = BiometricTemplate(
-                    template_id=base64.b64encode(secrets.token_bytes(16)).decode('utf-8'),
+                    template_id=base64.b64encode(secrets.token_bytes(16)).decode(
+                        "utf-8"
+                    ),
                     biometric_type=biometric_type,
                     template_hash=template_hash,
-                    quality_score=credential_data.get('quality_score', 0.85),
-                    user_id=user_id
+                    quality_score=credential_data.get("quality_score", 0.85),
+                    user_id=user_id,
                 )
 
                 if user_id not in self._templates:
@@ -784,8 +809,8 @@ class BiometricProvider(AuthenticationProvider):
                 if not user_templates:
                     return False
 
-                biometric_type = BiometricType(credential['type'])
-                raw_sample = credential['sample'].encode()
+                biometric_type = BiometricType(credential["type"])
+                raw_sample = credential["sample"].encode()
                 sample_hash = hashlib.sha512(raw_sample).digest()
 
                 # Find matching template
@@ -795,11 +820,15 @@ class BiometricProvider(AuthenticationProvider):
 
                     # Calculate similarity (simplified - production would use
                     # sophisticated biometric matching algorithms)
-                    similarity = self._calculate_similarity(template.template_hash, sample_hash)
+                    similarity = self._calculate_similarity(
+                        template.template_hash, sample_hash
+                    )
 
                     if similarity >= 0.95:  # 95% match threshold
                         template.last_verified = time.time()
-                        self.logger.info(f"Biometric authentication successful for {context.user_id}")
+                        self.logger.info(
+                            f"Biometric authentication successful for {context.user_id}"
+                        )
                         return True
 
                 return False
@@ -814,7 +843,8 @@ class BiometricProvider(AuthenticationProvider):
             if user_id in self._templates:
                 initial_count = len(self._templates[user_id])
                 self._templates[user_id] = [
-                    t for t in self._templates[user_id]
+                    t
+                    for t in self._templates[user_id]
                     if t.template_id != credential_id
                 ]
 
@@ -869,18 +899,31 @@ class MFAAuthenticator:
             RiskLevel.MINIMAL: [AuthMethod.PASSWORD],
             RiskLevel.LOW: [AuthMethod.PASSWORD, AuthMethod.TOTP],
             RiskLevel.MODERATE: [AuthMethod.PASSWORD, AuthMethod.TOTP],
-            RiskLevel.HIGH: [AuthMethod.PASSWORD, AuthMethod.FIDO2, AuthMethod.BIOMETRIC],
-            RiskLevel.CRITICAL: [AuthMethod.PASSWORD, AuthMethod.FIDO2, AuthMethod.CERTIFICATE],
-            RiskLevel.EXTREME: [AuthMethod.PASSWORD, AuthMethod.FIDO2, AuthMethod.CERTIFICATE, AuthMethod.BIOMETRIC],
+            RiskLevel.HIGH: [
+                AuthMethod.PASSWORD,
+                AuthMethod.FIDO2,
+                AuthMethod.BIOMETRIC,
+            ],
+            RiskLevel.CRITICAL: [
+                AuthMethod.PASSWORD,
+                AuthMethod.FIDO2,
+                AuthMethod.CERTIFICATE,
+            ],
+            RiskLevel.EXTREME: [
+                AuthMethod.PASSWORD,
+                AuthMethod.FIDO2,
+                AuthMethod.CERTIFICATE,
+                AuthMethod.BIOMETRIC,
+            ],
         }
 
         # Session timeout configuration (seconds)
         self._session_timeouts: Dict[AuthLevel, float] = {
-            AuthLevel.BASIC: 3600,      # 1 hour
-            AuthLevel.STANDARD: 7200,    # 2 hours
-            AuthLevel.ELEVATED: 3600,    # 1 hour
-            AuthLevel.HIGH: 1800,        # 30 minutes
-            AuthLevel.CRITICAL: 900,     # 15 minutes
+            AuthLevel.BASIC: 3600,  # 1 hour
+            AuthLevel.STANDARD: 7200,  # 2 hours
+            AuthLevel.ELEVATED: 3600,  # 1 hour
+            AuthLevel.HIGH: 1800,  # 30 minutes
+            AuthLevel.CRITICAL: 900,  # 15 minutes
         }
 
         # Privacy Risk Engine integration callback
@@ -892,12 +935,7 @@ class MFAAuthenticator:
         self.logger.info("MFA Authenticator initialized")
 
     def create_auth_context(
-        self,
-        user_id: str,
-        session_id: str,
-        ip_address: str,
-        user_agent: str,
-        **kwargs
+        self, user_id: str, session_id: str, ip_address: str, user_agent: str, **kwargs
     ) -> AuthContext:
         """
         Create new authentication context.
@@ -917,7 +955,7 @@ class MFAAuthenticator:
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            **kwargs
+            **kwargs,
         )
 
         # Assess initial risk
@@ -930,10 +968,7 @@ class MFAAuthenticator:
         return context
 
     def authenticate(
-        self,
-        context: AuthContext,
-        method: AuthMethod,
-        credential: Any
+        self, context: AuthContext, method: AuthMethod, credential: Any
     ) -> Tuple[bool, Optional[str]]:
         """
         Authenticate using specified method.
@@ -964,22 +999,27 @@ class MFAAuthenticator:
                 context.last_auth_time = time.time()
                 context.auth_level = self._calculate_auth_level(context)
 
-                self._log_audit("authentication_success", context, {"method": method.value})
+                self._log_audit(
+                    "authentication_success", context, {"method": method.value}
+                )
                 return True, None
             else:
-                self._log_audit("authentication_failure", context, {"method": method.value})
+                self._log_audit(
+                    "authentication_failure", context, {"method": method.value}
+                )
                 return False, "Authentication failed"
 
         except Exception as e:
             self.logger.error(f"Authentication error: {e}")
-            self._log_audit("authentication_error", context, {"method": method.value, "error": str(e)})
+            self._log_audit(
+                "authentication_error",
+                context,
+                {"method": method.value, "error": str(e)},
+            )
             return False, str(e)
 
     def enroll_method(
-        self,
-        user_id: str,
-        method: AuthMethod,
-        credential_data: Any
+        self, user_id: str, method: AuthMethod, credential_data: Any
     ) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
         Enroll new authentication method for user.
@@ -1005,10 +1045,11 @@ class MFAAuthenticator:
                 success, enrollment_data = result, None
 
             if success:
-                self._log_audit("method_enrolled", None, {
-                    "user_id": user_id,
-                    "method": method.value
-                })
+                self._log_audit(
+                    "method_enrolled",
+                    None,
+                    {"user_id": user_id, "method": method.value},
+                )
 
             return success, enrollment_data
 
@@ -1017,10 +1058,7 @@ class MFAAuthenticator:
             return False, None
 
     def revoke_method(
-        self,
-        user_id: str,
-        method: AuthMethod,
-        credential_id: str
+        self, user_id: str, method: AuthMethod, credential_id: str
     ) -> bool:
         """
         Revoke authentication method.
@@ -1041,11 +1079,15 @@ class MFAAuthenticator:
             success = provider.revoke(user_id, credential_id)
 
             if success:
-                self._log_audit("method_revoked", None, {
-                    "user_id": user_id,
-                    "method": method.value,
-                    "credential_id": credential_id
-                })
+                self._log_audit(
+                    "method_revoked",
+                    None,
+                    {
+                        "user_id": user_id,
+                        "method": method.value,
+                        "credential_id": credential_id,
+                    },
+                )
 
             return success
 
@@ -1054,9 +1096,7 @@ class MFAAuthenticator:
             return False
 
     def require_escalation(
-        self,
-        context: AuthContext,
-        target_level: AuthLevel
+        self, context: AuthContext, target_level: AuthLevel
     ) -> Tuple[bool, List[AuthMethod]]:
         """
         Check if authentication escalation is required and return required methods.
@@ -1073,14 +1113,12 @@ class MFAAuthenticator:
 
         # Determine required methods based on risk level
         required_methods = self._auth_policies.get(
-            context.risk_level,
-            [AuthMethod.PASSWORD, AuthMethod.TOTP]
+            context.risk_level, [AuthMethod.PASSWORD, AuthMethod.TOTP]
         )
 
         # Filter out already authenticated methods
         missing_methods = [
-            m for m in required_methods
-            if m not in context.authenticated_methods
+            m for m in required_methods if m not in context.authenticated_methods
         ]
 
         return True, missing_methods
@@ -1123,10 +1161,11 @@ class MFAAuthenticator:
                 f"Risk escalation: {old_risk_level.name} -> {new_risk_level.name}"
             )
 
-        self._log_audit("risk_level_updated", context, {
-            "old_level": old_risk_level.name,
-            "new_level": new_risk_level.name
-        })
+        self._log_audit(
+            "risk_level_updated",
+            context,
+            {"old_level": old_risk_level.name, "new_level": new_risk_level.name},
+        )
 
     def validate_session(self, session_id: str) -> Tuple[bool, Optional[AuthContext]]:
         """
@@ -1182,15 +1221,16 @@ class MFAAuthenticator:
             context = self._sessions.get(session_id)
             if context:
                 return {
-                    'user_id': context.user_id,
-                    'auth_level': context.auth_level.name,
-                    'risk_level': context.risk_level.name,
-                    'authenticated_methods': [m.value for m in context.authenticated_methods],
-                    'created_at': context.timestamp,
-                    'last_auth': context.last_auth_time,
-                    'expires_at': context.timestamp + self._session_timeouts.get(
-                        context.auth_level, 3600
-                    )
+                    "user_id": context.user_id,
+                    "auth_level": context.auth_level.name,
+                    "risk_level": context.risk_level.name,
+                    "authenticated_methods": [
+                        m.value for m in context.authenticated_methods
+                    ],
+                    "created_at": context.timestamp,
+                    "last_auth": context.last_auth_time,
+                    "expires_at": context.timestamp
+                    + self._session_timeouts.get(context.auth_level, 3600),
                 }
             return None
 
@@ -1252,8 +1292,10 @@ class MFAAuthenticator:
 
         # Count strong vs weak methods
         strong_methods = {
-            AuthMethod.FIDO2, AuthMethod.WEBAUTHN,
-            AuthMethod.CERTIFICATE, AuthMethod.PASSKEY
+            AuthMethod.FIDO2,
+            AuthMethod.WEBAUTHN,
+            AuthMethod.CERTIFICATE,
+            AuthMethod.PASSKEY,
         }
 
         biometric_methods = {AuthMethod.BIOMETRIC}
@@ -1286,13 +1328,18 @@ class MFAAuthenticator:
 
         return True
 
-    def _log_audit(self, event: str, context: Optional[AuthContext], metadata: Optional[Dict[str, Any]] = None):
+    def _log_audit(
+        self,
+        event: str,
+        context: Optional[AuthContext],
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
         """Log audit event"""
         audit_entry = {
-            'timestamp': time.time(),
-            'event': event,
-            'context': context.to_dict() if context else None,
-            'metadata': metadata or {}
+            "timestamp": time.time(),
+            "event": event,
+            "context": context.to_dict() if context else None,
+            "metadata": metadata or {},
         }
 
         self._audit_log.append(audit_entry)
@@ -1302,6 +1349,7 @@ class MFAAuthenticator:
 
 
 # Utility functions for integration
+
 
 def generate_totp_secret() -> bytes:
     """Generate new TOTP secret"""
@@ -1320,7 +1368,7 @@ def generate_qr_code_data(provisioning_uri: str) -> str:
     """
     # In production, this would generate actual QR code image
     # For now, return the URI itself
-    return base64.b64encode(provisioning_uri.encode()).decode('utf-8')
+    return base64.b64encode(provisioning_uri.encode()).decode("utf-8")
 
 
 def verify_totp_token(secret: bytes, token: str, window: int = 1) -> bool:

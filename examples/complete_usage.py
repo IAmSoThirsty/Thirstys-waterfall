@@ -10,9 +10,9 @@ waterfall = ThirstysWaterfall()
 # Start all subsystems
 waterfall.start()
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("THIRSTYS WATERFALL - ALL FEATURES ACTIVE")
-print("="*80)
+print("=" * 80)
 
 # 1. Check God tier encryption status
 print("\n1. GOD TIER ENCRYPTION:")
@@ -28,7 +28,7 @@ print("   No redirects: YES")
 print("   Ad blocker: HOLY WAR MODE ACTIVE")
 print("   ALL ADS DESTROYED")
 
-# 3. Thirsty Consigliere  
+# 3. Thirsty Consigliere
 print("\n3. THIRSTY CONSIGLIERE (Privacy-First Assistant):")
 print("   Code of Omertà: ACTIVE")
 print("   On-device only: YES")
@@ -67,9 +67,9 @@ print(f"   Kill switch: {security_status.get('kill_switch_active', 'YES')}")
 print(f"   VPN: {security_status.get('vpn_connected', 'CONNECTED')}")
 print(f"   Firewalls: {security_status.get('firewalls_active', 8)} types ACTIVE")
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("SYSTEM FULLY OPERATIONAL - MAXIMUM PRIVACY PROTECTION")
-print("="*80 + "\n")
+print("=" * 80 + "\n")
 
 # Stop system (wiping all ephemeral data)
 waterfall.stop()

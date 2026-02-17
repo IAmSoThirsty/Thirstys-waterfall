@@ -8,10 +8,10 @@ from .privacy_auditor import PrivacyAuditor
 from .onion_router import OnionRouter
 
 __all__ = [
-    'AntiFingerprintEngine',
-    'AntiTrackerEngine',
-    'AntiPhishingEngine',
-    'AntiMalwareEngine',
-    'PrivacyAuditor',
-    'OnionRouter'
+    "AntiFingerprintEngine",
+    "AntiTrackerEngine",
+    "AntiPhishingEngine",
+    "AntiMalwareEngine",
+    "PrivacyAuditor",
+    "OnionRouter",
 ]

@@ -18,6 +18,7 @@ Thirsty's Waterfall implements comprehensive security features requiring proper 
 ### Guidelines
 
 #### ✅ DO:
+
 - Load secrets from environment variables
 - Use secure vault systems (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, etc.)
 - Rotate secrets regularly (minimum every 90 days, or immediately if compromised)
@@ -30,6 +31,7 @@ Thirsty's Waterfall implements comprehensive security features requiring proper 
 - Use `.env` files locally (ensure they're in `.gitignore`)
 
 #### ❌ DON'T:
+
 - Hardcode secrets in source code
 - Commit secrets to version control
 - Share secrets via email, chat, or other insecure channels
@@ -75,11 +77,13 @@ This project uses several types of secrets:
 import os
 
 # Correct way to handle secrets
+
 encryption_key = os.environ.get('MASTER_ENCRYPTION_KEY')
 if not encryption_key:
     raise ValueError("MASTER_ENCRYPTION_KEY environment variable not set")
 
 # For optional demo values, generate securely if not provided
+
 import secrets
 demo_key = os.environ.get('DEMO_KEY', secrets.token_bytes(32))
 ```
@@ -90,18 +94,22 @@ demo_key = os.environ.get('DEMO_KEY', secrets.token_bytes(32))
 import secrets
 
 # Generate random bytes (for keys)
+
 key = secrets.token_bytes(32)  # 32 bytes = 256 bits
 
 # Generate random hex string (for tokens)
+
 token = secrets.token_hex(32)  # 64 character hex string
 
 # Generate URL-safe base64 string
+
 url_token = secrets.token_urlsafe(32)
 ```
 
 #### Secret Rotation Procedure
 
 1. **Generate New Secret**
+
    ```bash
    python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
    ```
@@ -139,12 +147,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v3
       - name: Install dependencies
+
         run: pip install -r requirements.txt
+
       - name: Run tests
+
         env:
+
           # Load secrets from GitHub Secrets
+
           MASTER_ENCRYPTION_KEY: ${{ secrets.MASTER_ENCRYPTION_KEY }}
           API_TOKEN: ${{ secrets.API_TOKEN }}
         run: python -m unittest discover tests
@@ -155,10 +169,14 @@ jobs:
 ```yaml
 test:
   script:
+
     - pip install -r requirements.txt
     - python -m unittest discover tests
+
   variables:
+
     # Use GitLab CI/CD variables (masked)
+
     MASTER_ENCRYPTION_KEY: $MASTER_ENCRYPTION_KEY
     API_TOKEN: $API_TOKEN
 ```
@@ -179,13 +197,17 @@ See `examples/dos_trap_demo.py` for a reference implementation.
 #### Check for Hardcoded Secrets
 
 ```bash
+
 # Search for potential hardcoded secrets
+
 grep -r "password\|secret\|key.*=" --include="*.py" thirstys_waterfall/
 
 # Search for hardcoded bytes that might be keys
+
 grep -r "b'[a-zA-Z0-9_]*'" --include="*.py" thirstys_waterfall/
 
 # Use automated tools
+
 pip install detect-secrets
 detect-secrets scan --baseline .secrets.baseline
 ```
@@ -300,10 +322,11 @@ Schedule regular security audits:
 ## Contact
 
 For security concerns, contact:
+
 - Security Team: security@thirstyswaterfall.example
 - Project Maintainer: maintainer@thirstyswaterfall.example
 
 ---
 
-**Last Updated**: 2026-02-03  
+**Last Updated**: 2026-02-03
 **Version**: 1.0

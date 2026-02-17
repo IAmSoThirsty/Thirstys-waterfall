@@ -6,4 +6,4 @@ from .ai_engine import GodTierAI
 from .local_inference import LocalInferenceEngine
 from .context_manager import ContextManager
 
-__all__ = ['GodTierAI', 'LocalInferenceEngine', 'ContextManager']
+__all__ = ["GodTierAI", "LocalInferenceEngine", "ContextManager"]

@@ -21,11 +21,11 @@ class ActionLedger:
     def add_entry(self, action: str, details: Dict[str, Any]):
         """Add an action to the ledger (encrypted)"""
         entry = {
-            'id': self._entry_counter,
-            'action': action,
-            'details': details,
-            'timestamp': time.time(),
-            'redacted': False
+            "id": self._entry_counter,
+            "action": action,
+            "details": details,
+            "timestamp": time.time(),
+            "redacted": False,
         }
 
         self._entries.append(entry)
@@ -40,14 +40,14 @@ class ActionLedger:
         """Get all ledger entries"""
         if include_redacted:
             return self._entries.copy()
-        return [e for e in self._entries if not e.get('redacted', False)]
+        return [e for e in self._entries if not e.get("redacted", False)]
 
     def redact_entry(self, entry_id: int):
         """Redact a specific entry"""
         for entry in self._entries:
-            if entry['id'] == entry_id:
-                entry['redacted'] = True
-                entry['details'] = {'redacted': True}
+            if entry["id"] == entry_id:
+                entry["redacted"] = True
+                entry["details"] = {"redacted": True}
                 self.logger.info(f"Entry redacted: {entry_id}")
                 return
 

@@ -2,4 +2,4 @@
 
 from .doh_resolver import DoHResolver
 
-__all__ = ['DoHResolver']
+__all__ = ["DoHResolver"]

@@ -102,6 +102,7 @@ Detailed logging and monitoring:
 from thirstys_waterfall.network import AdvancedStealthManager
 
 # Initialize with configuration
+
 config = {
     'advanced_stealth_enabled': True,
     'per_request_routing': True,
@@ -120,14 +121,17 @@ from thirstys_waterfall.vpn.vpn_manager import VPNManager
 from thirstys_waterfall.privacy.onion_router import OnionRouter
 
 # Initialize VPN
+
 vpn = VPNManager({'enabled': True, 'multi_hop': True})
 vpn.start()
 
 # Initialize Onion Router
+
 onion = OnionRouter({'onion_routing': True})
 onion.start()
 
 # Initialize Stealth Manager with integrations
+
 stealth = AdvancedStealthManager(config)
 stealth.integrate_vpn(vpn)
 stealth.integrate_onion_router(onion)
@@ -137,7 +141,9 @@ stealth.start()
 ### Routing Requests
 
 ```python
+
 # Basic request
+
 request = {
     'url': 'https://example.com/api',
     'data': 'sensitive data',
@@ -147,12 +153,19 @@ request = {
 routed_request = stealth.route_request(request)
 
 # The routed request includes:
+
 # - circuit_id: Unique circuit identifier
+
 # - circuit_path: List of nodes in the path
+
 # - transport: Transport type used
+
 # - obfuscated: Whether obfuscation was applied
+
 # - domain_fronting: Whether domain fronting is active
+
 # - sni_domain: Front domain for SNI
+
 ```
 
 ### Using Specific Transports
@@ -161,12 +174,15 @@ routed_request = stealth.route_request(request)
 from thirstys_waterfall.network import TransportType
 
 # Switch to meek for domain fronting
+
 stealth.switch_transport(TransportType.MEEK)
 
 # Enable HTTP/3 fallback
+
 stealth.enable_http3_fallback()
 
 # Enable QUIC tunnel
+
 stealth.enable_quic_tunnel()
 ```
 
@@ -176,6 +192,7 @@ stealth.enable_quic_tunnel()
 from thirstys_waterfall.network import ProtocolMimicry
 
 # Make traffic look like HTTPS
+
 request = {
     'data': 'secret message',
     'mimic_protocol': ProtocolMimicry.HTTPS,
@@ -184,18 +201,23 @@ request = {
 routed = stealth.route_request(request)
 
 # Other protocols: HTTP, TLS, DNS, BITTORRENT, GAMING
+
 ```
 
 ### Circuit Management
 
 ```python
+
 # Rotate all circuits
+
 stealth.rotate_all_circuits()
 
 # Rotate specific circuit
+
 stealth.rotate_circuit('circuit_id_here')
 
 # Get circuit status
+
 status = stealth.get_status()
 circuits = status['circuits']
 print(f"Active: {circuits['active']}/{circuits['total']}")
@@ -204,13 +226,16 @@ print(f"Active: {circuits['active']}/{circuits['total']}")
 ### Metrics and Monitoring
 
 ```python
+
 # Get basic metrics
+
 metrics = stealth.get_metrics()
 print(f"Requests routed: {metrics.requests_routed}")
 print(f"Circuits built: {metrics.circuits_built}")
 print(f"Average latency: {metrics.average_latency_ms}ms")
 
 # Get detailed metrics
+
 detailed = stealth.get_detailed_metrics()
 print(f"Transport usage: {detailed['transports_used']}")
 print(f"Obfuscation applied: {detailed['obfuscation_applied']}")
@@ -224,16 +249,21 @@ print(f"Domain fronting: {detailed['domain_fronting_used']} times")
 
 ```python
 config = {
+
     # Enable/disable stealth features
+
     'advanced_stealth_enabled': True,
-    
+
     # Per-request routing
+
     'per_request_routing': True,
-    
+
     # Circuit pool size
+
     'circuit_pool_size': 5,
-    
+
     # Obfuscation settings
+
     'obfuscation': {
         'padding': True,
         'timing_randomization': True,
@@ -245,8 +275,9 @@ config = {
         'max_delay_ms': 500,
         'target_packet_size': 1400
     },
-    
+
     # Domain fronting settings
+
     'domain_fronting': {
         'domain_fronting_enabled': True
     }
@@ -308,6 +339,7 @@ When fully configured, the stealth manager provides 10+ layers of protection:
 ### Latency
 
 Typical latency overhead:
+
 - Base stealth: 50-200ms
 - With domain fronting: +50-100ms
 - With full obfuscation: +100-300ms
@@ -316,6 +348,7 @@ Typical latency overhead:
 ### Throughput
 
 Transport performance (approximate):
+
 - obfs4: 10-50 Mbps
 - meek: 5-20 Mbps
 - snowflake: 5-15 Mbps
@@ -401,6 +434,7 @@ manager = AdvancedStealthManager(config)
 manager.start()
 
 # Test request routing
+
 request = {'url': 'https://example.com', 'data': 'test'}
 result = manager.route_request(request)
 

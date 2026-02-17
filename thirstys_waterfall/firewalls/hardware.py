@@ -12,7 +12,7 @@ class HardwareFirewall(FirewallBase):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.bypass_mode = config.get('bypass_mode', False)
+        self.bypass_mode = config.get("bypass_mode", False)
         self._hardware_rules = []
 
     def start(self):
@@ -38,8 +38,10 @@ class HardwareFirewall(FirewallBase):
 
     def remove_rule(self, rule_id: str):
         """Remove hardware firewall rule"""
-        self._rules = [r for r in self._rules if r.get('id') != rule_id]
-        self._hardware_rules = [r for r in self._hardware_rules if r.get('id') != rule_id]
+        self._rules = [r for r in self._rules if r.get("id") != rule_id]
+        self._hardware_rules = [
+            r for r in self._hardware_rules if r.get("id") != rule_id
+        ]
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet at hardware level"""
@@ -67,21 +69,23 @@ class HardwareFirewall(FirewallBase):
     def _hardware_inspect(self, packet: Dict[str, Any]) -> bool:
         """Hardware-level packet inspection"""
         # Check packet integrity
-        if not packet.get('src_ip') or not packet.get('dst_ip'):
+        if not packet.get("src_ip") or not packet.get("dst_ip"):
             return False
 
         # Check against hardware rules
         for rule in self._hardware_rules:
             if self._match_hardware_rule(packet, rule):
-                return rule.get('action') == 'allow'
+                return rule.get("action") == "allow"
 
         return True
 
-    def _match_hardware_rule(self, packet: Dict[str, Any], rule: Dict[str, Any]) -> bool:
+    def _match_hardware_rule(
+        self, packet: Dict[str, Any], rule: Dict[str, Any]
+    ) -> bool:
         """Match packet against hardware rule"""
-        if 'mac_src' in rule and packet.get('mac_src') != rule['mac_src']:
+        if "mac_src" in rule and packet.get("mac_src") != rule["mac_src"]:
             return False
-        if 'mac_dst' in rule and packet.get('mac_dst') != rule['mac_dst']:
+        if "mac_dst" in rule and packet.get("mac_dst") != rule["mac_dst"]:
             return False
         return True
 

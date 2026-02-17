@@ -22,23 +22,25 @@ class VPNManager:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-        self.enabled = config.get('enabled', True)
-        self.multi_hop = config.get('multi_hop', True)
-        self.hop_count = config.get('hop_count', 3)
-        self.stealth_mode = config.get('stealth_mode', True)
-        self.split_tunneling = config.get('split_tunneling', False)
-        self.logging_policy = config.get('logging', 'never')
-        self.protocol_fallback = config.get('protocol_fallback', ['wireguard', 'openvpn'])
+        self.enabled = config.get("enabled", True)
+        self.multi_hop = config.get("multi_hop", True)
+        self.hop_count = config.get("hop_count", 3)
+        self.stealth_mode = config.get("stealth_mode", True)
+        self.split_tunneling = config.get("split_tunneling", False)
+        self.logging_policy = config.get("logging", "never")
+        self.protocol_fallback = config.get(
+            "protocol_fallback", ["wireguard", "openvpn"]
+        )
 
         # ENCRYPTION: Generate encryption key for all VPN traffic
         self._vpn_cipher = Fernet(Fernet.generate_key())
 
         # Initialize components
         self.router = MultiHopRouter(self.hop_count)
-        self.kill_switch = KillSwitch(config.get('kill_switch', True))
+        self.kill_switch = KillSwitch(config.get("kill_switch", True))
         self.dns_protection = DNSProtection(
-            config.get('dns_leak_protection', True),
-            config.get('ipv6_leak_protection', True)
+            config.get("dns_leak_protection", True),
+            config.get("ipv6_leak_protection", True),
         )
 
         self._active = False
@@ -90,7 +92,9 @@ class VPNManager:
         """Establish VPN connection"""
         if self.multi_hop:
             self._current_route = self.router.establish_route()
-            self.logger.info(f"Multi-hop route established: {len(self._current_route)} hops")
+            self.logger.info(
+                f"Multi-hop route established: {len(self._current_route)} hops"
+            )
         else:
             self._current_route = [self._connect_single_node()]
 
@@ -114,10 +118,10 @@ class VPNManager:
         """Connect using specific protocol"""
         # Simulate protocol connection
         return {
-            'protocol': protocol,
-            'endpoint': f'{protocol}.vpn.thirstys.local',
-            'port': 443 if protocol == 'wireguard' else 1194,
-            'connected': True
+            "protocol": protocol,
+            "endpoint": f"{protocol}.vpn.thirstys.local",
+            "port": 443 if protocol == "wireguard" else 1194,
+            "connected": True,
         }
 
     def _disconnect(self):
@@ -161,22 +165,22 @@ class VPNManager:
             return self._vpn_cipher.decrypt(encrypted_data)
         except Exception as e:
             self.logger.error(f"Failed to decrypt VPN traffic: {e}")
-            return b''
+            return b""
 
     def get_status(self) -> Dict[str, Any]:
         """Get VPN status"""
         return {
-            'active': self._active,
-            'connected': self._connected,
-            'built_in': True,  # Emphasize built-in VPN
-            'multi_hop': self.multi_hop,
-            'route': self._current_route,
-            'kill_switch': self.kill_switch.is_active(),
-            'dns_protected': self.dns_protection.is_active(),
-            'stealth_mode': self.stealth_mode,
-            'split_tunneling': self.split_tunneling,
-            'traffic_encrypted': True,  # All traffic encrypted
-            'no_logging': self.logging_policy == 'never'
+            "active": self._active,
+            "connected": self._connected,
+            "built_in": True,  # Emphasize built-in VPN
+            "multi_hop": self.multi_hop,
+            "route": self._current_route,
+            "kill_switch": self.kill_switch.is_active(),
+            "dns_protected": self.dns_protection.is_active(),
+            "stealth_mode": self.stealth_mode,
+            "split_tunneling": self.split_tunneling,
+            "traffic_encrypted": True,  # All traffic encrypted
+            "no_logging": self.logging_policy == "never",
         }
 
     def is_connected(self) -> bool:
@@ -186,5 +190,5 @@ class VPNManager:
     def get_current_ip(self) -> Optional[str]:
         """Get current exit IP"""
         if self._current_route:
-            return self._current_route[-1].get('endpoint')
+            return self._current_route[-1].get("endpoint")
         return None
