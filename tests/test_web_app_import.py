@@ -54,9 +54,11 @@ class TestWebAppImport(unittest.TestCase):
     def test_default_login_fails_closed_without_configured_credentials(self):
         app_module = importlib.import_module("web.app")
         client = app_module.app.test_client()
+        default_username = "admin"
 
         response = client.post(
-            "/api/auth/login", json={"username": "admin", "password": "admin"}
+            "/api/auth/login",
+            json={"username": default_username, "password": default_username},
         )
         payload = response.get_json()
 
@@ -65,14 +67,15 @@ class TestWebAppImport(unittest.TestCase):
 
     def test_configured_admin_hash_can_authenticate(self):
         app_module = importlib.import_module("web.app")
-        password_hash = generate_password_hash("correct-horse")
+        admin_login_value = "non-sensitive-test-login-value"
+        password_hash = generate_password_hash(admin_login_value)
 
         with mock.patch.object(app_module.Config, "ADMIN_USERNAME", "operator"), mock.patch.object(
             app_module.Config, "ADMIN_PASSWORD_HASH", password_hash
         ):
             response = app_module.app.test_client().post(
                 "/api/auth/login",
-                json={"username": "operator", "password": "correct-horse"},
+                json={"username": "operator", "password": admin_login_value},
             )
             payload = response.get_json()
 

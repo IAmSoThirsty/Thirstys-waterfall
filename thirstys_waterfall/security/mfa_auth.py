@@ -30,7 +30,7 @@ from cryptography.x509.oid import ExtensionOID
 class AuthMethod(Enum):
     """Supported authentication methods"""
 
-    PASSWORD = "password"  # nosec B105
+    PASSWORD = "password"  # nosec B105  # pragma: allowlist secret
     TOTP = "totp"
     FIDO2 = "fido2"
     WEBAUTHN = "webauthn"

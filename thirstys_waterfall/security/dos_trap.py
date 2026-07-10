@@ -60,7 +60,7 @@ class ResponseAction(Enum):
     LOG = "log"
     ALERT = "alert"
     ISOLATE = "isolate"
-    WIPE_SECRETS = "wipe_secrets"
+    WIPE_SECRETS = "wipe_secrets"  # pragma: allowlist secret
     SANITIZE_RAM = "sanitize_ram"
     SANITIZE_DISK = "sanitize_disk"
     SHUTDOWN = "shutdown"

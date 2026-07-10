@@ -27,7 +27,7 @@ class SystemThemeDetector:
 
             key = winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
-                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize",  # pragma: allowlist secret
             )
             value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
             winreg.CloseKey(key)

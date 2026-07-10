@@ -121,8 +121,8 @@ class TestSecretWiper(unittest.TestCase):
     def test_wipe_credentials(self):
         """Test credential wiping"""
         creds = {
-            "user_pass": "redacted-password-placeholder",
-            "api_key": "redacted-key-placeholder",
+            "field_one": "non-sensitive-test-user-value",
+            "field_two": "non-sensitive-test-api-value",
         }
 
         self.wiper.wipe_credentials(creds)
