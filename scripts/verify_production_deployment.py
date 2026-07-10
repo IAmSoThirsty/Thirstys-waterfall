@@ -112,20 +112,25 @@ def wait_for_health(port: int, expected_backend: str | None) -> dict[str, Any]:
     raise AssertionError(f"health check did not pass: {last_error}")
 
 
-def verify_auth(port: int) -> None:
+def verify_auth(port: int, admin_password: str) -> None:
     login_url = f"http://127.0.0.1:{port}/api/auth/login"
     good = request_json(
         login_url,
         method="POST",
-        payload={"username": "operator", "password": "correct-horse"},
+        payload={"username": "operator", "password": admin_password},
     )
     if not good.get("access_token"):
         raise AssertionError("configured admin login did not return an access token")
-    assert_rejected(login_url, {"username": "admin", "password": "admin"})
+    default_username = "admin"
+    assert_rejected(
+        login_url,
+        {"username": default_username, "password": default_username},
+    )
 
 
 def smoke_local_web(thirsty_lang_path: str | None) -> None:
     port = free_port()
+    admin_password = secrets.token_urlsafe(18)
     env = os.environ.copy()
     env.update(
         {
@@ -137,7 +142,7 @@ def smoke_local_web(thirsty_lang_path: str | None) -> None:
             "JWT_SECRET_KEY": secrets.token_hex(32),
             "CORS_ORIGINS": f"http://127.0.0.1:{port}",
             "THIRSTYS_ADMIN_USERNAME": "operator",
-            "THIRSTYS_ADMIN_PASSWORD_HASH": generate_password_hash("correct-horse"),
+            "THIRSTYS_ADMIN_PASSWORD_HASH": generate_password_hash(admin_password),
             "THIRSTYS_ALLOW_DEMO_LOGIN": "false",
         }
     )
@@ -155,7 +160,7 @@ def smoke_local_web(thirsty_lang_path: str | None) -> None:
     )
     try:
         health = wait_for_health(port, "thirsty-lang" if thirsty_lang_path else None)
-        verify_auth(port)
+        verify_auth(port, admin_password)
         print(
             "local web smoke passed: "
             f"status={health.get('status')} backend={(health.get('sovereign_binding') or {}).get('backend')}"
@@ -185,13 +190,14 @@ def redacted_command(cmd: list[str]) -> str:
 
 
 def compose_validation_env() -> dict[str, str]:
+    admin_password = secrets.token_urlsafe(18)
     env = os.environ.copy()
     env.update(
         {
             "SECRET_KEY": secrets.token_hex(32),
             "JWT_SECRET_KEY": secrets.token_hex(32),
             "THIRSTYS_ADMIN_USERNAME": "operator",
-            "THIRSTYS_ADMIN_PASSWORD_HASH": generate_password_hash("correct-horse"),
+            "THIRSTYS_ADMIN_PASSWORD_HASH": generate_password_hash(admin_password),
             "CORS_ORIGINS": "http://localhost:8080",
         }
     )
@@ -227,7 +233,7 @@ def docker_env_args(port: int, thirsty_lang_path: str | None, password_hash: str
         env_args.extend(
             [
                 "-e",
-                "THIRSTY_LANG_PATH=/opt/thirsty-lang",
+                "THIRSTY_LANG_PATH=/opt/thirsty-lang",  # pragma: allowlist secret
                 "-v",
                 f"{thirsty_lang_path}:/opt/thirsty-lang:ro",
             ]
@@ -251,6 +257,7 @@ def run_smoke_container(
     port: int,
     env_args: list[str],
     expected_backend: str | None,
+    admin_password: str,
 ) -> dict[str, Any]:
     docker_run_json(["rm", "-f", name], timeout=30) if container_exists(name) else ""
 
@@ -273,7 +280,7 @@ def run_smoke_container(
         ) from exc
     try:
         health = wait_for_health(port, expected_backend)
-        verify_auth(port)
+        verify_auth(port, admin_password)
         logs = docker_logs(name)
         if not logs.strip():
             raise AssertionError("container startup/log capture was empty")
@@ -294,7 +301,8 @@ def run_smoke_container(
 def smoke_docker(image: str, thirsty_lang_path: str | None) -> None:
     name = f"thirstys-verify-{int(time.time())}"
     port = free_port()
-    password_hash = generate_password_hash("correct-horse")
+    admin_password = secrets.token_urlsafe(18)
+    password_hash = generate_password_hash(admin_password)
     env_args = docker_env_args(port, thirsty_lang_path, password_hash)
     health = run_smoke_container(
         image,
@@ -302,6 +310,7 @@ def smoke_docker(image: str, thirsty_lang_path: str | None) -> None:
         port,
         env_args,
         "thirsty-lang" if thirsty_lang_path else None,
+        admin_password,
     )
     print(
         "docker smoke passed: "
@@ -315,13 +324,21 @@ def smoke_docker_rollback(image: str, thirsty_lang_path: str | None) -> None:
     rollback_name = f"thirstys-rollback-{timestamp}"
     rollback_image = f"{image}-rollback-good"
     port = free_port()
-    password_hash = generate_password_hash("correct-horse")
+    admin_password = secrets.token_urlsafe(18)
+    password_hash = generate_password_hash(admin_password)
     env_args = docker_env_args(port, thirsty_lang_path, password_hash)
     expected_backend = "thirsty-lang" if thirsty_lang_path else None
 
     docker_run_json(["tag", image, rollback_image], timeout=60)
-    run_smoke_container(image, current_name, port, env_args, expected_backend)
-    rollback_health = run_smoke_container(rollback_image, rollback_name, port, env_args, expected_backend)
+    run_smoke_container(image, current_name, port, env_args, expected_backend, admin_password)
+    rollback_health = run_smoke_container(
+        rollback_image,
+        rollback_name,
+        port,
+        env_args,
+        expected_backend,
+        admin_password,
+    )
     print(
         "docker rollback smoke passed: "
         f"from={image} to={rollback_image} "
