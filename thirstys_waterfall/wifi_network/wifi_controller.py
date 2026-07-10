@@ -3,12 +3,18 @@ WiFi Controller - Full-Spectrum WiFi Network Direct Control
 Supports 2.4GHz, 5GHz, 6GHz (WiFi 6E/7), and 60GHz (WiGig)
 """
 
-import subprocess
+import subprocess  # nosec B404
 import platform
 import logging
+import shutil
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+
+
+def _command_path(command: str) -> Optional[str]:
+    """Resolve an executable path without invoking a shell."""
+    return shutil.which(command)
 
 
 class WiFiBand(Enum):
@@ -121,9 +127,10 @@ class WiFiController:
         """Discover WiFi adapters on Linux using iw/iwconfig"""
         try:
             # Use 'iw dev' to list wireless interfaces
+            iw = _command_path("iw") or "iw"
             result = subprocess.run(
-                ["iw", "dev"], capture_output=True, text=True, timeout=10
-            )
+                [iw, "dev"], capture_output=True, text=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 # Parse output to extract adapter information
@@ -158,9 +165,10 @@ class WiFiController:
         """Get detailed capabilities of Linux WiFi adapter"""
         try:
             # Use 'iw phy' to get physical capabilities
+            iw = _command_path("iw") or "iw"
             result = subprocess.run(
-                ["iw", "phy"], capture_output=True, text=True, timeout=10
-            )
+                [iw, "phy"], capture_output=True, text=True, timeout=10
+            )  # nosec B603
 
             if result.returncode != 0:
                 return None
@@ -219,13 +227,13 @@ class WiFiController:
         """Discover WiFi adapters on Windows using netsh"""
         try:
             # Use netsh to list wireless interfaces
+            netsh = _command_path("netsh") or "netsh"
             result = subprocess.run(
-                ["netsh", "wlan", "show", "interfaces"],
+                [netsh, "wlan", "show", "interfaces"],
                 capture_output=True,
                 text=True,
                 timeout=10,
-                shell=True,
-            )
+            )  # nosec B603
 
             if result.returncode == 0:
                 # Parse output (simplified)
@@ -256,13 +264,13 @@ class WiFiController:
         """Get WiFi adapter capabilities on Windows"""
         try:
             # Get detailed capabilities using netsh
+            netsh = _command_path("netsh") or "netsh"
             result = subprocess.run(
-                ["netsh", "wlan", "show", "drivers"],
+                [netsh, "wlan", "show", "drivers"],
                 capture_output=True,
                 text=True,
                 timeout=10,
-                shell=True,
-            )
+            )  # nosec B603
 
             if result.returncode != 0:
                 return None
@@ -307,7 +315,7 @@ class WiFiController:
                 capture_output=True,
                 text=True,
                 timeout=10,
-            )
+            )  # nosec B603
 
             if result.returncode == 0:
                 lines = result.stdout.split("\n")
@@ -333,20 +341,22 @@ class WiFiController:
         """Get WiFi adapter capabilities on macOS"""
         try:
             # Use system_profiler for detailed info
+            system_profiler = _command_path("system_profiler") or "/usr/sbin/system_profiler"
             result = subprocess.run(
-                ["system_profiler", "SPAirPortDataType"],
+                [system_profiler, "SPAirPortDataType"],
                 capture_output=True,
                 text=True,
                 timeout=10,
-            )
+            )  # nosec B603
 
             if result.returncode != 0:
                 return None
 
             # Get MAC address
+            ifconfig = _command_path("ifconfig") or "/sbin/ifconfig"
             mac_result = subprocess.run(
-                ["ifconfig", interface], capture_output=True, text=True, timeout=5
-            )
+                [ifconfig, interface], capture_output=True, text=True, timeout=5
+            )  # nosec B603
 
             mac = "Unknown"
             if mac_result.returncode == 0:
@@ -409,24 +419,25 @@ class WiFiController:
                 for line in f:
                     if "DRIVER=" in line:
                         return line.split("=")[1].strip()
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to read Linux driver for {interface}: {e}")
         return "Unknown"
 
     def _get_chipset_linux(self, interface: str) -> str:
         """Get chipset information for Linux WiFi interface"""
         try:
+            lspci = _command_path("lspci") or "lspci"
             result = subprocess.run(
-                ["lspci", "-k"], capture_output=True, text=True, timeout=5
-            )
+                [lspci, "-k"], capture_output=True, text=True, timeout=5
+            )  # nosec B603
 
             if result.returncode == 0:
                 # Parse lspci output for wireless controller
                 for line in result.stdout.split("\n"):
                     if "Network controller" in line or "Wireless" in line:
                         return line.split(":", 1)[1].strip()
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to read Linux chipset for {interface}: {e}")
         return "Unknown"
 
     def _get_driver_windows(self, interface: str) -> str:
@@ -464,13 +475,15 @@ class WiFiController:
 
         try:
             # Use iwlist or iw to scan
+            sudo = _command_path("sudo") or "sudo"
+            iw = _command_path("iw") or "iw"
             for adapter in self.adapters:
                 result = subprocess.run(
-                    ["sudo", "iw", adapter.interface_name, "scan"],
+                    [sudo, iw, adapter.interface_name, "scan"],
                     capture_output=True,
                     text=True,
                     timeout=10,
-                )
+                )  # nosec B603
 
                 if result.returncode == 0:
                     # Parse scan results (simplified)
@@ -496,13 +509,13 @@ class WiFiController:
         networks = []
 
         try:
+            netsh = _command_path("netsh") or "netsh"
             result = subprocess.run(
-                ["netsh", "wlan", "show", "networks", "mode=bssid"],
+                [netsh, "wlan", "show", "networks", "mode=bssid"],
                 capture_output=True,
                 text=True,
                 timeout=10,
-                shell=True,
-            )
+            )  # nosec B603
 
             if result.returncode == 0:
                 networks.extend(self._parse_scan_results_windows(result.stdout, band))
@@ -535,7 +548,7 @@ class WiFiController:
                 capture_output=True,
                 text=True,
                 timeout=10,
-            )
+            )  # nosec B603
 
             if result.returncode == 0:
                 networks.extend(self._parse_scan_results_macos(result.stdout, band))

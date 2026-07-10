@@ -8,6 +8,7 @@ from .sandbox import BrowserSandbox
 from .content_blocker import ContentBlocker
 from .encrypted_search import EncryptedSearchEngine
 from .encrypted_navigation import EncryptedNavigationHistory
+from .engine import FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 
 class IncognitoBrowser:
@@ -70,11 +71,21 @@ class IncognitoBrowser:
         # ENCRYPTED COMPONENTS: Everything encrypted
         self._search_engine = EncryptedSearchEngine(self._cipher)
         self._nav_history = EncryptedNavigationHistory(self._cipher)
+        self._web_engine = ThirstyWebEngine(
+            FetchPolicy(
+                allow_network=config.get("engine_network_enabled", False),
+                allow_file=config.get("engine_file_enabled", False),
+                timeout_seconds=config.get("engine_timeout_seconds", 10.0),
+                max_bytes=config.get("engine_max_bytes", 1024 * 1024),
+            )
+        )
 
         # MAXIMUM ALLOWED DESIGN: Expose as public properties for test introspection
         self.encrypted_search = self._search_engine
         self.encrypted_navigation = self._nav_history
         self._navigation_history = self._nav_history  # Alias
+        self.web_engine = self._web_engine
+        self._rendered_documents = {}
 
         self._active = False
         self._extension_whitelist = config.get("extension_whitelist", [])
@@ -115,6 +126,7 @@ class IncognitoBrowser:
 
         # Clear any ephemeral data
         self._clear_ephemeral_data()
+        self._rendered_documents.clear()
 
         # Stop components
         self._sandbox.stop()
@@ -173,7 +185,25 @@ class IncognitoBrowser:
         self.encrypted_navigation.record_navigation(url, tab_id)
 
         # Navigate in sandbox
-        return self.tab_manager.navigate(tab_id, url)
+        navigated = self.tab_manager.navigate(tab_id, url)
+        if navigated:
+            try:
+                document = self.web_engine.navigate(url)
+            except FetchBlocked as exc:
+                document = self.web_engine.blocked_document(url, str(exc))
+            self._rendered_documents[tab_id] = document
+            tab = self.tab_manager.get_tab(tab_id)
+            if tab is not None:
+                tab["document"] = document.snapshot()
+
+        return navigated
+
+    def get_document_snapshot(self, tab_id: str) -> Optional[Dict[str, Any]]:
+        """Return the current parsed document snapshot for a tab."""
+        document = self._rendered_documents.get(tab_id)
+        if document is None:
+            return None
+        return document.snapshot()
 
     def _apply_privacy_policies(self, tab_id: str):
         """Apply privacy policies to tab"""
@@ -268,4 +298,6 @@ class IncognitoBrowser:
             "everything_encrypted": True,  # NEW: Everything encrypted
             "searches_encrypted": self.encrypted_search._active,
             "navigation_encrypted": self.encrypted_navigation._active,
+            "native_engine": True,
+            "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
         }

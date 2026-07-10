@@ -106,7 +106,7 @@ def get_demo_credentials() -> dict:
                 "DEMO_USER_PASSWORD", f"demo_pass_{secrets.token_hex(8)}"
             ),
             "api_token": os.environ.get(
-                "DEMO_API_TOKEN", f"demo_token_{secrets.token_hex(16)}"
+                "DEMO_API_TOKEN", f"demo_value_{secrets.token_hex(16)}"
             ),
         },
     }

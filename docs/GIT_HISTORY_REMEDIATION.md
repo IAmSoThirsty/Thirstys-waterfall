@@ -46,19 +46,19 @@ java -jar bfg.jar --replace-text passwords.txt Thirstys-waterfall.git
 
 # Where passwords.txt contains:
 
-# secret_key_data_12345678
+# redacted-master-key-placeholder
 
-# signing_key_data_87654321
+# redacted-signing-key-placeholder
 
-# root_key_data_abcdefgh
+# redacted-root-key-placeholder
 
 # session_key_1
 
 # session_key_2
 
-# super_secret_password
+# redacted-password-placeholder
 
-# api_token_xyz123
+# redacted-api-placeholder
 
 # Clean up and push
 
@@ -84,13 +84,13 @@ cd Thirstys-waterfall
 # Create a replacement file
 
 cat > replacements.txt << EOF
-secret_key_data_12345678==>REDACTED_SECRET
-signing_key_data_87654321==>REDACTED_SECRET
-root_key_data_abcdefgh==>REDACTED_SECRET
+redacted-master-key-placeholder==>REDACTED_SECRET
+redacted-signing-key-placeholder==>REDACTED_SECRET
+redacted-root-key-placeholder==>REDACTED_SECRET
 session_key_1==>REDACTED_SECRET
 session_key_2==>REDACTED_SECRET
-super_secret_password==>REDACTED_SECRET
-api_token_xyz123==>REDACTED_SECRET
+redacted-password-placeholder==>REDACTED_SECRET
+redacted-api-placeholder==>REDACTED_SECRET
 EOF
 
 # Filter history
@@ -141,9 +141,9 @@ After cleaning Git history, verify the secrets are removed:
 
 # Search all history for secrets
 
-git log -p --all -S 'secret_key_data_12345678'
-git log -p --all -S 'signing_key_data_87654321'
-git log -p --all -S 'super_secret_password'
+git log -p --all -S 'redacted-master-key-placeholder'
+git log -p --all -S 'redacted-signing-key-placeholder'
+git log -p --all -S 'redacted-password-placeholder'
 
 # Should return no results
 

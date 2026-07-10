@@ -51,26 +51,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from functools import wraps
 
-
-# ==========================================
-# ⚡ THIRSTY-LANG MONOLITHIC BINDING ⚡
-# ==========================================
-# INJECTED VIA PROJECT-AI MASTER TIER AUDIT
-from Thirsty_Lang import T_A_R_L, TSCG, Thirst_of_Gods
-
-def __sovereign_execute__(context, target_protocol):
-    """
-    Adversarially hardened entrypoint mandated by Sovereign Law.
-    Binds standalone execution back to the T.A.R.L. core.
-    """
-    try:
-        TSCG.validate(context)
-        return Thirst_of_Gods.invoke(target_protocol)
-    except Exception as e:
-        # Fallback to T.A.R.L. quarantine
-        T_A_R_L.quarantine(context, e)
-        raise
-
 # Web framework and extensions
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -85,6 +65,11 @@ from flask_jwt_extended import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.security import check_password_hash
+from thirstys_waterfall.sovereign_binding import (
+    execute_sovereign_protocol,
+    get_sovereign_binding_status,
+)
 
 # Core system integration
 try:
@@ -121,6 +106,7 @@ class Config:
     """
 
     # Server Configuration
+    ENVIRONMENT = os.getenv("THIRSTYS_ENV", "development").lower()
     HOST = os.getenv("WEB_HOST", "0.0.0.0")
     PORT = int(os.getenv("WEB_PORT", "8080"))
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
@@ -130,6 +116,15 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.urandom(32).hex())
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    ADMIN_USERNAME = os.getenv("THIRSTYS_ADMIN_USERNAME")
+    ADMIN_PASSWORD_HASH = os.getenv("THIRSTYS_ADMIN_PASSWORD_HASH")
+    ALLOW_DEMO_LOGIN = os.getenv("THIRSTYS_ALLOW_DEMO_LOGIN", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    DEMO_USERNAME = os.getenv("THIRSTYS_DEMO_USERNAME", "admin")
+    DEMO_PASSWORD = os.getenv("THIRSTYS_DEMO_PASSWORD", "admin")
 
     # Rate Limiting Configuration
     RATELIMIT_STORAGE_URL = os.getenv("REDIS_URL", "memory://")
@@ -149,6 +144,33 @@ class Config:
     # Logging Configuration
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+
+def validate_production_config() -> None:
+    """Fail closed when production starts without required security inputs."""
+    if Config.ENVIRONMENT != "production":
+        return
+
+    missing = [
+        name
+        for name in (
+            "SECRET_KEY",
+            "JWT_SECRET_KEY",
+            "THIRSTYS_ADMIN_USERNAME",
+            "THIRSTYS_ADMIN_PASSWORD_HASH",
+            "CORS_ORIGINS",
+        )
+        if not os.getenv(name)
+    ]
+    if missing:
+        raise RuntimeError(
+            "Production configuration is missing required environment values: "
+            + ", ".join(missing)
+        )
+    if "*" in Config.CORS_ORIGINS:
+        raise RuntimeError("Production CORS_ORIGINS must not include '*'")
+    if Config.ALLOW_DEMO_LOGIN:
+        raise RuntimeError("Production must not enable THIRSTYS_ALLOW_DEMO_LOGIN")
 
 
 # ============================================================================
@@ -178,6 +200,7 @@ logger = logging.getLogger(__name__)
 # APPLICATION INITIALIZATION LAYER
 # ============================================================================
 
+validate_production_config()
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.config.from_object(Config)
 
@@ -549,6 +572,33 @@ def create_demo_token() -> str:
     )
 
 
+def authenticate_user(username: Optional[str], password: Optional[str]) -> Tuple[bool, Dict[str, Any], int]:
+    """Authenticate a user against configured credentials."""
+    if not username or not password:
+        return False, {"error": "Username and password are required"}, 400
+
+    if Config.ADMIN_USERNAME and Config.ADMIN_PASSWORD_HASH:
+        if username == Config.ADMIN_USERNAME and check_password_hash(
+            Config.ADMIN_PASSWORD_HASH, password
+        ):
+            return True, {"username": username, "role": "admin", "auth_mode": "configured"}, 200
+        return False, {"error": "Invalid credentials"}, 401
+
+    if Config.ALLOW_DEMO_LOGIN:
+        if username == Config.DEMO_USERNAME and password == Config.DEMO_PASSWORD:
+            return True, {"username": username, "role": "admin", "auth_mode": "demo"}, 200
+        return False, {"error": "Invalid credentials"}, 401
+
+    return (
+        False,
+        {
+            "error": "Authentication is not configured",
+            "required": ["THIRSTYS_ADMIN_USERNAME", "THIRSTYS_ADMIN_PASSWORD_HASH"],
+        },
+        503,
+    )
+
+
 @app.route("/api/auth/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
@@ -570,33 +620,33 @@ def login():
 
     Security Considerations:
     - Rate limited to prevent brute force
-    - Passwords must be hashed (not implemented in demo)
+    - Passwords are checked against a configured password hash
     - Tokens have expiration
-    - Refresh token rotation recommended
+    - Demo login is disabled unless explicitly enabled
     """
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
 
-    # DEMO IMPLEMENTATION - Replace with real authentication
-    if username == "admin" and password == "admin":
+    authenticated, result, status_code = authenticate_user(username, password)
+    if authenticated:
         access_token = create_access_token(
-            identity=username, additional_claims={"role": "admin"}
+            identity=result["username"], additional_claims={"role": result["role"]}
         )
-        refresh_token = create_refresh_token(identity=username)
+        refresh_token = create_refresh_token(identity=result["username"])
 
         return (
             jsonify(
                 {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
-                    "user": {"username": username, "role": "admin"},
+                    "user": result,
                 }
             ),
             200,
         )
 
-    return jsonify({"error": "Invalid credentials"}), 401
+    return jsonify(result), status_code
 
 
 @app.route("/api/auth/refresh", methods=["POST"])
@@ -901,6 +951,7 @@ def health_check():
                 "status": "healthy",
                 "timestamp": datetime.utcnow().isoformat(),
                 "version": "1.0.0",
+                "sovereign_binding": get_sovereign_binding_status().as_dict(),
             }
         ),
         200,
@@ -938,7 +989,7 @@ def serve_static(path):
 
 
 if __name__ == "__main__":
-    __sovereign_execute__(globals(), "INIT_PROTOCOL")
+    execute_sovereign_protocol(globals(), "INIT_PROTOCOL")
     # Development/Debug mode only - not used in production
     logger.warning("=" * 80)
     logger.warning("RUNNING IN DEVELOPMENT MODE")

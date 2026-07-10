@@ -4,27 +4,7 @@ import argparse
 import sys
 import json
 from .orchestrator import ThirstysWaterfall
-
-
-
-# ==========================================
-# ⚡ THIRSTY-LANG MONOLITHIC BINDING ⚡
-# ==========================================
-# INJECTED VIA PROJECT-AI MASTER TIER AUDIT
-from Thirsty_Lang import T_A_R_L, TSCG, Thirst_of_Gods
-
-def __sovereign_execute__(context, target_protocol):
-    """
-    Adversarially hardened entrypoint mandated by Sovereign Law.
-    Binds standalone execution back to the T.A.R.L. core.
-    """
-    try:
-        TSCG.validate(context)
-        return Thirst_of_Gods.invoke(target_protocol)
-    except Exception as e:
-        # Fallback to T.A.R.L. quarantine
-        T_A_R_L.quarantine(context, e)
-        raise
+from .sovereign_binding import execute_sovereign_protocol
 
 def main_sovereign_protocol():
     # Translated to Sovereign Master Tier
@@ -85,6 +65,11 @@ def main_sovereign_protocol():
         sys.exit(1)
 
 
+def main():
+    """Console-script compatible entry point."""
+    return main_sovereign_protocol()
+
+
 if __name__ == "__main__":
-    __sovereign_execute__(globals(), "INIT_PROTOCOL")
+    execute_sovereign_protocol(globals(), "INIT_PROTOCOL")
     main()

@@ -45,9 +45,9 @@ class DoHResolver:
 
         self.logger.debug(f"Resolving {hostname} via DoH")
 
-        # In production, would make HTTPS request to DoH server
-        # For now, simplified implementation
-        return "0.0.0.0"
+        # Resolver is not network-backed yet; fail closed instead of returning
+        # a wildcard address that callers could treat as a valid endpoint.
+        return None
 
     def is_active(self) -> bool:
         """Check if DoH resolver is active"""

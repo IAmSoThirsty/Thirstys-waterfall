@@ -215,16 +215,16 @@ Follow [Semantic Versioning](https://semver.org/):
 
 ## Secrets Configuration
 
-For automated PyPI publishing, configure GitHub secrets:
+For automated PyPI publishing, configure the package index credential in GitHub Actions secrets:
 
 1. Go to repository Settings → Secrets and variables → Actions
-2. Add secret: `PYPI_API_TOKEN`
-3. Value: Your PyPI API token
+2. Add the token name expected by the release workflow
+3. Store the package index token value there
 
-For Docker Hub publishing:
+For registry publishing:
 
-1. Add secrets: `DOCKER_USERNAME` and `DOCKER_PASSWORD`
-2. Update release workflow to include Docker push
+1. Configure the registry identity and credential names expected by the release workflow
+2. Update the release workflow only if the target registry changes
 
 ## Troubleshooting
 

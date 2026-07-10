@@ -1,8 +1,11 @@
 """Anti-Fingerprinting Engine"""
 
 import logging
-import random
+import secrets
 from typing import Dict, Any
+
+
+_RNG = secrets.SystemRandom()
 
 
 class AntiFingerprintEngine:
@@ -40,13 +43,13 @@ class AntiFingerprintEngine:
         ]
 
         self._spoofed_data = {
-            "user_agent": random.choice(user_agents),
-            "screen_resolution": random.choice(["1920x1080", "1366x768", "1440x900"]),
-            "timezone": random.choice(["UTC", "America/New_York", "Europe/London"]),
-            "language": random.choice(["en-US", "en-GB", "en-CA"]),
-            "platform": random.choice(["Win32", "MacIntel", "Linux x86_64"]),
-            "hardware_concurrency": random.choice([4, 8, 16]),
-            "device_memory": random.choice([4, 8, 16]),
+            "user_agent": _RNG.choice(user_agents),
+            "screen_resolution": _RNG.choice(["1920x1080", "1366x768", "1440x900"]),
+            "timezone": _RNG.choice(["UTC", "America/New_York", "Europe/London"]),
+            "language": _RNG.choice(["en-US", "en-GB", "en-CA"]),
+            "platform": _RNG.choice(["Win32", "MacIntel", "Linux x86_64"]),
+            "hardware_concurrency": _RNG.choice([4, 8, 16]),
+            "device_memory": _RNG.choice([4, 8, 16]),
             "color_depth": 24,
             "pixel_ratio": 1,
         }

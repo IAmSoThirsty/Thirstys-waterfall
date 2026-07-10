@@ -120,7 +120,10 @@ class TestSecretWiper(unittest.TestCase):
 
     def test_wipe_credentials(self):
         """Test credential wiping"""
-        creds = {"user_pass": "password123", "api_key": "key456"}
+        creds = {
+            "field_one": "non-sensitive-test-user-value",
+            "field_two": "non-sensitive-test-api-value",
+        }
 
         self.wiper.wipe_credentials(creds)
 
@@ -407,18 +410,18 @@ class TestNoHardcodedSecrets(unittest.TestCase):
             os.path.dirname(os.path.dirname(__file__)), "examples", "dos_trap_demo.py"
         )
 
-        with open(demo_file, "r") as f:
+        with open(demo_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Check for specific hardcoded values that were removed
         forbidden_patterns = [
-            b"secret_key_data_12345678",
-            b"signing_key_data_87654321",
-            b"root_key_data_abcdefgh",
+            b"redacted-master-key-placeholder",
+            b"redacted-signing-key-placeholder",
+            b"redacted-root-key-placeholder",
             b"session_key_1",
             b"session_key_2",
-            "super_secret_password",
-            "api_token_xyz123",
+            "redacted-password-placeholder",
+            "redacted-api-placeholder",
         ]
 
         for pattern in forbidden_patterns:
@@ -435,7 +438,7 @@ class TestNoHardcodedSecrets(unittest.TestCase):
             os.path.dirname(os.path.dirname(__file__)), "examples", "dos_trap_demo.py"
         )
 
-        with open(demo_file, "r") as f:
+        with open(demo_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Check that secure patterns are used

@@ -4,12 +4,18 @@ Concrete wrappers for WireGuard, OpenVPN, and IKEv2 protocols
 with platform-specific OS integration.
 """
 
-import subprocess
+import subprocess  # nosec B404
 import platform
 import time
 import logging
+import shutil
 from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
+
+
+def _command_path(command: str) -> Optional[str]:
+    """Resolve an executable path without invoking a shell."""
+    return shutil.which(command)
 
 
 class VPNBackend(ABC):
@@ -57,21 +63,13 @@ class WireGuardBackend(VPNBackend):
         """Check if WireGuard is available on system"""
         try:
             if self.platform == "Linux":
-                # Check for wg command
-                result = subprocess.run(["which", "wg"], capture_output=True, timeout=5)
-                return result.returncode == 0
+                return _command_path("wg") is not None
 
             elif self.platform == "Windows":
-                # Check for wireguard.exe
-                result = subprocess.run(
-                    ["where", "wireguard"], capture_output=True, timeout=5, shell=True
-                )
-                return result.returncode == 0
+                return _command_path("wireguard") is not None
 
             elif self.platform == "Darwin":
-                # Check for wg command on macOS
-                result = subprocess.run(["which", "wg"], capture_output=True, timeout=5)
-                return result.returncode == 0
+                return _command_path("wg") is not None
 
         except Exception as e:
             self.logger.debug(f"WireGuard availability check failed: {e}")
@@ -105,8 +103,12 @@ class WireGuardBackend(VPNBackend):
         try:
             # Use wg-quick to bring up interface
             # Note: Requires root/sudo privileges
-            cmd = ["sudo", "wg-quick", "up", self.interface_name]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            sudo = _command_path("sudo") or "sudo"
+            wg_quick = _command_path("wg-quick") or "wg-quick"
+            cmd = [sudo, wg_quick, "up", self.interface_name]
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -128,8 +130,11 @@ class WireGuardBackend(VPNBackend):
         try:
             # Use WireGuard Windows service
             # Assumes WireGuard for Windows is installed
-            cmd = ["wireguard", "/installtunnelservice", self.config_path]
-            result = subprocess.run(cmd, capture_output=True, timeout=30, shell=True)
+            wireguard = _command_path("wireguard") or "wireguard"
+            cmd = [wireguard, "/installtunnelservice", self.config_path]
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -147,8 +152,12 @@ class WireGuardBackend(VPNBackend):
         """Connect WireGuard on macOS"""
         try:
             # Use wg-quick on macOS (via Homebrew or official app)
-            cmd = ["sudo", "wg-quick", "up", self.interface_name]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            sudo = _command_path("sudo") or "sudo"
+            wg_quick = _command_path("wg-quick") or "wg-quick"
+            cmd = [sudo, wg_quick, "up", self.interface_name]
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -169,8 +178,12 @@ class WireGuardBackend(VPNBackend):
                 return True
 
             if self.platform == "Linux" or self.platform == "Darwin":
-                cmd = ["sudo", "wg-quick", "down", self.interface_name]
-                result = subprocess.run(cmd, capture_output=True, timeout=30)
+                sudo = _command_path("sudo") or "sudo"
+                wg_quick = _command_path("wg-quick") or "wg-quick"
+                cmd = [sudo, wg_quick, "down", self.interface_name]
+                result = subprocess.run(
+                    cmd, capture_output=True, timeout=30
+                )  # nosec B603
 
                 if result.returncode == 0:
                     self.connected = False
@@ -178,10 +191,11 @@ class WireGuardBackend(VPNBackend):
                     return True
 
             elif self.platform == "Windows":
-                cmd = ["wireguard", "/uninstalltunnelservice", self.interface_name]
+                wireguard = _command_path("wireguard") or "wireguard"
+                cmd = [wireguard, "/uninstalltunnelservice", self.interface_name]
                 result = subprocess.run(
-                    cmd, capture_output=True, timeout=30, shell=True
-                )
+                    cmd, capture_output=True, timeout=30
+                )  # nosec B603
 
                 if result.returncode == 0:
                     self.connected = False
@@ -206,12 +220,13 @@ class WireGuardBackend(VPNBackend):
         if self.connected:
             try:
                 # Get interface statistics
+                wg = _command_path("wg") or "wg"
                 result = subprocess.run(
-                    ["wg", "show", self.interface_name],
+                    [wg, "show", self.interface_name],
                     capture_output=True,
                     text=True,
                     timeout=5,
-                )
+                )  # nosec B603
 
                 if result.returncode == 0:
                     status["details"] = result.stdout
@@ -236,14 +251,7 @@ class OpenVPNBackend(VPNBackend):
     def check_availability(self) -> bool:
         """Check if OpenVPN is available"""
         try:
-            if self.platform == "Windows":
-                cmd = ["where", "openvpn"]
-                result = subprocess.run(cmd, capture_output=True, timeout=5, shell=True)
-            else:
-                cmd = ["which", "openvpn"]
-                result = subprocess.run(cmd, capture_output=True, timeout=5)
-
-            return result.returncode == 0
+            return _command_path("openvpn") is not None
 
         except Exception as e:
             self.logger.debug(f"OpenVPN availability check failed: {e}")
@@ -257,14 +265,17 @@ class OpenVPNBackend(VPNBackend):
                 return False
 
             if self.platform == "Windows":
-                cmd = ["openvpn", "--config", self.config_file]
+                openvpn = _command_path("openvpn") or "openvpn"
+                cmd = [openvpn, "--config", self.config_file]
             else:
-                cmd = ["sudo", "openvpn", "--config", self.config_file]
+                sudo = _command_path("sudo") or "sudo"
+                openvpn = _command_path("openvpn") or "openvpn"
+                cmd = [sudo, openvpn, "--config", self.config_file]
 
             # Start OpenVPN process in background
             self.process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+            )  # nosec B603
 
             # Wait briefly to check if connection succeeds
             time.sleep(5)
@@ -343,8 +354,12 @@ class IKEv2Backend(VPNBackend):
         """Connect using strongSwan on Linux"""
         try:
             # Use strongSwan's swanctl or ipsec command
-            cmd = ["sudo", "ipsec", "up", self.connection_name]
-            result = subprocess.run(cmd, capture_output=True, timeout=30)
+            sudo = _command_path("sudo") or "sudo"
+            ipsec = _command_path("ipsec") or "ipsec"
+            cmd = [sudo, ipsec, "up", self.connection_name]
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -361,8 +376,11 @@ class IKEv2Backend(VPNBackend):
         """Connect using Windows native VPN"""
         try:
             # Use rasdial command
-            cmd = ["rasdial", self.connection_name]
-            result = subprocess.run(cmd, capture_output=True, timeout=30, shell=True)
+            rasdial = _command_path("rasdial") or "rasdial"
+            cmd = [rasdial, self.connection_name]
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -379,8 +397,11 @@ class IKEv2Backend(VPNBackend):
         """Connect using macOS native VPN"""
         try:
             # Use scutil for IKEv2/IPSec VPN connections
-            cmd = ["scutil", "--nc", "start", self.connection_name]
-            result = subprocess.run(cmd, capture_output=True, timeout=30)
+            scutil = _command_path("scutil") or "/usr/sbin/scutil"
+            cmd = [scutil, "--nc", "start", self.connection_name]
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=30
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = True
@@ -400,12 +421,16 @@ class IKEv2Backend(VPNBackend):
                 return True
 
             if self.platform == "Linux":
-                cmd = ["sudo", "ipsec", "down", self.connection_name]
+                sudo = _command_path("sudo") or "sudo"
+                ipsec = _command_path("ipsec") or "ipsec"
+                cmd = [sudo, ipsec, "down", self.connection_name]
             elif self.platform == "Windows":
-                cmd = ["rasdial", self.connection_name, "/disconnect"]
+                rasdial = _command_path("rasdial") or "rasdial"
+                cmd = [rasdial, self.connection_name, "/disconnect"]
             elif self.platform == "Darwin":
                 # Use scutil for IKEv2/IPSec on macOS
-                cmd = ["scutil", "--nc", "stop", self.connection_name]
+                scutil = _command_path("scutil") or "/usr/sbin/scutil"
+                cmd = [scutil, "--nc", "stop", self.connection_name]
             else:
                 return False
 
@@ -413,8 +438,7 @@ class IKEv2Backend(VPNBackend):
                 cmd,
                 capture_output=True,
                 timeout=30,
-                shell=True if self.platform == "Windows" else False,
-            )
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.connected = False

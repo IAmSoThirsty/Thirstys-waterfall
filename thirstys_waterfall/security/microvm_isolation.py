@@ -7,7 +7,7 @@ for browser tabs, extensions, and sessions with hard process separation.
 import logging
 import os
 import socket
-import subprocess
+import subprocess  # nosec B404
 import threading
 import time
 import json
@@ -16,6 +16,13 @@ from typing import Dict, Any, Optional, List
 from enum import Enum
 from dataclasses import dataclass, field
 import tempfile
+
+
+def _runtime_dir() -> str:
+    """Return a user-private runtime directory for MicroVM control files."""
+    path = os.path.expanduser("~/.cache/thirstys/runtime")
+    os.makedirs(path, mode=0o700, exist_ok=True)
+    return path
 
 
 class VMBackend(Enum):
@@ -95,7 +102,9 @@ class CommunicationChannel:
     def __init__(self, vm_id: str, socket_path: Optional[str] = None):
         self.logger = logging.getLogger(__name__)
         self.vm_id = vm_id
-        self.socket_path = socket_path or f"/tmp/thirstys_vm_{vm_id}.sock"
+        self.socket_path = socket_path or os.path.join(
+            _runtime_dir(), f"thirstys_vm_{vm_id}.sock"
+        )
         self._socket: Optional[socket.socket] = None
         self._connected = False
         self._lock = threading.Lock()
@@ -173,16 +182,18 @@ class CommunicationChannel:
             if self._socket:
                 try:
                     self._socket.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to close VM socket {self.vm_id}: {e}")
                 self._socket = None
             self._connected = False
 
             if os.path.exists(self.socket_path):
                 try:
                     os.unlink(self.socket_path)
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(
+                        f"Failed to remove VM socket {self.socket_path}: {e}"
+                    )
 
 
 class MicroVMInstance:
@@ -233,7 +244,7 @@ class MicroVMInstance:
 
         # Firecracker/QEMU specific
         self._config_file: Optional[str] = None
-        self._socket_path = f"/tmp/thirstys_vm_{vm_id}.socket"
+        self._socket_path = os.path.join(_runtime_dir(), f"thirstys_vm_{vm_id}.socket")
 
     def _get_default_kernel_path(self) -> str:
         """Get default kernel path for MicroVM"""
@@ -426,7 +437,7 @@ class MicroVMInstance:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE,
-            )
+            )  # nosec B603
 
             self._pid = self._process.pid
             self.logger.info(f"VM process launched with PID {self._pid}")
