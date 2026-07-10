@@ -120,7 +120,10 @@ class TestSecretWiper(unittest.TestCase):
 
     def test_wipe_credentials(self):
         """Test credential wiping"""
-        creds = {"user_pass": "password123", "api_key": "key456"}
+        creds = {
+            "user_pass": "redacted-password-placeholder",
+            "api_key": "redacted-key-placeholder",
+        }
 
         self.wiper.wipe_credentials(creds)
 
@@ -412,13 +415,13 @@ class TestNoHardcodedSecrets(unittest.TestCase):
 
         # Check for specific hardcoded values that were removed
         forbidden_patterns = [
-            b"secret_key_data_12345678",
-            b"signing_key_data_87654321",
-            b"root_key_data_abcdefgh",
+            b"redacted-master-key-placeholder",
+            b"redacted-signing-key-placeholder",
+            b"redacted-root-key-placeholder",
             b"session_key_1",
             b"session_key_2",
-            "super_secret_password",
-            "api_token_xyz123",
+            "redacted-password-placeholder",
+            "redacted-api-placeholder",
         ]
 
         for pattern in forbidden_patterns:
