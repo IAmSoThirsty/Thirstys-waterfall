@@ -847,7 +847,7 @@ Automated testing across multiple platforms:
 - **Unit Tests**: All core components tested
 - **Integration Tests**: backend command construction, browser behavior, auth, MicroVM lifecycle, privacy ledger, and security components
 - **Platform Tests**: Linux (Ubuntu), Windows, macOS in CI workflow configuration; external run evidence is still required for acceptance
-- **Python Versions**: 3.9, 3.10, 3.11
+- **Python Versions**: 3.10, 3.11
 - **Security Scans**: Bandit, Safety, dependency checks
 
 ### Run Tests Locally
@@ -892,7 +892,7 @@ Our test suite includes:
 The CI workflow is configured for:
 
 - **Platforms**: Linux (Ubuntu), Windows, macOS
-- **Python Versions**: 3.9, 3.10, 3.11
+- **Python Versions**: 3.10, 3.11
 - **Tests**: Unit tests, integration tests, platform tests
 - **Security Scans**: Bandit, Safety, dependency checks
 

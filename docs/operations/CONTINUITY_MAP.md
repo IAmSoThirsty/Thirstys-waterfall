@@ -42,7 +42,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Updated vulnerable web dependency pins to patched version ranges.
 - Replaced the web API's default `admin/admin` login with fail-closed password-hash authentication.
 - Hardened CI syntax/test/security gates so scanners are not silently ignored.
-- Aligned Python package metadata and CI matrix to Python 3.9+ because the patched Flask web stack requires Python 3.9 or newer.
+- Aligned Python package metadata and CI matrix to Python 3.10+ because the patched Flask-Limiter web stack requires Python 3.10 or newer.
 - Cleared full-repo Bandit findings by removing shell execution paths, resolving OS command paths, replacing non-cryptographic random use in anonymity/security-adjacent modules, and documenting bounded subprocess use.
 - Added `requirements-deploy.lock` as the exact dependency set used for deployment verification.
 - Tightened the `cryptography` dependency floor to `>=46.0.7,<50.0.0` after Safety reported vulnerable versions allowed by the old range.

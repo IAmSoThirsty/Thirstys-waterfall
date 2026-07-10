@@ -326,7 +326,7 @@ Create `config/production.json`:
 - RAM: 2 GB
 - Disk: 10 GB
 - OS: Linux, Windows 10+, macOS 11+
-- Python: 3.9+
+- Python: 3.10+
 
 **Recommended:**
 
