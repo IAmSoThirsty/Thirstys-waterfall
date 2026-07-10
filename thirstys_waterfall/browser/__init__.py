@@ -6,6 +6,7 @@ from .sandbox import BrowserSandbox
 from .content_blocker import ContentBlocker
 from .encrypted_search import EncryptedSearchEngine
 from .encrypted_navigation import EncryptedNavigationHistory
+from .engine import BrowserDocument, FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 __all__ = [
     "IncognitoBrowser",
@@ -14,4 +15,8 @@ __all__ = [
     "ContentBlocker",
     "EncryptedSearchEngine",
     "EncryptedNavigationHistory",
+    "BrowserDocument",
+    "FetchBlocked",
+    "FetchPolicy",
+    "ThirstyWebEngine",
 ]

@@ -2,7 +2,10 @@
 
 import logging
 from typing import List, Dict, Any
-import random
+import secrets
+
+
+_RNG = secrets.SystemRandom()
 
 
 class OnionRouter:
@@ -65,19 +68,19 @@ class OnionRouter:
             n for n in self._nodes if n["type"] == "entry" and n["available"]
         ]
         if entry_nodes:
-            circuit.append(random.choice(entry_nodes))
+            circuit.append(_RNG.choice(entry_nodes))
 
         # Select middle node
         middle_nodes = [
             n for n in self._nodes if n["type"] == "middle" and n["available"]
         ]
         if middle_nodes:
-            circuit.append(random.choice(middle_nodes))
+            circuit.append(_RNG.choice(middle_nodes))
 
         # Select exit node
         exit_nodes = [n for n in self._nodes if n["type"] == "exit" and n["available"]]
         if exit_nodes:
-            circuit.append(random.choice(exit_nodes))
+            circuit.append(_RNG.choice(exit_nodes))
 
         return circuit if len(circuit) == 3 else []
 
@@ -92,7 +95,7 @@ class OnionRouter:
             return request
 
         # Select a circuit
-        circuit = random.choice(self._circuits)
+        circuit = _RNG.choice(self._circuits)
 
         # Wrap request in multiple encryption layers
         encrypted_request = request.copy()

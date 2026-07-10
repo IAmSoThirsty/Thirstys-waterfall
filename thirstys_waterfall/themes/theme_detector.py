@@ -2,6 +2,7 @@
 
 import logging
 import platform
+import shutil
 
 
 class SystemThemeDetector:
@@ -35,15 +36,16 @@ class SystemThemeDetector:
             return "dark"
 
     def _detect_macos(self):
-        import subprocess
+        import subprocess  # nosec B404
 
         try:
+            defaults = shutil.which("defaults") or "/usr/bin/defaults"
             result = subprocess.run(
-                ["defaults", "read", "-g", "AppleInterfaceStyle"],
+                [defaults, "read", "-g", "AppleInterfaceStyle"],
                 capture_output=True,
                 text=True,
                 timeout=2,
-            )
+            )  # nosec B603
             return "dark" if "Dark" in result.stdout else "light"
         except Exception:
             return "light"

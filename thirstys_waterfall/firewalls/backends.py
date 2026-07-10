@@ -4,11 +4,17 @@ Concrete OS-level firewall integrations for Linux, Windows, and macOS
 """
 
 import os
-import subprocess
+import subprocess  # nosec B404
 import platform
 import logging
+import shutil
 from typing import Dict, Any, List, Optional
 from abc import ABC, abstractmethod
+
+
+def _command_path(command: str) -> Optional[str]:
+    """Resolve an executable path without invoking a shell."""
+    return shutil.which(command)
 
 
 class FirewallBackend(ABC):
@@ -76,19 +82,16 @@ class NftablesBackend(FirewallBackend):
         if self.platform != "Linux":
             return False
 
-        try:
-            result = subprocess.run(["which", "nft"], capture_output=True, timeout=5)
-            return result.returncode == 0
-        except Exception as e:
-            self.logger.debug(f"nftables check failed: {e}")
-            return False
+        return _command_path("nft") is not None
 
     def initialize(self) -> bool:
         """Initialize nftables table and chain"""
         try:
             # Create table
-            cmd = ["sudo", "nft", "add", "table", "ip", self.table_name]
-            result = subprocess.run(cmd, capture_output=True, timeout=10)
+            sudo = _command_path("sudo") or "sudo"
+            nft = _command_path("nft") or "nft"
+            cmd = [sudo, nft, "add", "table", "ip", self.table_name]
+            result = subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             if result.returncode not in [0, 1]:  # 1 = already exists
                 self.logger.error(f"Failed to create nftables table: {result.stderr}")
@@ -96,8 +99,8 @@ class NftablesBackend(FirewallBackend):
 
             # Create chain
             cmd = [
-                "sudo",
-                "nft",
+                sudo,
+                nft,
                 "add",
                 "chain",
                 "ip",
@@ -113,7 +116,7 @@ class NftablesBackend(FirewallBackend):
                 ";",
                 "}",
             ]
-            result = subprocess.run(cmd, capture_output=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             if result.returncode not in [0, 1]:
                 self.logger.error(f"Failed to create nftables chain: {result.stderr}")
@@ -158,9 +161,11 @@ class NftablesBackend(FirewallBackend):
             nft_rule.append(action)
 
             # Execute nft command
+            sudo = _command_path("sudo") or "sudo"
+            nft = _command_path("nft") or "nft"
             cmd = [
-                "sudo",
-                "nft",
+                sudo,
+                nft,
                 "add",
                 "rule",
                 "ip",
@@ -168,7 +173,9 @@ class NftablesBackend(FirewallBackend):
                 self.chain_name,
             ] + nft_rule
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.rules.append({"id": rule_id, "rule": rule})
@@ -214,8 +221,10 @@ class NftablesBackend(FirewallBackend):
         """Disable nftables firewall"""
         try:
             # Delete table (removes all rules)
-            cmd = ["sudo", "nft", "delete", "table", "ip", self.table_name]
-            subprocess.run(cmd, capture_output=True, timeout=10)
+            sudo = _command_path("sudo") or "sudo"
+            nft = _command_path("nft") or "nft"
+            cmd = [sudo, nft, "delete", "table", "ip", self.table_name]
+            subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             self.active = False
             self.rules.clear()
@@ -242,23 +251,17 @@ class WindowsFirewallBackend(FirewallBackend):
         if self.platform != "Windows":
             return False
 
-        try:
-            result = subprocess.run(
-                ["where", "netsh"], capture_output=True, timeout=5, shell=True
-            )
-            return result.returncode == 0
-        except Exception as e:
-            self.logger.debug(f"Windows Firewall check failed: {e}")
-            return False
+        return _command_path("netsh") is not None
 
     def initialize(self) -> bool:
         """Initialize Windows Firewall"""
         try:
             # Ensure Windows Firewall is running
-            cmd = ["netsh", "advfirewall", "show", "allprofiles", "state"]
+            netsh = _command_path("netsh") or "netsh"
+            cmd = [netsh, "advfirewall", "show", "allprofiles", "state"]
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=10, shell=True
-            )
+                cmd, capture_output=True, text=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.logger.info("Windows Firewall is available")
@@ -293,8 +296,9 @@ class WindowsFirewallBackend(FirewallBackend):
             direction = rule.get("direction", "in")
 
             # Build netsh command
+            netsh = _command_path("netsh") or "netsh"
             cmd = [
-                "netsh",
+                netsh,
                 "advfirewall",
                 "firewall",
                 "add",
@@ -316,8 +320,8 @@ class WindowsFirewallBackend(FirewallBackend):
                 cmd.append(f"program={rule['program']}")
 
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=10, shell=True
-            )
+                cmd, capture_output=True, text=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.rules.append({"id": rule_id, "name": rule_name, "rule": rule})
@@ -343,8 +347,9 @@ class WindowsFirewallBackend(FirewallBackend):
 
             rule_name = rule_entry["name"]
 
+            netsh = _command_path("netsh") or "netsh"
             cmd = [
-                "netsh",
+                netsh,
                 "advfirewall",
                 "firewall",
                 "delete",
@@ -352,7 +357,9 @@ class WindowsFirewallBackend(FirewallBackend):
                 f"name={rule_name}",
             ]
 
-            result = subprocess.run(cmd, capture_output=True, timeout=10, shell=True)
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.rules = [r for r in self.rules if r["id"] != rule_id]
@@ -369,9 +376,10 @@ class WindowsFirewallBackend(FirewallBackend):
         """Enable Windows Firewall"""
         try:
             # Enable firewall for all profiles
+            netsh = _command_path("netsh") or "netsh"
             for profile in ["domainprofile", "privateprofile", "publicprofile"]:
-                cmd = ["netsh", "advfirewall", "set", profile, "state", "on"]
-                subprocess.run(cmd, capture_output=True, timeout=10, shell=True)
+                cmd = [netsh, "advfirewall", "set", profile, "state", "on"]
+                subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             self.active = True
             self.logger.info("Windows Firewall enabled")
@@ -406,15 +414,10 @@ class PFBackend(FirewallBackend):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.anchor_name = config.get("anchor", "thirstys")
-        # Use more secure location than /tmp for firewall rules
-        # Try user's home directory config first, fallback to /tmp only if needed
-        default_rules_dir = os.path.expanduser("~/.config/thirstys")
-        if not os.path.exists(default_rules_dir):
-            try:
-                os.makedirs(default_rules_dir, mode=0o700)  # User-only access
-            except Exception:
-                # Fallback to /tmp if config dir creation fails
-                default_rules_dir = "/tmp"
+        default_rules_dir = config.get(
+            "rules_dir", os.path.expanduser("~/.config/thirstys")
+        )
+        os.makedirs(default_rules_dir, mode=0o700, exist_ok=True)
         self.rules_file = config.get(
             "rules_file", os.path.join(default_rules_dir, "thirstys_pf.rules")
         )
@@ -424,19 +427,16 @@ class PFBackend(FirewallBackend):
         if self.platform != "Darwin":
             return False
 
-        try:
-            result = subprocess.run(["which", "pfctl"], capture_output=True, timeout=5)
-            return result.returncode == 0
-        except Exception as e:
-            self.logger.debug(f"PF check failed: {e}")
-            return False
+        return _command_path("pfctl") is not None
 
     def initialize(self) -> bool:
         """Initialize PF"""
         try:
             # Enable PF if not already enabled
-            cmd = ["sudo", "pfctl", "-e"]
-            subprocess.run(cmd, capture_output=True, timeout=10)
+            sudo = _command_path("sudo") or "sudo"
+            pfctl = _command_path("pfctl") or "pfctl"
+            cmd = [sudo, pfctl, "-e"]
+            subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             self.logger.info("PF initialized successfully")
             return True
@@ -513,8 +513,12 @@ class PFBackend(FirewallBackend):
                 return False
 
             # Load rules from file into anchor
-            cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-f", self.rules_file]
-            result = subprocess.run(cmd, capture_output=True, timeout=10)
+            sudo = _command_path("sudo") or "sudo"
+            pfctl = _command_path("pfctl") or "pfctl"
+            cmd = [sudo, pfctl, "-a", self.anchor_name, "-f", self.rules_file]
+            result = subprocess.run(
+                cmd, capture_output=True, timeout=10
+            )  # nosec B603
 
             if result.returncode == 0:
                 self.logger.info(f"PF rule added: {rule_id}")
@@ -540,8 +544,10 @@ class PFBackend(FirewallBackend):
 
             # Rewrite rules file and reload
             if self._write_rules_file():
-                cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-f", self.rules_file]
-                subprocess.run(cmd, capture_output=True, timeout=10)
+                sudo = _command_path("sudo") or "sudo"
+                pfctl = _command_path("pfctl") or "pfctl"
+                cmd = [sudo, pfctl, "-a", self.anchor_name, "-f", self.rules_file]
+                subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
                 self.logger.info(f"PF rule removed: {rule_id}")
                 return True
@@ -565,8 +571,10 @@ class PFBackend(FirewallBackend):
         """Disable PF firewall (flush Thirstys anchor only)"""
         try:
             # Flush rules in our anchor
-            cmd = ["sudo", "pfctl", "-a", self.anchor_name, "-F", "all"]
-            subprocess.run(cmd, capture_output=True, timeout=10)
+            sudo = _command_path("sudo") or "sudo"
+            pfctl = _command_path("pfctl") or "pfctl"
+            cmd = [sudo, pfctl, "-a", self.anchor_name, "-F", "all"]
+            subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             self.active = False
             self.rules.clear()

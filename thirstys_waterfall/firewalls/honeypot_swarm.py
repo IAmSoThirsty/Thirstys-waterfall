@@ -20,12 +20,15 @@ SECURITY INNOVATION:
 
 import logging
 import time
-import random
+import secrets
 import hashlib
 from typing import Dict, List, Set, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
+
+
+_RNG = secrets.SystemRandom()
 
 
 class ThreatLevel(Enum):
@@ -249,7 +252,7 @@ class ThirstysHoneypotSwarmDefense:
         decoy_variety = len(DecoyType) if threat_level == ThreatLevel.SWARM else 3
 
         for i in range(count):
-            decoy_type = random.choice(list(DecoyType)[:decoy_variety])
+            decoy_type = _RNG.choice(list(DecoyType)[:decoy_variety])
 
             # Generate unique decoy ID
             decoy_hash = hashlib.sha256(
@@ -260,7 +263,7 @@ class ThirstysHoneypotSwarmDefense:
 
             # Slightly randomize believability
             base_believability = 0.75
-            believability = base_believability + random.uniform(-0.1, 0.15)
+            believability = base_believability + _RNG.uniform(-0.1, 0.15)
             believability = min(0.99, max(0.5, believability))
 
             self.decoys[decoy_id] = DecoyNode(
