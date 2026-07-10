@@ -164,7 +164,7 @@ class SettingsManager:
                 "encryption_required": True,
                 "session_timeout": 3600,  # 1 hour
                 "max_sessions": 1,
-                "remote_host": "0.0.0.0",
+                "remote_host": "127.0.0.1",
                 "remote_port": 9000,
                 "desktop_port": 9001,
                 "secure_tunnel": True,

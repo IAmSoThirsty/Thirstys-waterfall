@@ -6,11 +6,13 @@
 
 # Thirstys-waterfall
 
-**Thirstys Waterfall** - Production-Grade Integrated Privacy-First System
+**Thirstys Waterfall** - Deployment-Gated Integrated Privacy-First System
 
 ## 🔒 EVERYTHING ENCRYPTED
 
-A comprehensive privacy-first system that combines 8 firewall types, a **built-in VPN**, and an incognito browser with **total encryption** of all data. This is not just another privacy tool—it's a complete, production-ready ecosystem with proven implementations across all major platforms.
+A comprehensive privacy-first system that is being completed toward 8 firewall types, a **built-in VPN**, and an incognito browser with encrypted privacy controls. This repository now has local deployment-smoke evidence, but broad deployment and all-platform claims remain gated by the Standard v3 acceptance matrix.
+
+> **Standard v3 acceptance status:** This repository is under active completion toward the claims in this README. The current acceptance plan, verified evidence, and blockers are tracked in [docs/operations/README_CLAIM_ACCEPTANCE.md](docs/operations/README_CLAIM_ACCEPTANCE.md). Final deployment claims are not accepted as complete until that matrix is green.
 
 ### ✨ Key Features
 
@@ -485,42 +487,48 @@ See `examples/config.json` for full configuration options.
 }
 ```
 
-## 🚀 Production Deployment
+## 🚀 Deployment Verification
 
-Thirstys Waterfall is **100% production-ready** with comprehensive deployment options:
+Thirstys Waterfall currently has **local deployment-smoke verification**, not final production Deployment Verified status. The local verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, and Docker container health/auth smoke.
+
+```powershell
+python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+```
+
+See [Production Deployment Verification](docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md) and the [README Claim Acceptance Matrix](docs/operations/README_CLAIM_ACCEPTANCE.md) for current evidence and blockers.
 
 ### Deployment Methods
 
-1. **Docker Deployment** (Recommended for Production)
+1. **Docker Deployment** (current local smoke path)
 
-   - Multi-stage optimized Dockerfile
+   - Locked deployment dependencies through `requirements-deploy.lock`
    - Docker Compose orchestration
    - Health checks and resource limits
    - Non-root user security
-   - Ready for Kubernetes
+   - Local container smoke verified
 
-1. **PyPI Package** (Recommended for Users)
+1. **Python Package**
 
-   - Published Python package
+   - Standard Python package metadata
    - Simple `pip install` deployment
-   - Platform-independent
+   - Local wheel build verified
 
-1. **Systemd Service** (Linux Servers)
+1. **Systemd Service** (planned Linux server path)
 
-   - Native systemd integration
+   - Native systemd integration still requires target-host evidence
    - Automatic startup and restart
    - System-level security hardening
 
-1. **Windows Service** (Windows Servers)
+1. **Windows Service** (planned Windows server path)
 
-   - Native Windows service support
+   - Native Windows service support still requires target-host evidence
    - Automatic startup configuration
 
 ### Quick Production Deploy
 
 ```bash
 
-# Docker (Simplest)
+# Docker local smoke
 
 docker-compose up -d
 
@@ -537,12 +545,13 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 ### Packaging & Distribution
 
-- ✅ **PyPI Ready**: Standard Python packaging with `pyproject.toml`
-- ✅ **Docker Hub Ready**: Optimized container images
-- ✅ **GitHub Releases**: Automated release workflow
-- ✅ **Multi-Platform**: Linux, Windows, macOS support
+- ✅ **Local wheel build verified**: Standard Python packaging with `pyproject.toml`
+- ✅ **Local Docker image build verified**: Container starts and passes health/auth smoke
+- ⚠️ **Registry publishing not yet verified**: Docker Hub or registry pull evidence is still required
+- ⚠️ **GitHub Releases not yet verified**: Release workflow evidence is still required
+- ⚠️ **Multi-platform support not yet accepted**: Linux, Windows, and macOS CI/platform evidence is still required
 
-📖 **[Complete Deployment Guide →](docs/DEPLOYMENT.md)**
+📖 **[Deployment Verification Guide →](docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md)**
 
 ## 🎯 Use Cases
 
@@ -692,7 +701,7 @@ python examples/advanced_usage.py
 python examples/complete_usage.py
 ```
 
-### 📊 Proof of Production-Ready Implementation
+### 📊 Local Verification Evidence
 
 #### ✅ Complete Test Coverage
 
@@ -825,7 +834,7 @@ For detailed security policies, incident response, and secret rotation procedure
 
 - `config.json` - Configuration template
 
-All examples are fully functional and demonstrate real, production-ready implementations.
+Examples are development and verification aids. Standard v3 acceptance for each feature is tracked in [docs/operations/README_CLAIM_ACCEPTANCE.md](docs/operations/README_CLAIM_ACCEPTANCE.md).
 
 ## 🧪 Testing & CI
 
@@ -836,9 +845,9 @@ All examples are fully functional and demonstrate real, production-ready impleme
 Automated testing across multiple platforms:
 
 - **Unit Tests**: All core components tested
-- **Integration Tests**: VPN handshake, firewall rule enforcement, browser sandboxing
-- **Platform Tests**: Linux (Ubuntu), Windows, macOS
-- **Python Versions**: 3.8, 3.9, 3.10, 3.11
+- **Integration Tests**: backend command construction, browser behavior, auth, MicroVM lifecycle, privacy ledger, and security components
+- **Platform Tests**: Linux (Ubuntu), Windows, macOS in CI workflow configuration; external run evidence is still required for acceptance
+- **Python Versions**: 3.9, 3.10, 3.11
 - **Security Scans**: Bandit, Safety, dependency checks
 
 ### Run Tests Locally
@@ -847,12 +856,12 @@ Automated testing across multiple platforms:
 
 # Run all tests
 
-python -m unittest discover -s tests -p "test_*.py" -v
+python -m pytest -q
 
 # Run specific test suites
 
-python -m unittest tests.test_vpn_backends -v
-python -m unittest tests.test_firewall_backends -v
+python -m pytest tests/test_vpn_backends.py -q
+python -m pytest tests/test_firewall_backends.py -q
 
 # Check VPN backend availability on your system
 
@@ -880,10 +889,10 @@ Our test suite includes:
 
 ### Continuous Integration
 
-Our CI pipeline runs across:
+The CI workflow is configured for:
 
 - **Platforms**: Linux (Ubuntu), Windows, macOS
-- **Python Versions**: 3.8, 3.9, 3.10, 3.11
+- **Python Versions**: 3.9, 3.10, 3.11
 - **Tests**: Unit tests, integration tests, platform tests
 - **Security Scans**: Bandit, Safety, dependency checks
 
@@ -893,7 +902,7 @@ View the [CI workflow results](https://github.com/IAmSoThirsty/Thirstys-waterfal
 
 ### What Sets Thirstys Waterfall Apart
 
-Thirstys Waterfall is not just another privacy tool—it's a **comprehensive, production-ready ecosystem** that integrates features typically found in multiple separate products:
+Thirstys Waterfall is being built as a comprehensive privacy ecosystem that integrates features typically found in multiple separate products. Claims below are target capabilities until accepted in the Standard v3 matrix.
 
 #### 🏆 All-in-One Solution
 
@@ -934,14 +943,15 @@ Thirstys Waterfall is not just another privacy tool—it's a **comprehensive, pr
 - **Competitors**: 1-2 encryption layers
 - **Our Advantage**: 3.5-7x stronger encryption
 
-### Why Production-Ready?
+### Production Readiness Status
 
-✅ **Complete Implementation** - No stubs, placeholders, or TODOs ✅ **Comprehensive Testing** - Unit, integration, and platform tests ✅ **Real Backends** - Actual VPN/firewall/platform integrations ✅ **Full Documentation** - Architecture, security, threat model, examples ✅ **CI/CD Pipeline** - Automated testing across platforms ✅ **Security Audits** - CodeQL, Bandit, Safety scans ✅ **Example Code** - 10+ working examples demonstrating features ✅ **Cross-Platform** - Linux, Windows, macOS support
+Current accepted evidence includes local tests, production-mode secret/CORS startup checks, local wheel build, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, Docker container smoke, local container log capture, and local Docker rollback smoke. Full production Deployment Verified status still requires CI/CodeQL evidence, published image pull evidence, target rollback evidence, production logs, secrets rotation evidence, and platform proof for real VPN/firewall backend execution.
 
 ### Proof of Implementation
 
 Every feature has concrete proof:
 
+- **Deployment Verification Script** - `scripts/verify_production_deployment.py`
 - **Backend Verification Scripts** - Check available VPN/firewall backends
 - **Feature Demonstrations** - 10+ example scripts showing real usage
 - **Comprehensive Tests** - Full test coverage for all components

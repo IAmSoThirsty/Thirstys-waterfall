@@ -407,7 +407,7 @@ class TestNoHardcodedSecrets(unittest.TestCase):
             os.path.dirname(os.path.dirname(__file__)), "examples", "dos_trap_demo.py"
         )
 
-        with open(demo_file, "r") as f:
+        with open(demo_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Check for specific hardcoded values that were removed
@@ -435,7 +435,7 @@ class TestNoHardcodedSecrets(unittest.TestCase):
             os.path.dirname(os.path.dirname(__file__)), "examples", "dos_trap_demo.py"
         )
 
-        with open(demo_file, "r") as f:
+        with open(demo_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Check that secure patterns are used

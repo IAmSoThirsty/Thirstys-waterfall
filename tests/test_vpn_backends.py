@@ -28,22 +28,22 @@ class TestWireGuardBackend(unittest.TestCase):
         self.assertFalse(self.backend.connected)
         self.assertEqual(self.backend.platform, platform.system())
 
-    @patch("subprocess.run")
-    def test_check_availability_linux(self, mock_run):
+    @patch("thirstys_waterfall.vpn.backends.shutil.which")
+    def test_check_availability_linux(self, mock_which):
         """Test WireGuard availability check on Linux"""
         self.backend.platform = "Linux"
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_which.return_value = "/usr/bin/wg"
 
         result = self.backend.check_availability()
 
         self.assertTrue(result)
-        mock_run.assert_called_once()
+        mock_which.assert_called_once_with("wg")
 
-    @patch("subprocess.run")
-    def test_check_availability_not_installed(self, mock_run):
+    @patch("thirstys_waterfall.vpn.backends.shutil.which")
+    def test_check_availability_not_installed(self, mock_which):
         """Test WireGuard availability when not installed"""
         self.backend.platform = "Linux"
-        mock_run.return_value = MagicMock(returncode=1)
+        mock_which.return_value = None
 
         result = self.backend.check_availability()
 
@@ -53,27 +53,23 @@ class TestWireGuardBackend(unittest.TestCase):
     def test_connect_linux_success(self, mock_run):
         """Test successful WireGuard connection on Linux"""
         self.backend.platform = "Linux"
-        mock_run.side_effect = [
-            MagicMock(returncode=0),  # availability check
-            MagicMock(returncode=0, stderr=""),  # wg-quick up
-        ]
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
 
-        result = self.backend.connect()
+        with patch.object(self.backend, "check_availability", return_value=True):
+            result = self.backend.connect()
 
         self.assertTrue(result)
         self.assertTrue(self.backend.connected)
-        self.assertEqual(mock_run.call_count, 2)
+        self.assertEqual(mock_run.call_count, 1)
 
     @patch("subprocess.run")
     def test_connect_failure(self, mock_run):
         """Test failed WireGuard connection"""
         self.backend.platform = "Linux"
-        mock_run.side_effect = [
-            MagicMock(returncode=0),  # availability check
-            MagicMock(returncode=1, stderr="Connection failed"),  # wg-quick up
-        ]
+        mock_run.return_value = MagicMock(returncode=1, stderr="Connection failed")
 
-        result = self.backend.connect()
+        with patch.object(self.backend, "check_availability", return_value=True):
+            result = self.backend.connect()
 
         self.assertFalse(result)
         self.assertFalse(self.backend.connected)
@@ -115,10 +111,10 @@ class TestOpenVPNBackend(unittest.TestCase):
         self.assertFalse(self.backend.connected)
         self.assertIsNone(self.backend.process)
 
-    @patch("subprocess.run")
-    def test_check_availability(self, mock_run):
+    @patch("thirstys_waterfall.vpn.backends.shutil.which")
+    def test_check_availability(self, mock_which):
         """Test OpenVPN availability check"""
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_which.return_value = "/usr/sbin/openvpn"
 
         result = self.backend.check_availability()
 
@@ -321,15 +317,13 @@ class TestVPNHandshake(unittest.TestCase):
 
         # Mock successful handshake
         mock_run.side_effect = [
-            MagicMock(returncode=0),  # availability
             MagicMock(returncode=0, stderr=""),  # connect
-            MagicMock(
-                returncode=0, stdout="interface: wg0\n  public key: ..."
-            ),  # status
+            MagicMock(returncode=0, stdout="interface: wg0\n  public key: ..."),
         ]
 
         # Connect
-        self.assertTrue(backend.connect())
+        with patch.object(backend, "check_availability", return_value=True):
+            self.assertTrue(backend.connect())
 
         # Verify connection
         self.assertTrue(backend.connected)
@@ -359,19 +353,19 @@ class TestVPNHandshake(unittest.TestCase):
             self.assertTrue(backend.disconnect())
             self.assertFalse(backend.connected)
 
-    @patch("subprocess.run")
-    def test_protocol_fallback(self, mock_run):
+    @patch("thirstys_waterfall.vpn.backends.shutil.which")
+    def test_protocol_fallback(self, mock_which):
         """Test VPN protocol fallback mechanism"""
         # Simulate WireGuard not available, but OpenVPN available
         wg_backend = WireGuardBackend({})
         wg_backend.platform = "Linux"
 
-        mock_run.return_value = MagicMock(returncode=1)  # WireGuard not available
+        mock_which.return_value = None  # WireGuard not available
         self.assertFalse(wg_backend.check_availability())
 
         # OpenVPN should be tried next
         openvpn_backend = OpenVPNBackend({})
-        mock_run.return_value = MagicMock(returncode=0)  # OpenVPN available
+        mock_which.return_value = "/usr/sbin/openvpn"  # OpenVPN available
         self.assertTrue(openvpn_backend.check_availability())
 
     @patch("subprocess.run")
@@ -381,22 +375,18 @@ class TestVPNHandshake(unittest.TestCase):
         backend.platform = "Linux"
 
         # Initial connection
-        mock_run.side_effect = [
-            MagicMock(returncode=0),  # availability
-            MagicMock(returncode=0),  # connect
-        ]
-        self.assertTrue(backend.connect())
+        mock_run.side_effect = [MagicMock(returncode=0)]  # connect
+        with patch.object(backend, "check_availability", return_value=True):
+            self.assertTrue(backend.connect())
 
         # Simulate disconnection
         mock_run.side_effect = [MagicMock(returncode=0)]  # disconnect
         self.assertTrue(backend.disconnect())
 
         # Reconnection
-        mock_run.side_effect = [
-            MagicMock(returncode=0),  # availability
-            MagicMock(returncode=0),  # connect
-        ]
-        self.assertTrue(backend.connect())
+        mock_run.side_effect = [MagicMock(returncode=0)]  # connect
+        with patch.object(backend, "check_availability", return_value=True):
+            self.assertTrue(backend.connect())
         self.assertTrue(backend.connected)
 
 

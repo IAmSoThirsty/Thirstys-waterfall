@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the complete production deployment infrastructure implemented for Thirstys Waterfall, making it **100% production-ready** for deployment, packaging, and release.
+This document summarizes the production deployment infrastructure implemented for Thirstys Waterfall. Current Standard v3 status: local deployment-smoke verification exists, but full production Deployment Verified status still requires the evidence listed in `docs/operations/README_CLAIM_ACCEPTANCE.md` and `docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md`.
 
 ## What Was Implemented
 
@@ -28,7 +28,7 @@ This document summarizes the complete production deployment infrastructure imple
 
 **Files Created:**
 
-- `Dockerfile` - Multi-stage production-ready image
+- `Dockerfile` - Multi-stage deployment image, gated by Standard v3 verification
 - `docker-compose.yml` - Orchestration configuration
 - `.dockerignore` - Optimized build context
 
@@ -42,7 +42,7 @@ This document summarizes the complete production deployment infrastructure imple
 - Volume mounting for persistent data
 - Environment variable support
 
-**Result:** Docker image builds successfully and runs without issues.
+**Result:** Docker image builds successfully and the local container health/auth smoke passes. Published registry pull and production-host evidence are still required.
 
 ### 3. Automated Installation ✅
 
@@ -77,7 +77,7 @@ This document summarizes the complete production deployment infrastructure imple
 - PyPI publishing (when configured)
 - Multi-platform support
 
-**Result:** Workflow validated and ready for automated releases.
+**Result:** Workflow exists, but GitHub-hosted run evidence for the exact deploy commit is still required before release readiness is accepted.
 
 ### 5. Comprehensive Documentation ✅
 
@@ -307,37 +307,35 @@ pyproject.toml                   # Fixed deprecation warnings
 
 ## Quality Metrics
 
-- ✅ **Code Review**: Passed - No issues
-- ✅ **Security Scan**: Passed - 0 vulnerabilities
-- ✅ **Docker Build**: Passed - Image builds successfully
-- ✅ **Package Build**: Passed - Both wheel and source dist
-- ✅ **Installation**: Passed - Package installs correctly
-- ✅ **Workflows**: Passed - All YAML valid
-- ✅ **Documentation**: Complete - All deployment scenarios covered
+- ✅ **Local Tests**: Passed - 323 tests
+- ✅ **Security Scan**: Passed locally - full-repo Bandit and locked dependency vulnerability check
+- ✅ **Docker Build**: Passed locally - image builds successfully
+- ✅ **Docker Smoke**: Passed locally - health/auth/log smoke and local rollback smoke succeed
+- ✅ **Package Build**: Passed locally - wheel build succeeds
+- ⚠️ **Workflows**: Configured, but GitHub-hosted evidence is still required
+- ⚠️ **Documentation**: Deployment evidence is tracked, but remaining production blockers are not closed
 
 ## Conclusion
 
-Thirstys Waterfall is now **100% production-ready** with:
+Thirstys Waterfall now has local deployment-smoke evidence for:
 
 1. ✅ **Modern packaging** for PyPI distribution
 2. ✅ **Docker containerization** with best practices
-3. ✅ **Automated CI/CD** for releases
-4. ✅ **Cross-platform installers** for easy setup
-5. ✅ **Comprehensive documentation** for all scenarios
-6. ✅ **Production configurations** with security defaults
-7. ✅ **Quality assurance** through code review and security scans
+3. ⚠️ **Automated CI/CD** configured but not yet proven for the deploy commit
+4. ⚠️ **Cross-platform installers** present but not target-host verified
+5. ✅ **Deployment verification documentation** for local gates, rollback, and secrets
+6. ✅ **Production configurations** with environment-based secrets
+7. ✅ **Quality assurance** through local tests and local security scans
 
-The project can now be:
+The project still requires external evidence before full production Deployment Verified status:
 
-- Published to PyPI
-- Deployed to Docker Hub
-- Released via GitHub Releases
-- Installed on any platform
-- Deployed to production environments
-- Scaled horizontally
-- Monitored and maintained
+- GitHub Actions and CodeQL run evidence for the deploy commit
+- Published image digest and pull/run evidence from the target registry
+- Target rollback execution evidence
+- Target production startup, health, login, and shutdown logs
+- Real platform evidence for claimed VPN/firewall backends
 
-**Status: READY FOR PRODUCTION DEPLOYMENT** 🚀
+**Status: LOCAL DEPLOYMENT-SMOKE VERIFIED; FULL PRODUCTION DEPLOYMENT VERIFIED NOT YET ACCEPTED**
 
 ---
 

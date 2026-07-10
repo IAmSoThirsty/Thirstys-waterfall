@@ -12,7 +12,8 @@ import time
 import threading
 import ctypes
 import platform
-import subprocess
+import shutil
+import subprocess  # nosec B404
 from typing import Dict, Any, Optional, List, Tuple, Callable, Set
 from enum import Enum
 from dataclasses import dataclass, field
@@ -20,6 +21,11 @@ from collections import deque
 
 # Cryptography imports removed - not used in current implementation
 # These were placeholders for future hardware-based encryption features
+
+
+def _command_path(command: str) -> str:
+    """Resolve an executable without invoking a shell."""
+    return shutil.which(command) or command
 
 
 class ThreatLevel(Enum):
@@ -64,9 +70,9 @@ class ResponseAction(Enum):
 class SanitizationMode(Enum):
     """Data sanitization modes"""
 
-    SINGLE_PASS = "single_pass"
-    THREE_PASS = "three_pass"
-    SEVEN_PASS_DOD = "seven_pass_dod"  # DoD 5220.22-M
+    SINGLE_PASS = "single_pass"  # nosec B105
+    THREE_PASS = "three_pass"  # nosec B105
+    SEVEN_PASS_DOD = "seven_pass_dod"  # nosec B105
     GUTMANN = "gutmann"  # 35-pass Gutmann method
     CRYPTO_ERASE = "crypto_erase"
 
@@ -145,14 +151,14 @@ class KernelInterface:
                 # Use PowerShell to get drivers
                 result = subprocess.run(
                     [
-                        "powershell",
+                        _command_path("powershell"),
                         "-Command",
                         "Get-WindowsDriver -Online | Select-Object -ExpandProperty ProviderName",
                     ],
                     capture_output=True,
                     text=True,
                     timeout=10,
-                )
+                )  # nosec B603
                 if result.returncode == 0:
                     modules = set(result.stdout.strip().split("\n"))
             except Exception as e:
@@ -273,8 +279,11 @@ class KernelInterface:
 
                 # Get PIDs from ps
                 result = subprocess.run(
-                    ["ps", "-eo", "pid"], capture_output=True, text=True, timeout=10
-                )
+                    [_command_path("ps"), "-eo", "pid"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )  # nosec B603
                 ps_pids = set()
                 for line in result.stdout.strip().split("\n")[1:]:
                     if line.strip():
@@ -714,7 +723,7 @@ class SecretWiper:
         try:
             # Platform-specific cache flushing
             if platform.system() == "Linux":
-                subprocess.run(["sync"], timeout=5)
+                subprocess.run([_command_path("sync")], timeout=5)  # nosec
                 try:
                     with open("/proc/sys/vm/drop_caches", "w") as f:
                         f.write("3")
@@ -815,8 +824,11 @@ class InterfaceDisabler:
             if self._is_linux:
                 # Get all network interfaces
                 result = subprocess.run(
-                    ["ip", "link", "show"], capture_output=True, text=True, timeout=10
-                )
+                    [_command_path("ip"), "link", "show"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )  # nosec B603
 
                 interfaces = []
                 for line in result.stdout.split("\n"):
@@ -831,8 +843,10 @@ class InterfaceDisabler:
                 for iface in interfaces:
                     try:
                         subprocess.run(
-                            ["ip", "link", "set", iface, "down"], timeout=5, check=True
-                        )
+                            [_command_path("ip"), "link", "set", iface, "down"],
+                            timeout=5,
+                            check=True,
+                        )  # nosec B603
                         self._disabled_interfaces.append(iface)
                         self.logger.info(f"Disabled network interface: {iface}")
                     except Exception as e:
@@ -843,13 +857,13 @@ class InterfaceDisabler:
                 try:
                     subprocess.run(
                         [
-                            "powershell",
+                            _command_path("powershell"),
                             "-Command",
                             'Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Disable-NetAdapter -Confirm:$false',
                         ],
                         timeout=30,
                         check=True,
-                    )
+                    )  # nosec B603
                     self.logger.info("Disabled all Windows network adapters")
                 except Exception as e:
                     self.logger.error(f"Failed to disable Windows adapters: {e}")
@@ -894,12 +908,12 @@ class InterfaceDisabler:
                 try:
                     subprocess.run(
                         [
-                            "powershell",
+                            _command_path("powershell"),
                             "-Command",
                             'Get-PnpDevice -Class USB | Where-Object {$_.Status -eq "OK"} | Disable-PnpDevice -Confirm:$false',
                         ],
                         timeout=30,
-                    )
+                    )  # nosec B603
                     self.logger.info("Disabled USB controllers")
                 except Exception as e:
                     self.logger.error(f"Failed to disable USB: {e}")
@@ -986,8 +1000,10 @@ class MemorySanitizer:
                 import gc
 
                 gc.collect()
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(
+                    f"Garbage collection after RAM sanitization failed: {e}"
+                )
 
             self.logger.info("RAM sanitization completed")
             return True
@@ -1091,13 +1107,15 @@ class DiskSanitizer:
                     dir_path = os.path.join(root, dir)
                     try:
                         os.rmdir(dir_path)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Failed to remove sanitized directory {dir_path}: {e}"
+                        )
 
             try:
                 os.rmdir(directory)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to remove sanitized root {directory}: {e}")
 
             self.logger.info(f"Directory sanitized: {directory}")
             return True
@@ -1426,9 +1444,13 @@ class DOSTrapMode:
         try:
             # Attempt graceful shutdown
             if platform.system() == "Linux":
-                subprocess.run(["shutdown", "-h", "now"], timeout=5)
+                subprocess.run(
+                    [_command_path("shutdown"), "-h", "now"], timeout=5
+                )  # nosec B603
             elif platform.system() == "Windows":
-                subprocess.run(["shutdown", "/s", "/t", "0"], timeout=5)
+                subprocess.run(
+                    [_command_path("shutdown"), "/s", "/t", "0"], timeout=5
+                )  # nosec B603
             else:
                 # Force exit
                 os._exit(1)

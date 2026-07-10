@@ -7,7 +7,6 @@ multi-layer obfuscation, and protocol mimicry.
 import logging
 import secrets
 import time
-import random
 import threading
 import struct
 from typing import Dict, Any, List, Optional
@@ -16,6 +15,9 @@ from enum import Enum
 from collections import defaultdict, deque
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+
+
+_RNG = secrets.SystemRandom()
 
 
 class TransportType(Enum):
@@ -187,7 +189,7 @@ class PluggableTransport:
         self._active = True
         self._update_success_rate(True)
         self.logger.info(
-            f"meek transport established via {random.choice(front_domains)}"
+            f"meek transport established via {_RNG.choice(front_domains)}"
         )
         return True
 
@@ -197,7 +199,7 @@ class PluggableTransport:
 
         # Snowflake uses temporary WebRTC proxies
         # Peers volunteer to be bridges
-        proxy_count = random.randint(3, 7)
+        proxy_count = _RNG.randint(3, 7)
         self.logger.info(f"Connected to {proxy_count} Snowflake proxies")
 
         self._active = True
@@ -276,7 +278,7 @@ class PluggableTransport:
     def _obfuscate_data(self, data: bytes) -> bytes:
         """Apply transport-specific data obfuscation"""
         # Add random padding
-        padding_size = random.randint(0, self.config.max_padding)
+        padding_size = _RNG.randint(0, self.config.max_padding)
         padding = secrets.token_bytes(padding_size)
 
         # Pack: [data_length(4 bytes)][data][padding]
@@ -367,7 +369,7 @@ class ObfuscationLayer:
 
     def _apply_padding(self, data: bytes) -> bytes:
         """Add random padding to data"""
-        padding_size = random.randint(self.min_padding, self.max_padding)
+        padding_size = _RNG.randint(self.min_padding, self.max_padding)
         padding = secrets.token_bytes(padding_size)
 
         # Format: [original_length(4)][data][padding]
@@ -385,7 +387,7 @@ class ObfuscationLayer:
     def _fragment_data(self, data: bytes) -> bytes:
         """Fragment data into smaller chunks"""
         # Store chunks with index for reassembly
-        chunk_size = random.randint(512, 1024)
+        chunk_size = _RNG.randint(512, 1024)
         chunks = [data[i : i + chunk_size] for i in range(0, len(data), chunk_size)]
 
         # In production, would return chunks separately
@@ -408,7 +410,7 @@ class ObfuscationLayer:
         if not self.timing_enabled:
             return 0.0
 
-        delay_ms = random.uniform(self.min_delay_ms, self.max_delay_ms)
+        delay_ms = _RNG.uniform(self.min_delay_ms, self.max_delay_ms)
         delay_s = delay_ms / 1000.0
 
         # Apply delay
@@ -473,7 +475,7 @@ class ObfuscationLayer:
         # DNS header
         dns_header = struct.pack(
             "!HHHHHH",
-            random.randint(1, 65535),  # Transaction ID
+            _RNG.randint(1, 65535),  # Transaction ID
             0x0100,  # Flags: standard query
             1,
             0,
@@ -498,7 +500,7 @@ class ObfuscationLayer:
     def _mimic_gaming(self, data: bytes) -> bytes:
         """Make traffic look like gaming protocol (UDP-like)"""
         # Gaming packet header
-        game_header = struct.pack("!I", random.randint(1, 10000))  # Sequence number
+        game_header = struct.pack("!I", _RNG.randint(1, 10000))  # Sequence number
         game_header += struct.pack("!f", time.time())  # Timestamp
         game_header += b"\x00" * 4  # Flags
 
@@ -542,8 +544,8 @@ class DomainFronting:
             return None
 
         # Select CDN provider
-        provider = random.choice(list(self.cdn_domains.keys()))
-        front_domain = random.choice(self.cdn_domains[provider])
+        provider = _RNG.choice(list(self.cdn_domains.keys()))
+        front_domain = _RNG.choice(self.cdn_domains[provider])
 
         self._active_fronts.append(
             {
@@ -661,8 +663,8 @@ class AdvancedStealthManager:
             {
                 "id": f"entry-{i}",
                 "type": "entry",
-                "location": random.choice(["US", "EU", "CA"]),
-                "bandwidth": random.randint(10, 100),
+                "location": _RNG.choice(["US", "EU", "CA"]),
+                "bandwidth": _RNG.randint(10, 100),
             }
             for i in range(5)
         ]
@@ -671,8 +673,8 @@ class AdvancedStealthManager:
                 {
                     "id": f"middle-{i}",
                     "type": "middle",
-                    "location": random.choice(["DE", "CH", "NL", "SE"]),
-                    "bandwidth": random.randint(10, 100),
+                    "location": _RNG.choice(["DE", "CH", "NL", "SE"]),
+                    "bandwidth": _RNG.randint(10, 100),
                 }
                 for i in range(10)
             ]
@@ -682,8 +684,8 @@ class AdvancedStealthManager:
                 {
                     "id": f"exit-{i}",
                     "type": "exit",
-                    "location": random.choice(["IS", "NO", "CH", "NL"]),
-                    "bandwidth": random.randint(10, 100),
+                    "location": _RNG.choice(["IS", "NO", "CH", "NL"]),
+                    "bandwidth": _RNG.randint(10, 100),
                 }
                 for i in range(5)
             ]
@@ -778,17 +780,17 @@ class AdvancedStealthManager:
 
             # Select by bandwidth
             entry = max(
-                random.sample(entry_nodes, min(3, len(entry_nodes))),
+                _RNG.sample(entry_nodes, min(3, len(entry_nodes))),
                 key=lambda x: x["bandwidth"],
             )
             exit_node = max(
-                random.sample(exit_nodes, min(3, len(exit_nodes))),
+                _RNG.sample(exit_nodes, min(3, len(exit_nodes))),
                 key=lambda x: x["bandwidth"],
             )
 
             # Multiple middle nodes for longer path
-            middle_count = random.randint(2, 4)
-            middle = random.sample(middle_nodes, min(middle_count, len(middle_nodes)))
+            middle_count = _RNG.randint(2, 4)
+            middle = _RNG.sample(middle_nodes, min(middle_count, len(middle_nodes)))
 
             circuit = OnionCircuit(
                 circuit_id=secrets.token_hex(8),

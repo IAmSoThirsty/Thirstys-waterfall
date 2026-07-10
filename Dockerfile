@@ -22,19 +22,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create application directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy web interface requirements and install
-COPY web/requirements.txt web/requirements.txt
-RUN pip install --no-cache-dir -r web/requirements.txt
+# Copy the locked deployment dependency set first for better layer caching
+COPY requirements-deploy.lock .
+RUN pip install --no-cache-dir -r requirements-deploy.lock
 
 # Copy application code
 COPY . .
 
-# Install the Thirstys-Waterfall package
-RUN pip install --no-cache-dir -e . || echo "Note: Package installation skipped (development mode)"
+# Normalize shell scripts copied from Windows worktrees.
+RUN sed -i 's/\r$//' /app/web/start.sh && chmod +x /app/web/start.sh
+
+# Install the Thirstys-Waterfall package. This must fail closed in production.
+RUN pip install --no-cache-dir .
 
 # Create non-root user for security
 RUN useradd -m -u 1000 -s /bin/bash thirsty && \

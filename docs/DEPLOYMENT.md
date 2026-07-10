@@ -6,7 +6,15 @@
 
 # Deployment Guide
 
-Complete guide for deploying Thirstys Waterfall in production environments.
+Guide for deploying Thirstys Waterfall and collecting the Standard v3 evidence required before calling a deployment production verified.
+
+For the current hard local gate, run:
+
+```powershell
+python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+```
+
+See [Production Deployment Verification](operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md) for rollback, secret rotation, and remaining external evidence requirements.
 
 ## Table of Contents
 
@@ -318,7 +326,7 @@ Create `config/production.json`:
 - RAM: 2 GB
 - Disk: 10 GB
 - OS: Linux, Windows 10+, macOS 11+
-- Python: 3.8+
+- Python: 3.9+
 
 **Recommended:**
 
@@ -657,8 +665,10 @@ pip install thirstys-waterfall
 
 Before deploying to production:
 
+- [ ] `python scripts\verify_production_deployment.py --thirsty-lang-path "<path>"` passes
 - [ ] Configuration file reviewed and secured
 - [ ] Environment variables set correctly
+- [ ] `SECRET_KEY`, `JWT_SECRET_KEY`, `THIRSTYS_ADMIN_USERNAME`, and `THIRSTYS_ADMIN_PASSWORD_HASH` are injected from a secret manager
 - [ ] Platform-specific dependencies installed
 - [ ] VPN backends available and tested
 - [ ] Firewall backends available and tested
@@ -666,6 +676,7 @@ Before deploying to production:
 - [ ] Logging configured
 - [ ] Monitoring configured
 - [ ] Backup strategy implemented
+- [ ] Rollback procedure executed and logged
 - [ ] Update procedure documented
 - [ ] Security hardening applied
 - [ ] Resource limits configured

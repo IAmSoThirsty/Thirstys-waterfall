@@ -13,7 +13,7 @@ This update addresses the concerns raised in the problem statement by providing 
 
 **File**: `thirstys_waterfall/vpn/backends.py` (570 lines)
 
-Implemented three production-ready VPN backends with real OS-level integration:
+Implemented three VPN backends intended for real OS-level integration; platform execution remains deployment-gated:
 
 - **WireGuardBackend**: Cross-platform WireGuard integration
   - Linux: Uses `wg-quick` commands
@@ -36,7 +36,7 @@ Implemented three production-ready VPN backends with real OS-level integration:
 
 **File**: `thirstys_waterfall/firewalls/backends.py` (640 lines)
 
-Implemented three production-ready firewall backends with real OS-level integration:
+Implemented three firewall backends intended for real OS-level integration; platform execution remains deployment-gated:
 
 - **NftablesBackend** (Linux): Modern netfilter integration
   - Creates tables and chains

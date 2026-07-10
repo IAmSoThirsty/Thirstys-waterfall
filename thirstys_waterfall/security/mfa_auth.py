@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional, List, Tuple, Callable, Set
 from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -30,14 +30,14 @@ from cryptography.x509.oid import ExtensionOID
 class AuthMethod(Enum):
     """Supported authentication methods"""
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B105
     TOTP = "totp"
     FIDO2 = "fido2"
     WEBAUTHN = "webauthn"
     PASSKEY = "passkey"
     CERTIFICATE = "certificate"
     BIOMETRIC = "biometric"
-    HARDWARE_TOKEN = "hardware_token"
+    HARDWARE_TOKEN = "hardware_token"  # nosec B105
     SMS = "sms"
     EMAIL = "email"
 
@@ -739,8 +739,15 @@ class CertificateProvider(AuthenticationProvider):
         """Validate certificate"""
         try:
             # Check validity period
-            now = datetime.utcnow()
-            if now < cert.not_valid_before or now > cert.not_valid_after:
+            try:
+                not_valid_before = cert.not_valid_before_utc
+                not_valid_after = cert.not_valid_after_utc
+                now = datetime.now(timezone.utc)
+            except AttributeError:
+                not_valid_before = cert.not_valid_before
+                not_valid_after = cert.not_valid_after
+                now = datetime.utcnow()
+            if now < not_valid_before or now > not_valid_after:
                 return False
 
             # Check key usage
