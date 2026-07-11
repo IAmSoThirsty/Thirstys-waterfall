@@ -123,12 +123,12 @@ install.bat      # Windows
 
 # Download latest release
 
-wget https://github.com/IAmSoThirsty/Thirstys-waterfall/archive/refs/tags/v1.0.0.tar.gz
+wget https://github.com/IAmSoThirsty/Thirstys-waterfall/archive/refs/tags/v1.0.1.tar.gz
 
 # Extract
 
-tar -xzf v1.0.0.tar.gz
-cd Thirstys-waterfall-1.0.0
+tar -xzf v1.0.1.tar.gz
+cd Thirstys-waterfall-1.0.1
 
 # Install
 
@@ -229,7 +229,7 @@ pip install thirstys-waterfall[dev]
 
 # Install specific version
 
-pip install thirstys-waterfall==1.0.0
+pip install thirstys-waterfall==1.0.1
 
 # Upgrade to latest version
 

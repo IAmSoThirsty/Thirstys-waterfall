@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="thirstys-waterfall",
-    version="1.0.0",
+    version="1.0.1",
     author="Thirsty Security Team",
     author_email="security@thirstys.local",
     description="Integrated privacy-first system with 8 firewalls, built-in VPN, and incognito browser",
@@ -27,14 +27,12 @@ setup(
         "Topic :: System :: Networking :: Firewalls",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
-        "cryptography>=41.0.0",
+        "cryptography>=46.0.7,<50.0.0",
     ],
     entry_points={
         "console_scripts": [
