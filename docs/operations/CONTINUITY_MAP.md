@@ -150,6 +150,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\browser\sandbox.py tests\test_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the browser-sandbox backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the browser-sandbox backend-gating change: 376 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the browser-sandbox backend-gating change.
+- Replaced VPN DNS/IPv6 leak-protection production substitutes with evidence-reporting DNS backend and leak-detector contracts.
+- `python -m pytest tests\test_vpn_dns_protection.py tests\test_vpn_manager.py -q` passed after the VPN-DNS backend-gating change: 11 tests passed.
+- `flake8 thirstys_waterfall\vpn\dns_protection.py tests\test_vpn_dns_protection.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the VPN-DNS backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the VPN-DNS backend-gating change: 383 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the VPN-DNS backend-gating change.
 
 ## Known Current Problems
 
@@ -164,6 +169,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Global kill switch no longer implies all traffic was blocked without a backend, but no real global traffic blocker backend is bundled or configured.
 - VPN kill switch no longer implies traffic block/restore without a backend, but no real VPN traffic blocker backend is bundled or configured.
 - Browser sandbox no longer reports policy enforcement or zero/within-limit resource usage without configured backends, but no real browser sandbox policy backend or resource monitor is bundled or configured.
+- VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
