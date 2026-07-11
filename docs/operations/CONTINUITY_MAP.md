@@ -140,6 +140,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\kill_switch.py tests\test_global_kill_switch.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the global-kill-switch backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the global-kill-switch backend-gating change: 366 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the global-kill-switch backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced VPN `KillSwitch` no-op production-substitute traffic blocking/restoring with evidence-reporting traffic-blocker-backend contracts.
+- `python -m pytest tests\test_vpn_kill_switch.py -q` passed after the VPN-kill-switch backend-gating change: 5 tests passed.
+- `flake8 thirstys_waterfall\vpn\kill_switch.py tests\test_vpn_kill_switch.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the VPN-kill-switch backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the VPN-kill-switch backend-gating change: 371 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the VPN-kill-switch backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -152,6 +157,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
 - Global kill switch no longer implies all traffic was blocked without a backend, but no real global traffic blocker backend is bundled or configured.
+- VPN kill switch no longer implies traffic block/restore without a backend, but no real VPN traffic blocker backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
