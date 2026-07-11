@@ -489,7 +489,7 @@ See `examples/config.json` for full configuration options.
 
 ## 🚀 Deployment Verification
 
-Thirstys Waterfall currently has **release and local deployment-smoke verification**, not final target-host Production Deployment Verified status. The verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, and local rollback smoke. Release `v1.0.1` also pushed a verified GHCR image that was pulled and smoke-tested locally.
+Thirstys Waterfall currently has **release and local deployment-smoke verification**, not final target-host Production Deployment Verified status. The verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, and local rollback smoke. Release `v1.0.2` also pushed a verified GHCR image that was pulled and smoke-tested locally.
 
 ```powershell
 python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
@@ -547,8 +547,8 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 - ✅ **Local wheel build verified**: Standard Python packaging with `pyproject.toml`
 - ✅ **Local Docker image build verified**: Container starts and passes health/auth smoke
-- ✅ **GitHub Release verified**: `v1.0.1` published with wheel and source artifacts
-- ✅ **GHCR image verified**: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1` published with digest `sha256:0e35d575f8d431795fccaf53c804000d6aeec29414512a5f9c2da404de80473f`
+- ✅ **GitHub Release verified**: `v1.0.2` published with wheel and source artifacts
+- ✅ **GHCR image verified**: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2` published with digest `sha256:4095d4d28f4d39aa9859783d2a9f170be919aba0435061f3d6ee9b3af95db059`
 - ⚠️ **Target-host deployment not yet accepted**: production host logs, secret rotation, target rollback, and host network policy evidence are still required
 - ⚠️ **Platform backend support not yet accepted**: real VPN/firewall execution evidence is still required beyond availability tests
 
