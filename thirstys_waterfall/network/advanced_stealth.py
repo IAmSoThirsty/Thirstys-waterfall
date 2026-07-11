@@ -1,6 +1,6 @@
 """
 Advanced Network Stealth Manager
-Production-grade network anonymization with pluggable transports,
+Evidence-gated network anonymization with pluggable transports,
 multi-layer obfuscation, and protocol mimicry.
 """
 
@@ -125,29 +125,55 @@ class PluggableTransport:
     Provides censorship circumvention through protocol obfuscation.
     """
 
-    def __init__(self, config: TransportConfig):
+    def __init__(self, config: TransportConfig, transport_backend: Optional[Any] = None):
         self.config = config
+        self.transport_backend = transport_backend
         self.logger = logging.getLogger(f"{__name__}.{config.transport_type.value}")
         self._active = False
         self._cipher_key = secrets.token_bytes(32)
+        self._connection_result: Optional[Dict[str, Any]] = None
 
     def connect(self) -> bool:
-        """Establish transport connection"""
+        """Establish transport connection through a configured backend."""
         try:
-            if self.config.transport_type == TransportType.OBFS4:
-                return self._connect_obfs4()
-            elif self.config.transport_type == TransportType.MEEK:
-                return self._connect_meek()
-            elif self.config.transport_type == TransportType.SNOWFLAKE:
-                return self._connect_snowflake()
-            elif self.config.transport_type == TransportType.HTTP3:
-                return self._connect_http3()
-            elif self.config.transport_type == TransportType.QUIC:
-                return self._connect_quic()
-            elif self.config.transport_type == TransportType.WEBSOCKET:
-                return self._connect_websocket()
-            else:
-                return self._connect_direct()
+            if self.transport_backend is None:
+                self._connection_result = {
+                    "status": "unavailable",
+                    "error": "Advanced stealth transport backend is not configured",
+                    "connected": False,
+                    "transport": self.config.transport_type.value,
+                }
+                self._active = False
+                self._update_success_rate(False)
+                return False
+
+            connect_transport = getattr(
+                self.transport_backend, "connect_transport", None
+            )
+            if not callable(connect_transport):
+                raise RuntimeError(
+                    "Advanced stealth transport backend does not implement "
+                    "connect_transport"
+                )
+
+            result = connect_transport(
+                transport_type=self.config.transport_type.value,
+                config=self.config,
+            )
+            if not isinstance(result, dict):
+                raise RuntimeError(
+                    "Advanced stealth transport backend returned invalid result"
+                )
+
+            result.setdefault("status", "unknown")
+            result.setdefault("connected", result["status"] == "connected")
+            result.setdefault("transport", self.config.transport_type.value)
+            result.setdefault("backend", type(self.transport_backend).__name__)
+
+            self._connection_result = result
+            self._active = bool(result["connected"])
+            self._update_success_rate(self._active)
+            return self._active
         except Exception as e:
             self.logger.error(f"Transport connection failed: {e}")
             self.config.failure_count += 1
@@ -165,7 +191,7 @@ class PluggableTransport:
         if not self.config.obfuscation_key:
             self.config.obfuscation_key = secrets.token_bytes(32)
 
-        # Simulate obfs4 handshake
+        # Build local obfs4 handshake material.
         self._perform_obfs4_handshake()
 
         self._active = True
@@ -309,6 +335,30 @@ class PluggableTransport:
         """Check if transport is active"""
         return self._active
 
+    def get_connection_status(self) -> Dict[str, Any]:
+        """Return latest transport connection evidence."""
+        if self._connection_result is None:
+            return {
+                "status": "not_attempted",
+                "connected": False,
+                "transport": self.config.transport_type.value,
+                "backend_configured": self.transport_backend is not None,
+                "backend": (
+                    type(self.transport_backend).__name__
+                    if self.transport_backend is not None
+                    else None
+                ),
+            }
+        return {
+            **self._connection_result,
+            "backend_configured": self.transport_backend is not None,
+            "backend": (
+                type(self.transport_backend).__name__
+                if self.transport_backend is not None
+                else None
+            ),
+        }
+
 
 class ObfuscationLayer:
     """
@@ -386,12 +436,10 @@ class ObfuscationLayer:
 
     def _fragment_data(self, data: bytes) -> bytes:
         """Fragment data into smaller chunks"""
-        # Store chunks with index for reassembly
         chunk_size = _RNG.randint(512, 1024)
         chunks = [data[i : i + chunk_size] for i in range(0, len(data), chunk_size)]
 
-        # In production, would return chunks separately
-        # For now, concat with markers
+        # Serialize indexed chunks into a deterministic envelope for reassembly.
         fragmented = b"".join(
             struct.pack("!H", i) + chunk for i, chunk in enumerate(chunks)
         )
@@ -521,6 +569,8 @@ class DomainFronting:
     def __init__(self, config: Dict[str, Any]):
         self.logger = logging.getLogger(__name__)
         self.enabled = config.get("domain_fronting_enabled", True)
+        self.fronting_backend = config.get("fronting_backend")
+        self._last_front_result: Optional[Dict[str, Any]] = None
 
         # Major CDN providers for fronting
         self.cdn_domains = {
@@ -543,9 +593,41 @@ class DomainFronting:
         if not self.enabled:
             return None
 
-        # Select CDN provider
-        provider = _RNG.choice(list(self.cdn_domains.keys()))
-        front_domain = _RNG.choice(self.cdn_domains[provider])
+        if self.fronting_backend is None:
+            self._last_front_result = {
+                "status": "unavailable",
+                "error": "Advanced stealth domain-fronting backend is not configured",
+                "fronted": False,
+                "target": target_domain,
+            }
+            return None
+
+        setup_front = getattr(self.fronting_backend, "setup_front", None)
+        if not callable(setup_front):
+            raise RuntimeError(
+                "Advanced stealth domain-fronting backend does not implement setup_front"
+            )
+
+        result = setup_front(target_domain=target_domain)
+        if not isinstance(result, dict):
+            raise RuntimeError(
+                "Advanced stealth domain-fronting backend returned invalid result"
+            )
+
+        result.setdefault("status", "unknown")
+        result.setdefault("fronted", result["status"] == "fronted")
+        result.setdefault("target", target_domain)
+        result.setdefault("backend", type(self.fronting_backend).__name__)
+        self._last_front_result = result
+        if not result["fronted"]:
+            return None
+
+        front_domain = result.get("front_domain")
+        provider = result.get("provider", "configured")
+        if not isinstance(front_domain, str) or not front_domain:
+            raise RuntimeError(
+                "Advanced stealth domain-fronting backend returned invalid front domain"
+            )
 
         self._active_fronts.append(
             {
@@ -580,10 +662,19 @@ class DomainFronting:
         """Get list of active domain fronts"""
         return self._active_fronts.copy()
 
+    def get_status(self) -> Dict[str, Any]:
+        """Return domain-fronting backend evidence."""
+        return {
+            "enabled": self.enabled,
+            "backend_configured": self.fronting_backend is not None,
+            "active_fronts": len(self._active_fronts),
+            "last_front_result": self._last_front_result,
+        }
+
 
 class AdvancedStealthManager:
     """
-    Production-grade network stealth manager integrating all anonymization features.
+    Evidence-gated network stealth manager integrating anonymization features.
 
     Features:
     - Pluggable transports (obfs4, meek, snowflake)
@@ -602,6 +693,9 @@ class AdvancedStealthManager:
 
         self.enabled = config.get("advanced_stealth_enabled", True)
         self.per_request_routing = config.get("per_request_routing", True)
+        self.transport_backend = config.get("transport_backend")
+        self.node_provider = config.get("node_provider")
+        self._start_result: Optional[Dict[str, Any]] = None
 
         # Initialize components
         self._init_transports()
@@ -639,7 +733,10 @@ class AdvancedStealthManager:
 
         for config in transport_configs:
             if config.enabled:
-                self.transports[config.transport_type] = PluggableTransport(config)
+                self.transports[config.transport_type] = PluggableTransport(
+                    config,
+                    transport_backend=self.transport_backend,
+                )
 
     def _init_obfuscation(self):
         """Initialize obfuscation layer"""
@@ -647,7 +744,12 @@ class AdvancedStealthManager:
 
     def _init_domain_fronting(self):
         """Initialize domain fronting"""
-        self.domain_fronting = DomainFronting(self.config.get("domain_fronting", {}))
+        domain_fronting_config = self.config.get("domain_fronting", {}).copy()
+        domain_fronting_config.setdefault(
+            "fronting_backend",
+            self.config.get("fronting_backend"),
+        )
+        self.domain_fronting = DomainFronting(domain_fronting_config)
 
     def _init_onion_circuits(self):
         """Initialize onion circuits for per-request routing"""
@@ -659,38 +761,44 @@ class AdvancedStealthManager:
 
     def _initialize_onion_nodes(self) -> List[Dict[str, Any]]:
         """Initialize pool of onion nodes"""
-        nodes = [
-            {
-                "id": f"entry-{i}",
-                "type": "entry",
-                "location": _RNG.choice(["US", "EU", "CA"]),
-                "bandwidth": _RNG.randint(10, 100),
-            }
-            for i in range(5)
-        ]
-        nodes.extend(
-            [
-                {
-                    "id": f"middle-{i}",
-                    "type": "middle",
-                    "location": _RNG.choice(["DE", "CH", "NL", "SE"]),
-                    "bandwidth": _RNG.randint(10, 100),
-                }
-                for i in range(10)
-            ]
-        )
-        nodes.extend(
-            [
-                {
-                    "id": f"exit-{i}",
-                    "type": "exit",
-                    "location": _RNG.choice(["IS", "NO", "CH", "NL"]),
-                    "bandwidth": _RNG.randint(10, 100),
-                }
-                for i in range(5)
-            ]
-        )
-        return nodes
+        configured_nodes = self.config.get("onion_nodes")
+        if configured_nodes is not None:
+            return self._validate_onion_nodes(configured_nodes)
+
+        if self.node_provider is None:
+            self.logger.warning("Advanced stealth onion node provider is not configured")
+            return []
+
+        get_onion_nodes = getattr(self.node_provider, "get_onion_nodes", None)
+        if not callable(get_onion_nodes):
+            raise RuntimeError(
+                "Advanced stealth node provider does not implement get_onion_nodes"
+            )
+
+        nodes = get_onion_nodes()
+        return self._validate_onion_nodes(nodes)
+
+    def _validate_onion_nodes(self, nodes: Any) -> List[Dict[str, Any]]:
+        """Validate externally supplied onion node evidence."""
+        if not isinstance(nodes, list):
+            raise RuntimeError("Advanced stealth node provider returned invalid nodes")
+
+        validated = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                raise RuntimeError(
+                    "Advanced stealth node provider returned invalid node"
+                )
+            if node.get("type") not in {"entry", "middle", "exit"}:
+                raise RuntimeError(
+                    "Advanced stealth node provider returned node with invalid type"
+                )
+            if "id" not in node or "bandwidth" not in node:
+                raise RuntimeError(
+                    "Advanced stealth node provider returned incomplete node"
+                )
+            validated.append(node)
+        return validated
 
     def integrate_vpn(self, vpn_manager):
         """Integrate with VPN manager"""
@@ -720,8 +828,23 @@ class AdvancedStealthManager:
             # Build circuit pool
             self._build_circuit_pool()
 
-            self._active = True
-            self.logger.info("Advanced Stealth Manager active")
+            active_transports = sum(1 for t in self.transports.values() if t.is_active())
+            active_circuits = sum(1 for c in self._circuits if c.is_active)
+            self._active = active_transports > 0 and (
+                not self.per_request_routing or active_circuits > 0
+            )
+            self._start_result = {
+                "status": "active" if self._active else "unavailable",
+                "active_transports": active_transports,
+                "active_circuits": active_circuits,
+                "transport_backend_configured": self.transport_backend is not None,
+                "node_provider_configured": self.node_provider is not None
+                or self.config.get("onion_nodes") is not None,
+            }
+            if self._active:
+                self.logger.info("Advanced Stealth Manager active")
+            else:
+                self.logger.error("Advanced Stealth Manager lacks backend evidence")
 
     def stop(self):
         """Stop advanced stealth manager"""
@@ -1008,10 +1131,15 @@ class AdvancedStealthManager:
             "active": self._active,
             "enabled": self.enabled,
             "per_request_routing": self.per_request_routing,
+            "backend_evidence": self._start_result,
+            "transport_backend_configured": self.transport_backend is not None,
+            "node_provider_configured": self.node_provider is not None
+            or self.config.get("onion_nodes") is not None,
             "circuits": {
                 "total": len(self._circuits),
                 "active": sum(1 for c in self._circuits if c.is_active),
                 "pool_size": self._circuit_pool_size,
+                "available_nodes": len(self._nodes),
             },
             "transports": {
                 tt.value: {
@@ -1019,6 +1147,7 @@ class AdvancedStealthManager:
                     "priority": t.config.priority,
                     "success_rate": t.config.success_rate,
                     "failures": t.config.failure_count,
+                    "connection": t.get_connection_status(),
                 }
                 for tt, t in self.transports.items()
             },
@@ -1032,6 +1161,7 @@ class AdvancedStealthManager:
             "domain_fronting": {
                 "enabled": self.domain_fronting.enabled,
                 "active_fronts": len(self.domain_fronting.get_active_fronts()),
+                "status": self.domain_fronting.get_status(),
             },
             "integration": {
                 "vpn": self._vpn_manager is not None,

@@ -155,6 +155,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\vpn\dns_protection.py tests\test_vpn_dns_protection.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the VPN-DNS backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the VPN-DNS backend-gating change: 383 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the VPN-DNS backend-gating change.
+- Replaced advanced-stealth synthetic transport, onion-node, and domain-fronting paths with evidence-reporting backend/provider contracts.
+- `python -m pytest tests\test_advanced_stealth.py -q` passed after the advanced-stealth backend-gating change: 4 tests passed.
+- `flake8 thirstys_waterfall\network\advanced_stealth.py tests\test_advanced_stealth.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the advanced-stealth backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the advanced-stealth backend-gating change: 387 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the advanced-stealth backend-gating change.
 
 ## Known Current Problems
 
@@ -170,6 +175,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - VPN kill switch no longer implies traffic block/restore without a backend, but no real VPN traffic blocker backend is bundled or configured.
 - Browser sandbox no longer reports policy enforcement or zero/within-limit resource usage without configured backends, but no real browser sandbox policy backend or resource monitor is bundled or configured.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
+- Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
