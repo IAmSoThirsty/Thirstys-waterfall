@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-07-11
+
+### Changed
+
+- Added Standard v3 deployment verification gates, release-image smoke testing, and operations evidence docs.
+- Removed legacy Thirsty-Lang fallback behavior in favor of the enhanced sovereign binding path.
+- Tightened production web authentication/configuration startup checks and deployment metadata.
+- Removed the tracked production environment placeholder file from the release surface.
+
 ## [1.0.0] - 2026-02-12
 
 ### Added - Production Deployment Features

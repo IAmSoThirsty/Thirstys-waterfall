@@ -950,7 +950,7 @@ def health_check():
             {
                 "status": "healthy",
                 "timestamp": datetime.utcnow().isoformat(),
-                "version": "1.0.0",
+                "version": "1.0.1",
                 "sovereign_binding": get_sovereign_binding_status().as_dict(),
             }
         ),
