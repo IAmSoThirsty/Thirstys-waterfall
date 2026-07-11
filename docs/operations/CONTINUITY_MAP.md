@@ -135,6 +135,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\remote_access\secure_tunnel.py tests\test_secure_tunnel.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the secure-tunnel backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the secure-tunnel backend-gating change: 362 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the secure-tunnel backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced `GlobalKillSwitch` no-op production-substitute traffic blocking with an evidence-reporting traffic-blocker-backend contract.
+- `python -m pytest tests\test_global_kill_switch.py -q` passed after the global-kill-switch backend-gating change: 4 tests passed.
+- `flake8 thirstys_waterfall\kill_switch.py tests\test_global_kill_switch.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the global-kill-switch backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the global-kill-switch backend-gating change: 366 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the global-kill-switch backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -146,6 +151,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Release workflow run `29138685612` passed for `v1.0.2` and commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
+- Global kill switch no longer implies all traffic was blocked without a backend, but no real global traffic blocker backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
