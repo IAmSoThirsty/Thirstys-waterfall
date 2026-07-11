@@ -185,13 +185,20 @@ class TestIKEv2Backend(unittest.TestCase):
         self.assertEqual(self.backend.connection_name, "TestVPN")
         self.assertFalse(self.backend.connected)
 
-    def test_check_availability(self):
-        """Test IKEv2 availability - should be available on major platforms"""
+    @patch("thirstys_waterfall.vpn.backends.shutil.which")
+    def test_check_availability_requires_platform_command(self, mock_which):
+        """Test IKEv2 availability requires an OS command path."""
+        self.backend.platform = "Windows"
+        mock_which.return_value = None
+
         result = self.backend.check_availability()
 
-        # IKEv2 should be available on Linux, Windows, Darwin
-        expected = self.backend.platform in ["Linux", "Windows", "Darwin"]
-        self.assertEqual(result, expected)
+        self.assertFalse(result)
+
+        mock_which.return_value = "C:\\Windows\\System32\\rasdial.exe"
+        result = self.backend.check_availability()
+
+        self.assertTrue(result)
 
     @patch("subprocess.run")
     def test_connect_linux(self, mock_run):

@@ -74,7 +74,7 @@ const appState = new ApplicationState();
 // ============================================================================
 
 class APIClient {
-    constructor(baseURL = 'http://localhost:8080') {
+    constructor(baseURL = window.location.origin) {
         this.baseURL = baseURL;
         this.socket = null;
     }
@@ -316,20 +316,18 @@ class TabManager {
             this.viewport.innerHTML = document.getElementById('start-page').outerHTML;
             document.getElementById('start-page').classList.remove('hidden');
         } else {
-            // In a real implementation, this would render an iframe or custom engine
-            // For demo purposes, show a placeholder
             this.viewport.innerHTML = `
                 <div class="page-content" style="padding: 2rem;">
                     <div style="background: var(--color-glass); backdrop-filter: blur(20px); 
                                 border: 1px solid var(--color-glass-border); border-radius: 1rem; 
                                 padding: 2rem; text-align: center;">
-                        <i class="fas fa-lock" style="font-size: 3rem; color: var(--color-success); margin-bottom: 1rem;"></i>
-                        <h2 style="margin-bottom: 1rem;">Encrypted Connection</h2>
+                        <i class="fas fa-code" style="font-size: 3rem; color: var(--color-warning); margin-bottom: 1rem;"></i>
+                        <h2 style="margin-bottom: 1rem;">Native Renderer Pending</h2>
                         <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">
                             URL: <strong>${this.escapeHtml(tab.url)}</strong>
                         </p>
                         <p style="color: var(--color-text-tertiary); font-size: 0.875rem;">
-                            All traffic encrypted with 7-layer protection • VPN Active • Trackers Blocked
+                            This tab records navigation state. Full page rendering remains gated by Standard v3 acceptance.
                         </p>
                     </div>
                 </div>
@@ -351,9 +349,6 @@ class TabManager {
         this.updateActiveTab(activeTab);
         this.renderTabContent(activeTab);
 
-        // Update stats
-        appState.systemStatus.stats.trackersBlocked += Math.floor(Math.random() * 5);
-        appState.systemStatus.stats.adsBlocked += Math.floor(Math.random() * 10);
         updateStatsDisplay();
     }
 
@@ -545,14 +540,6 @@ function updateStatsDisplay() {
     }
 }
 
-// Simulate stats increase
-setInterval(() => {
-    if (appState.systemStatus.running) {
-        appState.systemStatus.stats.dataEncrypted += Math.random() * 1024 * 100; // Random bytes
-        updateStatsDisplay();
-    }
-}, 5000);
-
 // ============================================================================
 // EVENT HANDLERS
 // ============================================================================
@@ -652,14 +639,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize
     try {
-        // Login with demo credentials
-        await api.login('admin', 'admin');
-
-        // Initialize WebSocket
-        api.initWebSocket();
+        if (!appState.authToken) {
+            showNotification('Authentication required', 'info');
+            tabManager.createTab();
+            return;
+        }
 
         // Create initial tab
         tabManager.createTab();
+
+        // Initialize WebSocket
+        api.initWebSocket();
 
         // Load system status
         const status = await api.getSystemStatus();
@@ -673,7 +663,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showNotification('Thirsty\'s Waterfall Ready', 'success');
     } catch (error) {
         console.error('Initialization failed:', error);
-        showNotification('Running in demo mode', 'info');
+        showNotification('Backend unavailable or authentication required', 'info');
         tabManager.createTab();
     }
 });

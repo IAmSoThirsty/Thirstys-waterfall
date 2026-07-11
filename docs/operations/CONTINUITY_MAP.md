@@ -99,12 +99,13 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
 - Release workflow run `29138685612` passed for `v1.0.2` and commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
-- The web UI still contains demo-mode notification text and placeholder UI behavior in static assets.
+- The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points
 
-1. Replace or downgrade simulated implementation paths until the README claim matrix is green.
+1. Replace or downgrade remaining simulated implementation paths until the README claim matrix is green.
 2. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
 3. Prove real OS VPN/firewall backend execution on supported platforms or narrow the README claims.
-4. Revisit README production language only after evidence supports it, or change the language to match implemented reality.
+4. Clean broad marketing/showcase docs so they cannot be mistaken for accepted Standard v3 evidence.
+5. Revisit README production language only after evidence supports it, or change the language to match implemented reality.
