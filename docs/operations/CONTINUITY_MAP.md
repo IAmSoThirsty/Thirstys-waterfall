@@ -96,7 +96,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - README and public deployment/showcase docs now point to Standard v3 evidence instead of claiming final production readiness, but some product capability claims still remain target-state until the matrix is green.
 - Several implementation paths still state they are simulated, simplified, placeholders, or production substitutes.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
-- Full-repo Bandit is clean locally and in hosted CI, but CodeQL/GitHub-hosted code scanning evidence has not been collected in this pass.
+- Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138022895` passed on main for commit `b380b2b14a7bcf0bc6682e598ca687493f73951f`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
 - Release workflow run `29137207054` passed for `v1.0.1` and commit `7b459a7ab0fa0873152a614ab2f751a8a037bedf`.
 - The web UI still contains demo-mode notification text and placeholder UI behavior in static assets.
@@ -105,7 +105,6 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 ## Safe Continuation Points
 
 1. Replace or downgrade simulated implementation paths until the README claim matrix is green.
-2. Add CodeQL or equivalent hosted code scanning evidence.
-3. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
-4. Prove real OS VPN/firewall backend execution on supported platforms or narrow the README claims.
-5. Revisit README production language only after evidence supports it, or change the language to match implemented reality.
+2. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
+3. Prove real OS VPN/firewall backend execution on supported platforms or narrow the README claims.
+4. Revisit README production language only after evidence supports it, or change the language to match implemented reality.

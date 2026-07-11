@@ -2,7 +2,7 @@
 
 Standard: Thirsty's Standard v3
 
-Status: local verification, hosted CI, release workflow, GHCR publishing, and published-image local smoke are verified. Full target-host production deployment verification still requires target host, target rollback, secret rotation, host network policy, CodeQL, and operations log evidence.
+Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, and published-image local smoke are verified. Full target-host production deployment verification still requires target host, target rollback, secret rotation, host network policy, and operations log evidence.
 
 ## Local Verification Gate
 
@@ -52,6 +52,8 @@ This mode is used by the release workflow so the Docker smoke covers the actual 
 ## Release Evidence
 
 - Release workflow run: `29137207054`
+- Main CodeQL run: `29138022895`
+- Main CI run: `29138022899`
 - Commit: `7b459a7ab0fa0873152a614ab2f751a8a037bedf`
 - GitHub release: `v1.0.1`
 - Wheel asset: `thirstys_waterfall-1.0.1-py3-none-any.whl`, digest `sha256:5edf2d5f5c7e956f43b26f1893f6f635b86d6023c91c7f84620b0e3238d077d7`
@@ -173,7 +175,7 @@ Rotation checklist:
 ## Evidence Still Required For Full Production Deployment Verified
 
 - GitHub Actions run for the exact commit being deployed. Current release evidence: run `29137207054` for commit `7b459a7ab0fa0873152a614ab2f751a8a037bedf`.
-- CodeQL/security workflow evidence for the exact commit being deployed.
+- CodeQL/security workflow evidence for the exact commit being deployed. Current main evidence: CodeQL run `29138022895` passed for commit `b380b2b14a7bcf0bc6682e598ca687493f73951f`; release commit evidence is from the pre-CodeQL release run and should be refreshed on the next release.
 - Published image digest from the target registry. Current release evidence: `sha256:0e35d575f8d431795fccaf53c804000d6aeec29414512a5f9c2da404de80473f`.
 - Pull-and-run evidence using the published image, not only a local image. Current local published-image evidence exists; target-host pull/run evidence is still missing.
 - Rollback execution evidence on the target host or orchestrator, not only local Docker rollback smoke.
