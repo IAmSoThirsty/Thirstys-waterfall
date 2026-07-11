@@ -1,8 +1,7 @@
 """
 Thirstys Waterfall Orchestrator
 Main integration layer coordinating all subsystems
-GOD TIER ENCRYPTION - 7 layers, military-grade, quantum-resistant
-EVERYTHING ENCRYPTED - Every search, every site, every communication
+Runtime status remains gated by the Standard v3 acceptance matrix.
 """
 
 import logging
@@ -33,24 +32,6 @@ class ThirstysWaterfall:
     """
     Main orchestrator for Thirstys Waterfall privacy-first system.
 
-    GOD TIER ENCRYPTION:
-    - 7 layers of encryption per data block
-    - AES-256-GCM (military-grade)
-    - RSA-4096 (quantum-resistant)
-    - ChaCha20-Poly1305
-    - ECC-521 (highest elliptic curve)
-    - Perfect Forward Secrecy
-    - Quantum-resistant key derivation
-    - Zero-knowledge architecture
-
-    EVERYTHING ENCRYPTED:
-    - Every search query encrypted with 7 layers
-    - Every visited site encrypted with 7 layers
-    - Every network request encrypted with 7 layers
-    - All storage encrypted with 7 layers
-    - All logs encrypted with 7 layers
-    - All VPN traffic encrypted with 7 layers
-
     Integrates:
     - 8 firewall types (Packet-Filtering, Circuit Level, Stateful Inspection,
       Proxy, Next Generation, Software, Hardware, Cloud)
@@ -69,11 +50,10 @@ class ThirstysWaterfall:
         self.logger = logging.getLogger(__name__)
         self.logger.info("=" * 70)
         self.logger.info("Initializing Thirstys Waterfall")
-        self.logger.info("ENCRYPTION MODE: GOD TIER")
-        self.logger.info("7 LAYERS - MILITARY-GRADE - QUANTUM-RESISTANT")
+        self.logger.info("Standard v3 status: in progress")
         self.logger.info("=" * 70)
 
-        # GOD TIER ENCRYPTION - The most powerful encryption available
+        # Encryption helpers are available, but acceptance is evidence-gated.
         self.god_tier_encryption = GodTierEncryption()
         self.quantum_encryption = QuantumResistantEncryption()
 
@@ -86,17 +66,17 @@ class ThirstysWaterfall:
             f"Perfect Forward Secrecy: {strength['perfect_forward_secrecy']}"
         )
 
-        # MASTER ENCRYPTION KEY for entire system (using god tier encryption)
+        # Master encryption key for local helper components.
         self._master_cipher = Fernet(Fernet.generate_key())
 
-        # Initialize encrypted logger (with god tier encryption)
+        # Initialize encrypted logger.
         self.encrypted_logger = EncryptedLogger(self._master_cipher)
         self.encrypted_logger.start()
 
-        # Initialize encrypted network handler (with god tier encryption)
+        # Initialize encrypted network handler.
         self.encrypted_network = EncryptedNetworkHandler(self._master_cipher)
 
-        # Initialize configuration registry (encrypted with god tier)
+        # Initialize configuration registry.
         self.config = ConfigRegistry()
         self.config.initialize(config_path, encryption_key=Fernet.generate_key())
 
@@ -156,7 +136,7 @@ class ThirstysWaterfall:
         """Start all subsystems"""
         self.logger.info("=" * 70)
         self.logger.info("STARTING THIRSTYS WATERFALL")
-        self.logger.info("GOD TIER ENCRYPTION - 7 LAYERS ACTIVE")
+        self.logger.info("Runtime claims remain Standard v3 evidence-gated")
         self.logger.info("=" * 70)
 
         try:
@@ -170,8 +150,8 @@ class ThirstysWaterfall:
             self.logger.info("Starting firewalls...")
             self.firewall.start()
 
-            # Start BUILT-IN VPN (all traffic encrypted with god tier)
-            self.logger.info("Starting BUILT-IN VPN with GOD TIER encryption...")
+            # Start VPN backend orchestration.
+            self.logger.info("Starting VPN backend orchestration...")
             self.vpn.start()
 
             # Start privacy engines
@@ -183,34 +163,22 @@ class ThirstysWaterfall:
             self.privacy_auditor.start()
             self.onion_router.start()
 
-            # Start encrypted storage
-            self.logger.info("Starting GOD TIER encrypted storage...")
+            # Start encrypted storage helpers.
+            self.logger.info("Starting encrypted storage helpers...")
             self.privacy_vault.start()
             self.ephemeral_storage.start()
 
             # Start browser last (requires VPN)
-            self.logger.info("Starting incognito browser with GOD TIER encryption...")
+            self.logger.info("Starting incognito browser...")
             self.browser.start()
 
             self._active = True
 
             self.logger.info("=" * 70)
-            self.logger.info("THIRSTYS WATERFALL FULLY OPERATIONAL")
+            self.logger.info("THIRSTYS WATERFALL RUNTIME STARTED")
             self.logger.info("=" * 70)
-            self.logger.info("✓ Privacy Mode: MAXIMUM")
-            self.logger.info("✓ Encryption: GOD TIER (7 Layers)")
-            self.logger.info("✓ Algorithms: AES-256-GCM, RSA-4096, ChaCha20, ECC-521")
-            self.logger.info("✓ Quantum Resistant: YES")
-            self.logger.info("✓ Perfect Forward Secrecy: YES")
-            self.logger.info("✓ Kill Switch: ENABLED")
-            self.logger.info("✓ Pop-ups: BLOCKED")
-            self.logger.info("✓ Redirects: BLOCKED")
-            self.logger.info("✓ VPN: BUILT-IN & ACTIVE")
-            self.logger.info("✓ All Searches: ENCRYPTED (7 layers)")
-            self.logger.info("✓ All Sites: ENCRYPTED (7 layers)")
-            self.logger.info("✓ All Traffic: ENCRYPTED (7 layers)")
-            self.logger.info("✓ All Storage: ENCRYPTED (7 layers)")
-            self.logger.info("✓ All Logs: ENCRYPTED (7 layers)")
+            self.logger.info("Standard v3 acceptance: in progress")
+            self.logger.info("See docs/operations/README_CLAIM_ACCEPTANCE.md")
             self.logger.info("=" * 70)
 
         except Exception as e:
@@ -267,18 +235,28 @@ class ThirstysWaterfall:
 
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
+        vpn_status = self.vpn.get_status()
+        vault_active = self.privacy_vault.is_active()
+        ephemeral_stats = self.ephemeral_storage.get_statistics()
+        encryption_strength = self.god_tier_encryption.get_encryption_strength()
+        traffic_encrypted = bool(vpn_status.get("traffic_encrypted"))
+
         return {
             "active": self._active,
-            "encryption_tier": "GOD TIER",
-            "encryption_layers": 7,
-            "everything_encrypted": True,
-            "built_in_vpn": True,
+            "standard_v3_status": "in_progress",
+            "deployment_accepted": False,
+            "encryption_tier": "not_accepted",
+            "encryption_layers": None,
+            "everything_encrypted": False,
+            "everything_encrypted_accepted": False,
+            "built_in_vpn": bool(vpn_status.get("connected")),
+            "built_in_vpn_accepted": False,
             "kill_switch": {
                 "enabled": self.kill_switch.is_active(),
                 "triggered": self.kill_switch.is_triggered(),
             },
             "firewall": self.firewall.get_statistics(),
-            "vpn": self.vpn.get_status(),
+            "vpn": vpn_status,
             "browser": self.browser.get_status(),
             "privacy": {
                 "anti_fingerprint": self.anti_fingerprint.get_protection_status(),
@@ -287,19 +265,21 @@ class ThirstysWaterfall:
                 "anti_malware": self.anti_malware.get_statistics(),
             },
             "storage": {
-                "vault_active": self.privacy_vault.is_active(),
-                "ephemeral_stats": self.ephemeral_storage.get_statistics(),
-                "all_encrypted": True,
-                "encryption_tier": "GOD TIER",
+                "vault_active": vault_active,
+                "ephemeral_stats": ephemeral_stats,
+                "all_encrypted": False,
+                "all_encrypted_accepted": False,
+                "encryption_tier": "not_accepted",
             },
             "encryption": {
-                "tier": "GOD TIER",
-                "layers": 7,
-                "searches_encrypted": True,
-                "sites_encrypted": True,
-                "traffic_encrypted": True,
-                "storage_encrypted": True,
-                "logs_encrypted": True,
+                "tier": "not_accepted",
+                "layers": None,
+                "accepted": False,
+                "searches_encrypted": False,
+                "sites_encrypted": False,
+                "traffic_encrypted": traffic_encrypted,
+                "storage_encrypted": vault_active,
+                "logs_encrypted": self.encrypted_logger.is_active(),
                 "config_encrypted": True,
                 "algorithms": [
                     "AES-256-GCM",
@@ -308,9 +288,10 @@ class ThirstysWaterfall:
                     "ECC-521",
                     "Fernet",
                 ],
-                "quantum_resistant": True,
-                "perfect_forward_secrecy": True,
-                "zero_knowledge": True,
+                "helper_strength": encryption_strength,
+                "quantum_resistant": False,
+                "perfect_forward_secrecy": False,
+                "zero_knowledge": False,
             },
         }
 

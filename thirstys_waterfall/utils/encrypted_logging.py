@@ -59,6 +59,10 @@ class EncryptedLogger:
         """Get encrypted logs"""
         return self._encrypted_logs.copy()
 
+    def is_active(self) -> bool:
+        """Check whether encrypted logging is active."""
+        return self._active
+
     def decrypt_log(self, encrypted_log: bytes) -> str:
         """Decrypt single log entry for viewing"""
         try:
