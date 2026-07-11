@@ -240,6 +240,13 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\security\microvm_isolation.py tests\test_microvm_isolation.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the microVM evidence-contract change: 0 findings.
 - `python -m pytest -q` passed after the microVM evidence-contract change: 454 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the microVM evidence-contract change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
+- Replaced hardware-root TPM, Secure Enclave, and HSM accepted-looking substitute initialization with backend-evidence requirements; default local operation now reports explicit `software_fallback`.
+- Added operation evidence for hardware-root key storage, retrieval, deletion, attestation, sealing, and unsealing paths, separating hardware-backed backend results from software-emulated fallback results.
+- Tightened TPM software seal/unseal behavior so the fallback records and rechecks the local PCR policy before returning sealed data.
+- `python -m pytest tests\test_hardware_root_of_trust.py -q` passed after the hardware-root evidence-contract change: 27 tests passed.
+- `flake8 thirstys_waterfall\security\hardware_root_of_trust.py tests\test_hardware_root_of_trust.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the hardware-root evidence-contract change: 0 findings.
+- `python -m pytest -q` passed after the hardware-root evidence-contract change: 459 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the hardware-root evidence-contract change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
 
 ## Known Current Problems
 
@@ -261,6 +268,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Mesh networking now calculates local routes and bottlenecks from known topology, but actual mesh interface creation and peer discovery still require a configured mesh backend.
 - MFA FIDO2 verification is limited to DER-encoded RSA/ECDSA public keys in the built-in verifier; full WebAuthn COSE attestation/verification, native biometric matching, and image QR generation still require configured or future backends.
 - MicroVM isolation now fails closed when boot assets are missing and no longer reports non-isolated networking, pause/resume control, or health metrics beyond process liveness without a configured platform backend.
+- Hardware root-of-trust now reports `software_fallback` unless a configured TPM, Secure Enclave, or HSM backend provides concrete hardware evidence; no real TPM, Secure Enclave, HSM, PKCS#11, or CloudHSM backend is bundled or configured.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
