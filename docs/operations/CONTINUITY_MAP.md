@@ -130,6 +130,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\browser\browser_engine.py tests\test_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the browser-download backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the browser-download backend-gating change: 357 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the browser-download backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced `SecureTunnel` unconditional tunnel-establishment success with a fail-closed VPN-plus-tunnel-backend contract.
+- `python -m pytest tests\test_secure_tunnel.py -q` passed after the secure-tunnel backend-gating change: 5 tests passed.
+- `flake8 thirstys_waterfall\remote_access\secure_tunnel.py tests\test_secure_tunnel.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the secure-tunnel backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the secure-tunnel backend-gating change: 362 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the secure-tunnel backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -148,6 +153,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
 - Remote browser no longer fabricates remote server/session command success without a backend, but no real remote-browser transport backend is bundled or configured.
 - Remote desktop no longer fabricates connection success without a backend, but no real remote-desktop backend is bundled or configured.
+- Secure tunnel no longer fabricates tunnel establishment without connected VPN evidence and a backend, but no real secure-tunnel backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
 - Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
