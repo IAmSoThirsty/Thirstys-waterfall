@@ -91,10 +91,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Added `--skip-docker-build` to the Standard v3 verifier so release CI can smoke-test the loaded release image tag instead of rebuilding a separate image.
 - Hardened `.github/workflows/release.yml`: Docker Buildx now loads the built release image into the runner before smoke testing, the verifier tests `thirstys-waterfall:${{ steps.version.outputs.version }}` with `--skip-docker-build`, the verified image is pushed to GHCR with version and `latest` tags, and PyPI publish no longer uses `continue-on-error`.
 - Rewrote `docs/SHOWCASE.md` and `docs/COMPETITION_COMPARISON.md` as evidence-gated Standard v3 documents instead of broad marketing superiority claims.
+- Rewrote high-risk README feature, architecture, platform, security, and comparison language so accepted-looking claims point back to the Standard v3 matrix.
 
 ## Known Current Problems
 
-- README and public deployment/showcase/comparison docs now point to Standard v3 evidence instead of claiming final production readiness, but some product capability claims still remain target-state until the matrix is green.
+- README and public deployment/showcase/comparison docs now point to Standard v3 evidence instead of claiming final production readiness; remaining target-state capability language is explicitly gated by the matrix.
 - Several implementation paths still state they are simulated, simplified, placeholders, or production substitutes.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
 - Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
@@ -108,4 +109,4 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 1. Replace or downgrade remaining simulated implementation paths until the README claim matrix is green.
 2. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
 3. Prove real OS VPN/firewall backend execution on supported platforms or narrow the README claims.
-4. Revisit README production language only after evidence supports it, or change the language to match implemented reality.
+4. Continue replacing simulated implementation paths or narrow related claims as each path is inspected.

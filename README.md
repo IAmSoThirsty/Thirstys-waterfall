@@ -1,6 +1,6 @@
 <div align="right">
   <img src="https://img.shields.io/badge/Date-2026--03--10-blue?style=for-the-badge" alt="Date" />
-  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status" />
+  <img src="https://img.shields.io/badge/Status-Standard%20v3%20In%20Progress-yellow?style=for-the-badge" alt="Status" />
   <img src="https://img.shields.io/badge/Tier-Master-gold?style=for-the-badge" alt="Tier" />
 </div>
 
@@ -8,93 +8,38 @@
 
 **Thirstys Waterfall** - Deployment-Gated Integrated Privacy-First System
 
-## 🔒 EVERYTHING ENCRYPTED
+## Standard v3 Evidence-Gated Privacy System
 
 A comprehensive privacy-first system that is being completed toward 8 firewall types, a **built-in VPN**, and an incognito browser with encrypted privacy controls. This repository now has local deployment-smoke evidence, but broad deployment and all-platform claims remain gated by the Standard v3 acceptance matrix.
 
 > **Standard v3 acceptance status:** This repository is under active completion toward the claims in this README. The current acceptance plan, verified evidence, and blockers are tracked in [docs/operations/README_CLAIM_ACCEPTANCE.md](docs/operations/README_CLAIM_ACCEPTANCE.md). Final deployment claims are not accepted as complete until that matrix is green.
 
-### ✨ Key Features
+### Capability Targets and Current Evidence
 
-#### 🔐 **EVERYTHING ENCRYPTED**
+| Area | Standard v3 status | Evidence now present | Remaining acceptance work |
+| --- | --- | --- | --- |
+| Encryption and private data handling | Not accepted | Crypto helpers, encrypted storage helpers, and privacy-ledger components exist | End-to-end proof for browser state, logs, downloads, configuration, storage, and transport paths |
+| 8 firewall categories | Partial | Firewall modules and backend tests exist; web status now fails closed when backend status is unavailable | Real rule apply/rollback evidence per supported OS or narrowed platform claims |
+| Built-in VPN direction | Partial | Backend modules and tests exist; command paths are resolved before availability is reported; web connect/disconnect no longer fabricate success | Real OS connection/disconnection evidence, privilege requirements, and rollback behavior |
+| Native browser engine | Partial | Native document/parser/fetcher layer and compatibility tests exist | Layout, rendering, navigation, and session acceptance tests |
+| Privacy/security engines | Partial | Modules and focused tests exist for multiple privacy/security subsystems | Replace or reclassify simulated/simplified paths and add end-to-end evidence |
+| Kill switch | Partial | Kill-switch modules and orchestration paths exist | Prove real network blocking and rollback behavior on supported platforms |
 
-- ✅ Every search query encrypted before processing
-- ✅ Every site visited encrypted in storage
-- ✅ All network traffic encrypted end-to-end
-- ✅ All storage encrypted at rest
-- ✅ All logs encrypted
-- ✅ All configurations encrypted
-- ✅ All VPN traffic encrypted with multiple layers
+## New and Advanced Feature Areas
 
-#### 🛡️ **8 Integrated Firewall Types**
-
-1. **Packet-Filtering Firewall** - IP/port-based filtering
-1. **Circuit-Level Gateway** - TCP handshake monitoring
-1. **Stateful Inspection Firewall** - Connection state tracking
-1. **Proxy Firewall** - Application-layer intermediary
-1. **Next-Generation Firewall** - AI-based threat detection
-1. **Software Firewall** - User-space protection
-1. **Hardware Firewall** - Hardware-level filtering
-1. **Cloud Firewall** - Distributed cloud protection
-
-#### 🌐 **Built-In VPN**
-
-- ✅ Completely native Python implementation - NO external services!
-- ✅ Multi-hop routing (up to 5+ hops)
-- ✅ Built-in kill switch (100% coverage)
-- ✅ DNS leak protection
-- ✅ IPv6 leak protection
-- ✅ All traffic encrypted end-to-end
-- ✅ Never-logs policy
-- ✅ Stealth mode
-- ✅ Protocol fallback (WireGuard, OpenVPN, IKEv2)
-
-#### 🌍 **Privacy-First Incognito Browser**
-
-- ✅ No history (ever)
-- ✅ No cache (ever)
-- ✅ No cookies (ever)
-- ✅ **No pop-ups (blocked)**
-- ✅ **No redirects (blocked)**
-- ✅ Tab isolation (sandboxed)
-- ✅ Anti-fingerprinting
-- ✅ Anti-tracking
-- ✅ **All searches encrypted**
-- ✅ **All visited sites encrypted**
-- ✅ Keyboard/mouse cloaking
-- ✅ Zero telemetry
-
-#### 🔐 **Privacy & Security Engines**
-
-- Anti-Fingerprinting Engine
-- Anti-Tracker Engine (blocks all known trackers)
-- Anti-Phishing Engine
-- Anti-Malware Engine (real-time scanning)
-- Privacy Auditor (leak detection)
-- Onion Routing
-- DNS-over-HTTPS
-- Encrypted Privacy Vault
-- Ephemeral Storage (auto-wipe)
-
-#### ⚡ **Global Kill Switch**
-
-- Coordinates browser, VPN, and firewall layers
-- Instant traffic blocking if any component fails
-- Prevents all leaks
-
-## 🚀 NEW & ADVANCED FEATURES
+The sections below identify implemented modules, demos, and intended capability areas. They are not final Standard v3 acceptance claims unless the acceptance matrix marks the related row accepted.
 
 ### 🎯 Thirsty Consigliere - Privacy-First AI Assistant
 
-**The Code of Omertà**: Privacy as a first-class contract, not a vibe.
+Privacy-assistant direction: privacy as a first-class contract, not a vibe.
 
 #### Core Principles:
 
 - **Data Minimization**: Collect only what is strictly needed
-- **No Training on User Data**: Never use your data for model training
+- **No Training on User Data**: target behavior for local/private inference paths
 - **On-Device Inference**: No external API calls by default
 - **Zero "Accept All"**: Everything locked down by default
-- **Full Transparency**: Complete data flow visibility
+- **Transparency**: data-flow visibility remains acceptance work
 
 #### Features:
 
@@ -103,13 +48,13 @@ A comprehensive privacy-first system that is being completed toward 8 firewall t
 - ✅ Privacy audit checklist
 - ✅ Fine-grained permission toggles
 - ✅ Ephemeral context windows (memory only)
-- ✅ 7-layer God tier encryption
+- ✅ Privacy-preserving local-assistant direction
 
 [Learn more →](docs/NEW_FEATURES.md#thirsty-consigliere)
 
 ### 🔐 Multi-Factor Authentication (MFA)
 
-Production-grade MFA with multiple authentication methods and risk-based escalation.
+MFA module with multiple authentication methods and risk-based escalation paths.
 
 #### Authentication Methods:
 
@@ -131,7 +76,7 @@ Production-grade MFA with multiple authentication methods and risk-based escalat
 
 ### 🖥️ MicroVM Isolation
 
-Hardware-level process isolation for browser tabs, extensions, and sessions using Firecracker and QEMU.
+MicroVM isolation module intended to isolate browser tabs, extensions, and sessions using Firecracker, QEMU, or compatible backends where available.
 
 #### Capabilities:
 
@@ -150,9 +95,9 @@ Hardware-level process isolation for browser tabs, extensions, and sessions usin
 
 [Learn more →](docs/microvm_isolation.md)
 
-### ⚔️ DOS Trap Mode - System Compromise Detection
+### DOS Trap Mode - System Compromise Detection
 
-Advanced compromise detection and automated response capabilities.
+Compromise-detection and automated-response module. Some low-level response paths still require real platform evidence.
 
 #### Detection:
 
@@ -173,11 +118,11 @@ Advanced compromise detection and automated response capabilities.
 
 ### 📋 Privacy Accountability Ledger
 
-Encrypted, immutable audit logging with zero-knowledge encryption.
+Encrypted audit logging with integrity checks and zero-knowledge direction.
 
 #### Security:
 
-- **Zero-Knowledge Encryption** - Dual-layer (Fernet + AES-256-GCM)
+- **Zero-Knowledge Direction** - Dual-layer encryption helpers (Fernet + AES-256-GCM)
 - **Tamper Detection** - SHA-512 cryptographic hashing
 - **Merkle Tree Verification** - O(log n) integrity proofs
 - **Atomic Writes** - ACID guarantees with WAL
@@ -193,9 +138,9 @@ Encrypted, immutable audit logging with zero-knowledge encryption.
 
 [Learn more →](docs/privacy_ledger.md)
 
-### 🌐 Advanced Network Stealth
+### Advanced Network Stealth
 
-Production-grade network anonymization and censorship circumvention.
+Network anonymization and censorship-circumvention module.
 
 #### Pluggable Transports:
 
@@ -217,13 +162,13 @@ Production-grade network anonymization and censorship circumvention.
 - Per-request onion routing
 - Dynamic circuit selection
 - Comprehensive metrics and monitoring
-- 10+ layers of protection
+- Multiple transport and obfuscation strategies
 
 [Learn more →](docs/network_stealth.md)
 
-### 📥 Media Downloader
+### Media Downloader
 
-Multi-mode media downloader with God tier security.
+Multi-mode media downloader with encrypted-library direction.
 
 #### Features:
 
@@ -231,41 +176,41 @@ Multi-mode media downloader with God tier security.
 - Built-in encrypted media library
 - Format conversion
 - Metadata encryption (7 layers)
-- God tier encryption on all downloads
+- Download encryption support remains part of Standard v3 data-path acceptance work
 
-### 🤖 God Tier AI Assistant
+### Local AI Assistant
 
-On-device AI assistant with zero data collection.
+Local AI-assistant direction with no external API calls by default.
 
 #### Features:
 
 - On-device inference (no external API calls)
-- 7-layer God tier encryption
-- Zero data collection
+- Local privacy-preserving inference direction
+- Zero-data-collection target for local inference paths
 - Text generation, code assistance, problem solving
 
 ### 🖥️ Remote Access - Browser & Desktop
 
-Secure remote access with full encryption.
+Remote-access module with secure-tunnel direction.
 
 #### Features:
 
-- Remote browser with 7-layer encryption
-- Remote desktop with full streaming
+- Remote browser direction with encrypted transport support
+- Remote desktop streaming direction
 - Secure tunnel through VPN
-- All traffic through multi-hop VPN
+- Multi-hop VPN routing remains acceptance-gated
 
-### ⚔️ AD ANNIHILATOR - HOLY WAR MODE
+### Ad Annihilator - Ad and Tracker Blocking
 
-Complete annihilation of intrusive advertising.
+Ad and tracker blocking module.
 
 #### Features:
 
-- **NUCLEAR-LEVEL** ad blocking
+- Rule-based ad blocking
 - 1000+ ad domains blocked
-- Tracker destruction
-- Pop-up obliteration
-- Autoplay assassination
+- Tracker blocking
+- Pop-up blocking
+- Autoplay blocking
 - Malvertising protection
 - Cryptomining prevention
 
@@ -409,7 +354,7 @@ from thirstys_waterfall import ThirstysWaterfall
 
 waterfall = ThirstysWaterfall()
 
-# Start all subsystems (built-in VPN, all firewalls, browser)
+# Start configured subsystems
 
 waterfall.start()
 
@@ -417,26 +362,26 @@ waterfall.start()
 
 tab_id = waterfall.browser.create_tab()
 
-# Navigate (URL encrypted automatically)
+# Navigate with the current browser engine implementation
 
 waterfall.browser.navigate(tab_id, "https://example.com")
 
-# Perform encrypted search (query encrypted immediately)
+# Perform a search through the configured search path
 
 results = waterfall.browser.search("my search query")
 
 # Get system status
 
 status = waterfall.get_status()
-print(f"Everything Encrypted: {status['everything_encrypted']}")
-print(f"Built-in VPN Active: {status['vpn']['built_in']}")
+print(f"Encryption Status: {status['everything_encrypted']}")
+print(f"VPN Backend Configured: {status['vpn']['built_in']}")
 print(f"VPN Connected: {status['vpn']['connected']}")
 
 # Run privacy audit
 
 audit = waterfall.run_privacy_audit()
 
-# Stop system (all data wiped)
+# Stop configured subsystems
 
 waterfall.stop()
 ```
@@ -556,20 +501,20 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 ## 🎯 Use Cases
 
-- **Maximum Privacy Browsing** - Everything encrypted, no tracking
-- **Secure Research** - All searches encrypted
-- **Anonymous Communication** - Multi-hop VPN + onion routing
-- **Threat Protection** - 8 firewall types + malware detection
-- **Leak-Proof Browsing** - Kill switch + leak detection
-- **No Pop-ups/Redirects** - Clean browsing experience
+- **Privacy-focused browsing research** - native browser direction, privacy controls, and acceptance-gated data handling
+- **Secure research workflows** - encrypted storage/search direction with remaining end-to-end proof work
+- **Anonymous communication direction** - multi-hop VPN and onion-routing modules with remaining real backend evidence
+- **Threat-protection direction** - firewall categories, malware detection modules, and backend proof work
+- **Leak-reduction direction** - kill switch and leak-detection modules with remaining platform proof
+- **Pop-up/redirect controls** - browser-control modules with remaining acceptance coverage
 
 ## 🔬 Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                 Thirstys Waterfall Orchestrator                     │
-│                    EVERYTHING ENCRYPTED                              │
-│                   GOD TIER 7-LAYER ENCRYPTION                        │
+│                 STANDARD V3 EVIDENCE-GATED RUNTIME                  │
+│                  CAPABILITIES TRACKED BY ACCEPTANCE MATRIX           │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
         ┌─────────────────────────┼─────────────────────────┐
@@ -579,9 +524,8 @@ sudo systemctl status thirstys-waterfall  # Systemd
    │Firewalls│              │   VPN   │              │Encrypted│
    └─────────┘              └─────────┘              └─────────┘
         │                         │                         │
-   All Packets              All Traffic              All Searches
-   Encrypted                Encrypted                & Sites
-                                                     Encrypted
+   Rule Control             Backend Control          Native Engine
+   Evidence Needed          Evidence Needed          Evidence Needed
         │                         │                         │
         └─────────────────────────┼─────────────────────────┘
                                   │
@@ -604,16 +548,16 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 #### Core Layer
 
-- **Orchestrator**: Coordinates all subsystems with master kill switch
-- **8 Firewalls**: Packet-filtering, circuit-level, stateful, proxy, NGFW, software, hardware, cloud
-- **Built-in VPN**: Native Python implementation with multi-hop routing
-- **Privacy Browser**: Incognito mode with complete isolation
+- **Orchestrator**: Coordinates configured subsystems with kill-switch paths
+- **8 Firewall Categories**: packet-filtering, circuit-level, stateful, proxy, NGFW, software, hardware, cloud
+- **Built-in VPN Direction**: backend orchestration for WireGuard, OpenVPN, and IKEv2 where supported
+- **Privacy Browser**: native browser-engine direction with incognito/session controls
 
 #### Advanced Features Layer
 
-- **Thirsty Consigliere**: Privacy-first AI assistant with zero data collection
+- **Thirsty Consigliere**: Privacy-first local assistant direction
 - **Network Stealth**: Pluggable transports, domain fronting, protocol mimicry
-- **AD Annihilator**: Nuclear-level ad blocking and tracker destruction
+- **Ad Annihilator**: Ad and tracker blocking
 
 #### Privacy Systems Layer
 
@@ -704,7 +648,7 @@ python examples/complete_usage.py
 
 ### 📊 Local Verification Evidence
 
-#### ✅ Complete Test Coverage
+#### Local Test Coverage
 
 ```bash
 
@@ -735,20 +679,20 @@ python -c "from thirstys_waterfall.vpn.backends import VPNBackendFactory; print(
 python -c "from thirstys_waterfall.firewalls.backends import FirewallBackendFactory; print(FirewallBackendFactory.get_available_backends())"
 ```
 
-#### ✅ Comprehensive Documentation
+#### Current Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) - Complete system architecture
-- [Competition Comparison](docs/COMPETITION_COMPARISON.md) - How we compare
+- [Architecture](docs/ARCHITECTURE.md) - System architecture
+- [Competition Comparison](docs/COMPETITION_COMPARISON.md) - Evidence-gated capability comparison
 - [Threat Model](THREAT_MODEL.md) - Security architecture and limitations
 - [Security Policy](SECURITY.md) - Security practices and incident response
 - [New Features](docs/NEW_FEATURES.md) - Latest feature additions
-- [Showcase](docs/SHOWCASE.md) - Feature comparison and proof
+- [Showcase](docs/SHOWCASE.md) - Current evidence and remaining gaps
 
 ## 🎯 Platform Support
 
-### Cross-Platform Implementation
+### Cross-Platform Implementation Status
 
-Thirstys Waterfall provides **concrete OS-level integrations** for all major platforms:
+Thirstys Waterfall contains backend implementations and availability checks for major platforms. Standard v3 acceptance still requires real execution evidence for VPN/firewall apply, rollback, and privilege behavior on each supported OS.
 
 #### VPN Backends
 
@@ -762,7 +706,7 @@ Thirstys Waterfall provides **concrete OS-level integrations** for all major pla
 - **Windows**: Windows Firewall API (netsh advfirewall)
 - **macOS**: PF (Packet Filter) via pfctl
 
-All backends include: ✅ Automatic platform detection ✅ Protocol fallback mechanisms ✅ Real handshake and connection verification ✅ Comprehensive integration tests
+Current backend coverage includes platform detection, command resolution, protocol fallback paths, and unit/integration tests. Real handshake, rule application, rollback, and platform privilege evidence remain acceptance work.
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) for detailed security architecture and limitations.
 
@@ -770,13 +714,13 @@ See [THREAT_MODEL.md](THREAT_MODEL.md) for detailed security architecture and li
 
 ### Core Security
 
-- **End-to-End Encryption** - All data encrypted in transit and at rest
-- **Zero-Knowledge** - No plaintext data ever stored
-- **Forensic Resistance** - Secure data wiping (DoD 5220.22-M, Gutmann)
-- **Kill Switch** - Instant protection if connection fails
-- **No Logging** - Never-logs policy across all components
-- **Anti-Fingerprinting** - Randomized browser fingerprint
-- **Leak Protection** - DNS, IPv6, WebRTC leak prevention
+- **Encryption Direction** - crypto and storage helpers exist; end-to-end data-path proof remains required
+- **Zero-Knowledge Direction** - no-plaintext storage claims require acceptance evidence
+- **Forensic Resistance Direction** - secure wiping modules exist; real platform evidence remains required
+- **Kill Switch** - protection paths exist; real network-blocking proof remains required
+- **Logging Policy Direction** - no-logging claims require end-to-end audit evidence
+- **Anti-Fingerprinting** - randomized browser fingerprint module
+- **Leak Protection** - DNS, IPv6, and WebRTC protection modules
 
 ### Advanced Security Features
 
@@ -790,7 +734,7 @@ See [THREAT_MODEL.md](THREAT_MODEL.md) for detailed security architecture and li
 
 ### 🔐 Threat Model & Security Architecture
 
-**See [THREAT_MODEL.md](THREAT_MODEL.md) for comprehensive security documentation:**
+**See [THREAT_MODEL.md](THREAT_MODEL.md) for security documentation:**
 
 - Threat actors and attack scenarios we defend against
 - What we protect and what's out of scope
@@ -875,18 +819,19 @@ python -c "from thirstys_waterfall.firewalls.backends import FirewallBackendFact
 
 ### Test Coverage
 
-Our test suite includes:
+The current test suite includes:
 
-- ✅ **VPN Handshake Tests**: WireGuard, OpenVPN, IKEv2 connection flows
-- ✅ **Firewall Rule Enforcement**: nftables, Windows Firewall, PF rule application
-- ✅ **Platform Detection**: Automatic backend selection per OS
-- ✅ **Protocol Fallback**: VPN protocol fallback mechanisms
-- ✅ **Connection Resilience**: Reconnection and error handling
-- ✅ **MFA Authentication**: All providers (TOTP, FIDO2, Biometrics, etc.)
-- ✅ **MicroVM Isolation**: Lifecycle, resource management, health monitoring
-- ✅ **DOS Trap Mode**: Compromise detection and response
-- ✅ **Privacy Ledger**: Encryption, integrity, audit workflows
-- ✅ **Network Stealth**: All transports and obfuscation techniques
+- ✅ **VPN Backend Tests**: command construction, availability checks, and protocol fallback paths
+- ✅ **Firewall Backend Tests**: command construction and platform backend selection
+- ✅ **Platform Detection**: backend selection per OS
+- ✅ **Connection Resilience Paths**: reconnection and error-handling coverage
+- ✅ **MFA Authentication**: provider and risk-escalation coverage
+- ✅ **MicroVM Isolation**: lifecycle, resource management, and health-monitoring coverage
+- ✅ **DOS Trap Mode**: compromise-detection and response-path coverage
+- ✅ **Privacy Ledger**: encryption, integrity, and audit-workflow coverage
+- ✅ **Network Stealth**: transport and obfuscation module coverage
+
+Real OS VPN/firewall execution evidence remains separate from CI unit/integration coverage.
 
 ### Continuous Integration
 
@@ -905,17 +850,17 @@ View the [CI workflow results](https://github.com/IAmSoThirsty/Thirstys-waterfal
 
 Thirstys Waterfall is being built as a comprehensive privacy ecosystem that integrates features typically found in multiple separate products. Claims below are target capabilities until accepted in the Standard v3 matrix.
 
-#### 🏆 All-in-One Solution
+#### All-in-One Direction
 
-- **8 Integrated Firewalls** (vs. competitors with 0-1)
-- **Built-in VPN** (vs. requiring external paid subscriptions)
-- **Privacy Browser** with complete encryption
-- **Multi-Factor Authentication** with 5 methods
-- **Hardware-Level Isolation** via MicroVM
-- **Advanced Network Stealth** with 10+ protection layers
-- **7-Layer God Tier Encryption** (vs. 1-2 layers in competitors)
+- **8 firewall categories** represented in code, with real rule evidence still required
+- **Built-in VPN direction** with backend orchestration, with real OS execution evidence still required
+- **Privacy browser direction** with a native document/parser/fetcher layer, with rendering/session acceptance still required
+- **Multi-factor authentication** module with several provider paths
+- **MicroVM isolation** module with backend-specific acceptance still required
+- **Advanced network stealth** module with multiple transport strategies
+- **Encryption/privacy helpers** that still require end-to-end data-path proof
 
-#### 🛡️ Security Features Competitors Lack
+#### Security Feature Areas
 
 - **DOS Trap Mode**: Rootkit detection and automated response
 - **Hardware Root of Trust**: TPM, Secure Enclave, HSM integration
@@ -924,25 +869,16 @@ Thirstys Waterfall is being built as a comprehensive privacy ecosystem that inte
 - **Advanced Network Stealth**: Domain fronting, protocol mimicry
 - **Forensic Resistance**: DoD 5220.22-M and Gutmann secure wiping
 
-#### 💰 Cost Comparison
+#### Cost and Packaging
 
-- **Thirstys Waterfall**: $0 forever (100% free and open source)
-- **VPN Services** (NordVPN, ExpressVPN): $143-$155/year
-- **Advanced Firewalls**: $100+/year
-- **Complete Security Suite**: $500+/year
-- **Our Advantage**: Save $500+/year with superior features
+- **Thirstys Waterfall source**: available under this repository's license.
+- **Local install path**: source install and local wheel build are verified.
+- **Container path**: release image publication and local published-image smoke are verified.
+- **Target deployment cost**: depends on the user's host, runtime, and operating model.
 
-#### 📊 Feature Count
+#### Feature Count and Encryption Claims
 
-- **Thirstys Waterfall**: 50+ major features
-- **Best Competitor**: 10-15 features
-- **Our Advantage**: 3-5x more features
-
-#### 🔐 Encryption Comparison
-
-- **Thirstys Waterfall**: 7 encryption layers (AES-256-GCM, RSA-4096, ChaCha20-Poly1305, ECC-521, PFS, Quantum-Resistant)
-- **Competitors**: 1-2 encryption layers
-- **Our Advantage**: 3.5-7x stronger encryption
+Feature-count and encryption-strength comparisons are not accepted Standard v3 evidence. The accepted source of truth is the claim matrix, which separates implemented helpers, tests, and remaining end-to-end proof.
 
 ### Production Readiness Status
 
@@ -950,12 +886,12 @@ Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, C
 
 ### Proof of Implementation
 
-Every feature has concrete proof:
+Current proof surfaces:
 
 - **Deployment Verification Script** - `scripts/verify_production_deployment.py`
 - **Backend Verification Scripts** - Check available VPN/firewall backends
-- **Feature Demonstrations** - 10+ example scripts showing real usage
-- **Comprehensive Tests** - Full test coverage for all components
+- **Feature Demonstrations** - example scripts for local inspection
+- **Tests** - unit/integration coverage for current components
 - **CI Pipeline** - Automated testing on every commit
 - **Documentation** - Detailed docs for every major feature
 
@@ -963,7 +899,7 @@ Run `python examples/concrete_implementation_demo.py` to see platform-specific i
 
 ## 🤝 Contributing
 
-This is a security-critical project. All contributions are welcome but will be thoroughly reviewed.
+This is a security-critical project. Contributions should preserve Standard v3 evidence discipline and avoid claiming acceptance before proof exists.
 
 ## 📄 License
 

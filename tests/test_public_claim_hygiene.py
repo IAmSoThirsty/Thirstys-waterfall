@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_CLAIM_DOCS = (
+    ROOT / "README.md",
     ROOT / "docs" / "SHOWCASE.md",
     ROOT / "docs" / "COMPETITION_COMPARISON.md",
 )
@@ -27,6 +28,21 @@ def test_public_claim_docs_do_not_use_unaccepted_superiority_claims():
         "98/100",
         "72% better",
         "zero telemetry (impossible to enable)",
+        "everything encrypted",
+        "all traffic encrypted end-to-end",
+        "all searches encrypted",
+        "all visited sites encrypted",
+        "zero data collection",
+        "no history (ever)",
+        "no cache (ever)",
+        "no cookies (ever)",
+        "100% coverage",
+        "complete annihilation",
+        "nuclear-level",
+        "our advantage",
+        "full test coverage",
+        "concrete os-level integrations",
+        "all backends include",
     )
 
     for doc_path in PUBLIC_CLAIM_DOCS:
