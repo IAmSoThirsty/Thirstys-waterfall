@@ -1,6 +1,6 @@
 """Cloud Firewall implementation"""
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .base import FirewallBase
 
 
@@ -13,8 +13,15 @@ class CloudFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.distributed = config.get("distributed", True)
+        self.cloud_backend = config.get("cloud_backend")
         self._cloud_nodes = []
         self._geo_rules = {}
+        self._backend_status: Dict[str, Any] = {
+            "status": "unavailable",
+            "error": "Cloud firewall backend is not configured",
+            "backend_configured": False,
+        }
+        self._last_backend_result: Optional[Dict[str, Any]] = None
 
     def start(self):
         """Start cloud firewall"""
@@ -29,12 +36,33 @@ class CloudFirewall(FirewallBase):
 
     def _initialize_cloud_nodes(self):
         """Initialize distributed cloud nodes"""
-        # Simulate cloud node setup
-        self._cloud_nodes = [
-            {"id": "node1", "region": "us-east", "active": True},
-            {"id": "node2", "region": "eu-west", "active": True},
-            {"id": "node3", "region": "asia-pacific", "active": True},
-        ]
+        if self.cloud_backend is None:
+            self._cloud_nodes = []
+            self._backend_status = {
+                "status": "unavailable",
+                "error": "Cloud firewall backend is not configured",
+                "backend_configured": False,
+            }
+            self.logger.warning("Cloud firewall backend is not configured")
+            return
+
+        initialize = getattr(self.cloud_backend, "initialize_nodes", None)
+        if not callable(initialize):
+            raise RuntimeError(
+                "Cloud firewall backend does not implement initialize_nodes"
+            )
+
+        nodes = initialize()
+        if not isinstance(nodes, list):
+            raise RuntimeError("Cloud firewall backend returned invalid nodes")
+
+        self._cloud_nodes = nodes
+        self._backend_status = {
+            "status": "ready",
+            "backend": type(self.cloud_backend).__name__,
+            "backend_configured": True,
+            "node_count": len(nodes),
+        }
 
     def add_rule(self, rule: Dict[str, Any]):
         """Add cloud firewall rule"""
@@ -43,29 +71,37 @@ class CloudFirewall(FirewallBase):
         # Geo-based rules
         if "region" in rule:
             self._geo_rules[rule["region"]] = rule
+        if self.cloud_backend is not None:
+            add_rule = getattr(self.cloud_backend, "add_rule", None)
+            if callable(add_rule):
+                add_rule(rule)
 
     def remove_rule(self, rule_id: str):
         """Remove cloud firewall rule"""
         self._rules = [r for r in self._rules if r.get("id") != rule_id]
+        self._geo_rules = {
+            region: rule
+            for region, rule in self._geo_rules.items()
+            if rule.get("id") != rule_id
+        }
+        if self.cloud_backend is not None:
+            remove_rule = getattr(self.cloud_backend, "remove_rule", None)
+            if callable(remove_rule):
+                remove_rule(rule_id)
 
     def process_packet(self, packet: Dict[str, Any]) -> bool:
         """Process packet through cloud firewall"""
         if not self._active:
             return True
 
+        result = self._evaluate_cloud_packet(packet)
+        if not result.get("allowed", False):
+            self._update_statistics(False, threat=bool(result.get("threat")))
+            return False
+
         # Geo-IP filtering
         if not self._check_geo_location(packet):
             self._update_statistics(False)
-            return False
-
-        # DDoS protection
-        if self._is_ddos_attack(packet):
-            self._update_statistics(False, threat=True)
-            return False
-
-        # Cloud-based threat intelligence
-        if not self._check_threat_intelligence(packet):
-            self._update_statistics(False, threat=True)
             return False
 
         self._update_statistics(True)
@@ -84,45 +120,47 @@ class CloudFirewall(FirewallBase):
 
         return True
 
-    def _is_ddos_attack(self, packet: Dict[str, Any]) -> bool:
-        """Detect DDoS attacks"""
-        # Simplified DDoS detection
-        src_ip = packet.get("src_ip")
+    def _evaluate_cloud_packet(self, packet: Dict[str, Any]) -> Dict[str, Any]:
+        """Evaluate packet through a configured cloud firewall backend."""
+        if self.cloud_backend is None:
+            result = {
+                "status": "unavailable",
+                "error": "Cloud firewall backend is not configured",
+                "allowed": False,
+                "backend_configured": False,
+            }
+            self._last_backend_result = result
+            self.logger.error(result["error"])
+            return result
 
-        # Check request rate (would be more sophisticated in production)
-        if hasattr(self, "_request_count"):
-            if src_ip in self._request_count:
-                self._request_count[src_ip] += 1
-                if self._request_count[src_ip] > 1000:  # Threshold
-                    self.logger.warning(f"Possible DDoS from {src_ip}")
-                    return True
-            else:
-                self._request_count[src_ip] = 1
-        else:
-            self._request_count = {src_ip: 1}
+        evaluate = getattr(self.cloud_backend, "evaluate_packet", None)
+        if not callable(evaluate):
+            raise RuntimeError(
+                "Cloud firewall backend does not implement evaluate_packet"
+            )
 
-        return False
+        result = evaluate(packet)
+        if isinstance(result, bool):
+            result = {"allowed": result}
+        if not isinstance(result, dict) or "allowed" not in result:
+            raise RuntimeError("Cloud firewall backend returned invalid result")
 
-    def _check_threat_intelligence(self, packet: Dict[str, Any]) -> bool:
-        """Check against cloud threat intelligence"""
-        src_ip = packet.get("src_ip")
-
-        # Check against known malicious IPs (would query cloud service)
-        malicious_ips = ["10.0.0.1", "192.168.255.255"]
-
-        if src_ip in malicious_ips:
-            self.logger.warning(f"Malicious IP detected: {src_ip}")
-            return False
-
-        return True
+        result.setdefault("status", "verified")
+        result.setdefault("backend", type(self.cloud_backend).__name__)
+        result.setdefault("backend_configured", True)
+        self._last_backend_result = result
+        return result
 
     def get_cloud_status(self) -> Dict[str, Any]:
         """Get cloud firewall status"""
-        return {
+        status = {
             "distributed": self.distributed,
             "nodes": self._cloud_nodes,
             "active": self._active,
+            "last_backend_result": self._last_backend_result,
         }
+        status.update(self._backend_status)
+        return status
 
     def add_geo_rule(self, region: str, action: str):
         """Add geographic-based rule"""
