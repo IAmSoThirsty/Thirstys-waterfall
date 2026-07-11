@@ -87,15 +87,21 @@ class WiFiController:
     - Bandwidth marketplace integration
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        wifi_backend: Optional[Any] = None,
+    ):
         self.config = config or {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.platform = platform.system()
+        self.wifi_backend = wifi_backend or self.config.get("wifi_backend")
 
         # Detected adapters and networks
         self.adapters: List[WiFiAdapter] = []
         self.available_networks: List[WiFiNetwork] = []
         self.connected_network: Optional[WiFiNetwork] = None
+        self.last_operation_results: Dict[str, Dict[str, Any]] = {}
 
         # Performance settings
         self.enable_band_steering = self.config.get("band_steering", True)
@@ -106,7 +112,8 @@ class WiFiController:
         # Bandwidth marketplace integration
         self.marketplace_mode = self.config.get("marketplace_mode", False)
 
-        self._discover_adapters()
+        if not self.config.get("skip_discovery", False):
+            self._discover_adapters()
 
     def _discover_adapters(self) -> None:
         """Discover available WiFi adapters on the system"""
@@ -133,8 +140,6 @@ class WiFiController:
             )  # nosec B603
 
             if result.returncode == 0:
-                # Parse output to extract adapter information
-                # This is a simplified version - production would parse fully
                 lines = result.stdout.split("\n")
                 current_interface = None
 
@@ -173,7 +178,6 @@ class WiFiController:
             if result.returncode != 0:
                 return None
 
-            # Parse capabilities (simplified)
             supported_bands = []
             supported_standards = []
 
@@ -236,7 +240,6 @@ class WiFiController:
             )  # nosec B603
 
             if result.returncode == 0:
-                # Parse output (simplified)
                 lines = result.stdout.split("\n")
                 interface_name = None
 
@@ -275,7 +278,6 @@ class WiFiController:
             if result.returncode != 0:
                 return None
 
-            # Parse capabilities (simplified)
             supported_bands = [WiFiBand.BAND_2_4_GHZ, WiFiBand.BAND_5_GHZ]
             supported_standards = [WiFiStandard.WIFI_4, WiFiStandard.WIFI_5]
 
@@ -442,8 +444,22 @@ class WiFiController:
 
     def _get_driver_windows(self, interface: str) -> str:
         """Get driver name for Windows WiFi interface"""
-        # Would require WMI or registry access
-        return "Windows WiFi Driver"
+        driver_reader = getattr(self.wifi_backend, "get_driver_windows", None)
+        if callable(driver_reader):
+            result = driver_reader(interface=interface)
+            if isinstance(result, str) and result:
+                return result
+
+        self._record_operation(
+            "windows_driver_lookup",
+            {
+                "status": "unavailable",
+                "interface": interface,
+                "backend": self._backend_name(),
+                "error": "No WiFi backend is configured for Windows driver lookup",
+            },
+        )
+        return "Unknown"
 
     def scan_networks(self, band: Optional[WiFiBand] = None) -> List[WiFiNetwork]:
         """
@@ -456,6 +472,24 @@ class WiFiController:
             List of detected WiFi networks
         """
         try:
+            scanner = getattr(self.wifi_backend, "scan_networks", None)
+            if callable(scanner):
+                networks = self._normalize_networks(
+                    scanner(band=band), "backend network scan"
+                )
+                self.available_networks = self._filter_networks_by_band(
+                    networks, band
+                )
+                self._record_operation(
+                    "scan_networks",
+                    {
+                        "status": "scanned",
+                        "backend": self._backend_name(),
+                        "network_count": len(self.available_networks),
+                    },
+                )
+                return self.available_networks
+
             if self.platform == "Linux":
                 return self._scan_networks_linux(band)
             elif self.platform == "Windows":
@@ -485,9 +519,7 @@ class WiFiController:
                     timeout=10,
                 )  # nosec B603
 
-                if result.returncode == 0:
-                    # Parse scan results (simplified)
-                    # Production version would fully parse all fields
+            if result.returncode == 0:
                     networks.extend(self._parse_scan_results_linux(result.stdout, band))
 
         except Exception as e:
@@ -501,7 +533,82 @@ class WiFiController:
     ) -> List[WiFiNetwork]:
         """Parse Linux iw scan output"""
         networks = []
-        # Simplified parser - production would be more comprehensive
+        current: Dict[str, Any] = {}
+        security_lines: List[str] = []
+
+        def flush_current() -> None:
+            if not current:
+                return
+
+            frequency = int(current.get("frequency_mhz") or 0)
+            channel = int(current.get("channel") or 0)
+            if not frequency and channel:
+                frequency = self._channel_to_frequency(channel)
+            if not channel and frequency:
+                channel = self._frequency_to_channel(frequency)
+
+            band = self._frequency_to_band(frequency)
+            if band_filter is not None and band != band_filter:
+                return
+
+            ssid = str(current.get("ssid") or "<hidden>")
+            network = WiFiNetwork(
+                ssid=ssid,
+                bssid=str(current.get("bssid") or "Unknown"),
+                band=band,
+                channel=channel,
+                frequency_mhz=frequency,
+                signal_strength_dbm=int(current.get("signal_strength_dbm") or 0),
+                security=self._security_from_text("\n".join(security_lines)),
+                max_rate_mbps=int(current.get("max_rate_mbps") or 0),
+                bandwidth_mhz=int(current.get("bandwidth_mhz") or 20),
+                supports_wifi6=bool(current.get("supports_wifi6")),
+                supports_wifi7=bool(current.get("supports_wifi7")),
+            )
+            networks.append(network)
+
+        for raw_line in output.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            if line.startswith("BSS "):
+                flush_current()
+                bssid = line.split()[1].split("(")[0]
+                current = {"bssid": bssid}
+                security_lines = []
+                continue
+
+            if not current:
+                continue
+
+            security_lines.append(line)
+
+            if line.startswith("SSID:"):
+                current["ssid"] = line.split(":", 1)[1].strip()
+            elif line.startswith("freq:"):
+                current["frequency_mhz"] = self._first_int(line)
+            elif line.startswith("signal:"):
+                current["signal_strength_dbm"] = self._first_int(line)
+            elif "DS Parameter set: channel" in line:
+                current["channel"] = self._first_int(line)
+            elif line.startswith("primary channel:"):
+                current["channel"] = self._first_int(line)
+            elif "HE capabilities" in line or "HE PHY Capabilities" in line:
+                current["supports_wifi6"] = True
+            elif "EHT" in line:
+                current["supports_wifi7"] = True
+            elif "VHT" in line:
+                current.setdefault("bandwidth_mhz", 80)
+            elif "MHz" in line and "width" in line.lower():
+                current["bandwidth_mhz"] = self._first_int(line) or 20
+            elif "MBit/s" in line or "Mbps" in line:
+                current["max_rate_mbps"] = max(
+                    int(current.get("max_rate_mbps") or 0),
+                    self._first_int(line) or 0,
+                )
+
+        flush_current()
         return networks
 
     def _scan_networks_windows(self, band: Optional[WiFiBand]) -> List[WiFiNetwork]:
@@ -531,7 +638,89 @@ class WiFiController:
     ) -> List[WiFiNetwork]:
         """Parse Windows netsh scan output"""
         networks = []
-        # Simplified parser
+        ssid = None
+        ssid_security = ""
+        current: Dict[str, Any] = {}
+
+        def flush_current() -> None:
+            if not current:
+                return
+
+            channel = int(current.get("channel") or 0)
+            frequency = int(current.get("frequency_mhz") or 0)
+            if not frequency and channel:
+                frequency = self._channel_to_frequency(channel)
+            band = self._frequency_to_band(frequency)
+            if band_filter is not None and band != band_filter:
+                return
+
+            radio_type = str(current.get("radio_type") or "")
+            security = self._security_from_text(str(current.get("security") or ""))
+            network = WiFiNetwork(
+                ssid=str(ssid or "<hidden>"),
+                bssid=str(current.get("bssid") or "Unknown"),
+                band=band,
+                channel=channel,
+                frequency_mhz=frequency,
+                signal_strength_dbm=self._signal_percent_to_dbm(
+                    int(current.get("signal_percent") or 0)
+                ),
+                security=security,
+                max_rate_mbps=int(current.get("max_rate_mbps") or 0),
+                bandwidth_mhz=int(current.get("bandwidth_mhz") or 20),
+                supports_wifi6="ax" in radio_type.lower(),
+                supports_wifi7="be" in radio_type.lower(),
+            )
+            networks.append(network)
+
+        for raw_line in output.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            if line.startswith("SSID ") and ":" in line:
+                flush_current()
+                ssid = line.split(":", 1)[1].strip()
+                ssid_security = ""
+                current = {}
+                continue
+
+            if line.startswith("BSSID ") and ":" in line:
+                flush_current()
+                current = {
+                    "bssid": line.split(":", 1)[1].strip(),
+                    "security": ssid_security,
+                }
+                continue
+
+            if line.startswith("Authentication") and ":" in line:
+                ssid_security = line.split(":", 1)[1].strip()
+                if current:
+                    current["security"] = ssid_security
+            elif line.startswith("Encryption") and ":" in line:
+                encryption = line.split(":", 1)[1].strip()
+                ssid_security = f"{ssid_security} {encryption}".strip()
+                if current:
+                    current["security"] = ssid_security
+            elif not current:
+                continue
+            elif line.startswith("Signal") and ":" in line:
+                current["signal_percent"] = self._first_int(line)
+            elif line.startswith("Radio type") and ":" in line:
+                current["radio_type"] = line.split(":", 1)[1].strip()
+            elif line.startswith("Band") and ":" in line:
+                band_text = line.split(":", 1)[1].strip()
+                current["frequency_mhz"] = self._frequency_from_band_text(band_text)
+            elif line.startswith("Channel") and ":" in line:
+                current["channel"] = self._first_int(line)
+            elif "rates (Mbps)" in line and ":" in line:
+                rates = [int(value) for value in line.split(":", 1)[1].split() if value.isdigit()]
+                if rates:
+                    current["max_rate_mbps"] = max(
+                        int(current.get("max_rate_mbps") or 0), max(rates)
+                    )
+
+        flush_current()
         return networks
 
     def _scan_networks_macos(self, band: Optional[WiFiBand]) -> List[WiFiNetwork]:
@@ -564,7 +753,51 @@ class WiFiController:
     ) -> List[WiFiNetwork]:
         """Parse macOS airport scan output"""
         networks = []
-        # Simplified parser
+        for raw_line in output.splitlines()[1:]:
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            parts = line.split()
+            if len(parts) < 6:
+                continue
+
+            bssid_index = None
+            for index, part in enumerate(parts):
+                if self._looks_like_mac(part):
+                    bssid_index = index
+                    break
+
+            if bssid_index is None or bssid_index == 0:
+                continue
+
+            ssid = " ".join(parts[:bssid_index])
+            bssid = parts[bssid_index]
+            signal = int(parts[bssid_index + 1])
+            channel_text = parts[bssid_index + 2]
+            channel = self._first_int(channel_text) or 0
+            frequency = self._channel_to_frequency(channel)
+            band = self._frequency_to_band(frequency)
+            if band_filter is not None and band != band_filter:
+                continue
+
+            security_text = " ".join(parts[bssid_index + 5 :])
+            networks.append(
+                WiFiNetwork(
+                    ssid=ssid,
+                    bssid=bssid,
+                    band=band,
+                    channel=channel,
+                    frequency_mhz=frequency,
+                    signal_strength_dbm=signal,
+                    security=self._security_from_text(security_text),
+                    max_rate_mbps=0,
+                    bandwidth_mhz=40 if "," in channel_text else 20,
+                    supports_wifi6="HE" in security_text,
+                    supports_wifi7="EHT" in security_text,
+                )
+            )
+
         return networks
 
     def connect(
@@ -601,23 +834,19 @@ class WiFiController:
         self, ssid: str, password: Optional[str], security: Optional[str]
     ) -> bool:
         """Connect to WiFi on Linux using NetworkManager or wpa_supplicant"""
-        # Implementation would use nmcli or wpa_supplicant
-        # Prioritize WPA3 if available
-        return False
+        return self._connect_via_backend("linux", ssid, password, security)
 
     def _connect_windows(
         self, ssid: str, password: Optional[str], security: Optional[str]
     ) -> bool:
         """Connect to WiFi on Windows"""
-        # Implementation would use netsh or Windows API
-        return False
+        return self._connect_via_backend("windows", ssid, password, security)
 
     def _connect_macos(
         self, ssid: str, password: Optional[str], security: Optional[str]
     ) -> bool:
         """Connect to WiFi on macOS"""
-        # Implementation would use networksetup
-        return False
+        return self._connect_via_backend("macos", ssid, password, security)
 
     def disconnect(self) -> bool:
         """Disconnect from current WiFi network"""
@@ -625,7 +854,29 @@ class WiFiController:
             if not self.connected_network:
                 return True
 
-            # Platform-specific disconnection
+            disconnector = getattr(self.wifi_backend, "disconnect", None)
+            if not callable(disconnector):
+                self._record_operation(
+                    "disconnect",
+                    {
+                        "status": "unavailable",
+                        "disconnected": False,
+                        "backend": self._backend_name(),
+                        "error": "No WiFi backend is configured for disconnect",
+                    },
+                )
+                return False
+
+            result = disconnector(network=self.connected_network)
+            normalized = self._normalize_bool_or_dict_result(
+                result, "disconnected", "disconnect"
+            )
+            normalized.setdefault("status", "disconnected")
+            normalized["backend"] = self._backend_name()
+            self._record_operation("disconnect", normalized)
+            if not normalized["disconnected"]:
+                return False
+
             self.connected_network = None
             self.logger.info("WiFi disconnected")
             return True
@@ -644,6 +895,9 @@ class WiFiController:
             "adapters": [adapter.__dict__ for adapter in self.adapters],
             "available_networks_count": len(self.available_networks),
             "marketplace_mode": self.marketplace_mode,
+            "backend_configured": self.wifi_backend is not None,
+            "backend": self._backend_name(),
+            "last_operation_results": dict(self.last_operation_results),
         }
 
     def enable_marketplace_mode(self) -> bool:
@@ -665,5 +919,212 @@ class WiFiController:
         Returns:
             Optimal channel number
         """
-        # Would perform spectrum analysis and select least congested channel
+        optimizer = getattr(self.wifi_backend, "optimize_channel", None)
+        if not callable(optimizer):
+            self._record_operation(
+                "optimize_channel",
+                {
+                    "status": "unavailable",
+                    "band": band.value,
+                    "channel": None,
+                    "backend": self._backend_name(),
+                    "error": "No WiFi backend is configured for spectrum analysis",
+                },
+            )
+            return None
+
+        result = optimizer(band=band, networks=list(self.available_networks))
+        if isinstance(result, int):
+            normalized = {"status": "optimized", "channel": result}
+        elif isinstance(result, dict):
+            if "channel" not in result or not isinstance(
+                result["channel"], (int, type(None))
+            ):
+                raise ValueError(
+                    "WiFi backend optimize_channel result must include "
+                    "integer or null 'channel'"
+                )
+            normalized = dict(result)
+            normalized.setdefault("status", "optimized")
+        else:
+            raise TypeError(
+                "WiFi backend optimize_channel must return int or dict"
+            )
+
+        normalized["backend"] = self._backend_name()
+        normalized["band"] = band.value
+        self._record_operation("optimize_channel", normalized)
+        return normalized["channel"]
+
+    def _connect_via_backend(
+        self, platform_name: str, ssid: str, password: Optional[str], security: Optional[str]
+    ) -> bool:
+        connector = getattr(
+            self.wifi_backend, f"connect_{platform_name}", None
+        ) or getattr(self.wifi_backend, "connect", None)
+        if not callable(connector):
+            self._record_operation(
+                "connect",
+                {
+                    "status": "unavailable",
+                    "connected": False,
+                    "ssid": ssid,
+                    "platform": platform_name,
+                    "backend": self._backend_name(),
+                    "error": "No WiFi backend is configured for connection",
+                },
+            )
+            return False
+
+        result = connector(ssid=ssid, password=password, security=security)
+        normalized = self._normalize_bool_or_dict_result(
+            result, "connected", "connect"
+        )
+        normalized.setdefault("status", "connected")
+        normalized["backend"] = self._backend_name()
+        normalized["ssid"] = ssid
+        self._record_operation("connect", normalized)
+
+        if not normalized["connected"]:
+            return False
+
+        network = normalized.get("network")
+        if isinstance(network, WiFiNetwork):
+            self.connected_network = network
+        else:
+            self.connected_network = self._find_available_network(ssid)
+
+        return True
+
+    def _normalize_bool_or_dict_result(
+        self, result: Any, bool_field: str, operation: str
+    ) -> Dict[str, Any]:
+        if isinstance(result, bool):
+            return {bool_field: result}
+
+        if not isinstance(result, dict):
+            raise TypeError(f"WiFi backend {operation} must return bool or dict")
+
+        if bool_field not in result or not isinstance(result[bool_field], bool):
+            raise ValueError(
+                f"WiFi backend {operation} result must include "
+                f"boolean {bool_field!r}"
+            )
+
+        return dict(result)
+
+    def _normalize_networks(self, result: Any, operation: str) -> List[WiFiNetwork]:
+        if not isinstance(result, list):
+            raise TypeError(f"WiFi backend {operation} must return a list")
+
+        for network in result:
+            if not isinstance(network, WiFiNetwork):
+                raise TypeError(
+                    f"WiFi backend {operation} returned a non-WiFiNetwork item"
+                )
+
+        return list(result)
+
+    def _filter_networks_by_band(
+        self, networks: List[WiFiNetwork], band: Optional[WiFiBand]
+    ) -> List[WiFiNetwork]:
+        if band is None:
+            return networks
+        return [network for network in networks if network.band == band]
+
+    def _find_available_network(self, ssid: str) -> Optional[WiFiNetwork]:
+        for network in self.available_networks:
+            if network.ssid == ssid:
+                return network
         return None
+
+    def _record_operation(self, operation: str, result: Dict[str, Any]) -> None:
+        self.last_operation_results[operation] = result
+
+    def _backend_name(self) -> Optional[str]:
+        if self.wifi_backend is None:
+            return None
+        return self.wifi_backend.__class__.__name__
+
+    def _frequency_to_band(self, frequency_mhz: int) -> WiFiBand:
+        if 2400 <= frequency_mhz < 2500:
+            return WiFiBand.BAND_2_4_GHZ
+        if 4900 <= frequency_mhz < 5925:
+            return WiFiBand.BAND_5_GHZ
+        if 5925 <= frequency_mhz < 7125:
+            return WiFiBand.BAND_6_GHZ
+        if 57000 <= frequency_mhz < 71000:
+            return WiFiBand.BAND_60_GHZ
+        return WiFiBand.BAND_2_4_GHZ
+
+    def _channel_to_frequency(self, channel: int) -> int:
+        if channel <= 0:
+            return 0
+        if channel == 14:
+            return 2484
+        if 1 <= channel <= 13:
+            return 2407 + channel * 5
+        if 32 <= channel <= 177:
+            return 5000 + channel * 5
+        if 1 <= channel <= 233:
+            return 5950 + channel * 5
+        return 0
+
+    def _frequency_to_channel(self, frequency_mhz: int) -> int:
+        if frequency_mhz == 2484:
+            return 14
+        if 2412 <= frequency_mhz <= 2472:
+            return int((frequency_mhz - 2407) / 5)
+        if 5000 <= frequency_mhz <= 5885:
+            return int((frequency_mhz - 5000) / 5)
+        if 5955 <= frequency_mhz <= 7115:
+            return int((frequency_mhz - 5950) / 5)
+        return 0
+
+    def _frequency_from_band_text(self, band_text: str) -> int:
+        normalized = band_text.lower()
+        if "6" in normalized:
+            return 5955
+        if "5" in normalized:
+            return 5180
+        if "60" in normalized:
+            return 60480
+        return 2412
+
+    def _security_from_text(self, text: str) -> List[str]:
+        upper_text = text.upper()
+        security = []
+        if "WPA3" in upper_text or "SAE" in upper_text:
+            security.append("WPA3")
+        if "WPA2" in upper_text or "RSN" in upper_text:
+            security.append("WPA2")
+        if "WPA" in upper_text and "WPA2" not in upper_text and "WPA3" not in upper_text:
+            security.append("WPA")
+        if "OWE" in upper_text:
+            security.append("OWE")
+        if "WEP" in upper_text:
+            security.append("WEP")
+        if "PRIVACY" in upper_text and not security:
+            security.append("WEP")
+        return security or ["OPEN"]
+
+    def _signal_percent_to_dbm(self, signal_percent: int) -> int:
+        bounded = max(0, min(signal_percent, 100))
+        return int((bounded / 2) - 100)
+
+    def _first_int(self, text: str) -> int:
+        digits = []
+        current = ""
+        for char in text:
+            if char.isdigit() or (char == "-" and not current):
+                current += char
+            elif current:
+                digits.append(current)
+                current = ""
+        if current:
+            digits.append(current)
+        return int(digits[0]) if digits else 0
+
+    def _looks_like_mac(self, value: str) -> bool:
+        parts = value.split(":")
+        return len(parts) == 6 and all(len(part) == 2 for part in parts)
