@@ -4,6 +4,7 @@ Concrete OS-level firewall integrations for Linux, Windows, and macOS
 """
 
 import os
+import re
 import subprocess  # nosec B404
 import platform
 import logging
@@ -159,6 +160,7 @@ class NftablesBackend(FirewallBackend):
                 nft_rule.extend([protocol])
 
             nft_rule.append(action)
+            nft_rule.extend(["comment", rule_id])
 
             # Execute nft command
             sudo = _command_path("sudo") or "sudo"
@@ -198,8 +200,53 @@ class NftablesBackend(FirewallBackend):
                 self.logger.warning(f"Rule {rule_id} not found")
                 return False
 
-            # For simplicity, flush and re-add all rules except this one
-            # In production, would use rule handles
+            sudo = _command_path("sudo") or "sudo"
+            nft = _command_path("nft") or "nft"
+            list_cmd = [
+                sudo,
+                nft,
+                "-a",
+                "list",
+                "chain",
+                "ip",
+                self.table_name,
+                self.chain_name,
+            ]
+            list_result = subprocess.run(
+                list_cmd, capture_output=True, text=True, timeout=10
+            )  # nosec B603
+            if list_result.returncode != 0:
+                self.logger.error(
+                    f"Failed to list nftables rule handles: {list_result.stderr}"
+                )
+                return False
+
+            handle = self._find_rule_handle(rule_id, list_result.stdout)
+            if handle is None:
+                self.logger.error(f"nftables handle for rule {rule_id} not found")
+                return False
+
+            delete_cmd = [
+                sudo,
+                nft,
+                "delete",
+                "rule",
+                "ip",
+                self.table_name,
+                self.chain_name,
+                "handle",
+                handle,
+            ]
+            delete_result = subprocess.run(
+                delete_cmd, capture_output=True, text=True, timeout=10
+            )  # nosec B603
+            if delete_result.returncode != 0:
+                self.logger.error(
+                    f"Failed to delete nftables rule {rule_id}: "
+                    f"{delete_result.stderr}"
+                )
+                return False
+
             self.rules = [r for r in self.rules if r["id"] != rule_id]
             self.logger.info(f"nftables rule removed: {rule_id}")
             return True
@@ -207,6 +254,19 @@ class NftablesBackend(FirewallBackend):
         except Exception as e:
             self.logger.error(f"Error removing nftables rule: {e}")
             return False
+
+    def _find_rule_handle(self, rule_id: str, ruleset: str) -> Optional[str]:
+        """Find nftables rule handle by the rule id comment."""
+        pattern = re.compile(r"#\s*handle\s+(\d+)\b")
+        comment = f'comment "{rule_id}"'
+        bare_comment = f"comment {rule_id}"
+        for line in ruleset.splitlines():
+            if comment not in line and bare_comment not in line:
+                continue
+            match = pattern.search(line)
+            if match:
+                return match.group(1)
+        return None
 
     def enable(self) -> bool:
         """Enable nftables firewall"""
