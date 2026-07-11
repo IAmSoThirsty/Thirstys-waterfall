@@ -1,6 +1,6 @@
 """
 GOD TIER ENCRYPTION MODULE
-Military-grade, quantum-resistant, multi-layered encryption
+Classical multi-layer encryption helpers with evidence-gated post-quantum support
 """
 
 from cryptography.fernet import Fernet
@@ -12,20 +12,21 @@ import os
 import hashlib
 import secrets
 import logging
+from typing import Any, Optional
 
 
 class GodTierEncryption:
     """
-    GOD TIER ENCRYPTION - The most powerful encryption available.
+    GOD TIER ENCRYPTION - layered classical encryption helper.
 
     Features:
     - Multiple encryption layers (7 layers deep)
     - AES-256-GCM (military-grade symmetric encryption)
-    - RSA-4096 (quantum-resistant asymmetric encryption)
+    - RSA-4096 (classical asymmetric encryption)
     - ChaCha20-Poly1305 (high-speed authenticated encryption)
     - Elliptic Curve Cryptography (ECC-521)
     - Perfect Forward Secrecy
-    - Quantum-resistant key derivation
+    - High-cost local key derivation
     - Zero-knowledge architecture
     - Hardware security support
     """
@@ -44,7 +45,7 @@ class GodTierEncryption:
         # Layer 3: ChaCha20-Poly1305 (authenticated encryption)
         self._chacha_key = secrets.token_bytes(32)
 
-        # Layer 4: RSA-4096 (quantum-resistant)
+        # Layer 4: RSA-4096 (classical asymmetric key material)
         self._rsa_private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=4096,  # GOD TIER: 4096-bit RSA
@@ -103,8 +104,8 @@ class GodTierEncryption:
         rotated_key = self._rotate_key(self._aes_key)
         layer5 = self._encrypt_aes_gcm_with_key(layer4, rotated_key)
 
-        # Layer 6: Add quantum-resistant padding
-        layer6 = self._add_quantum_resistant_padding(layer5)
+        # Layer 6: Add randomized padding
+        layer6 = self._add_randomized_padding(layer5)
 
         # Layer 7: Final authentication MAC
         layer7 = self._add_authentication_mac(layer6)
@@ -131,8 +132,8 @@ class GodTierEncryption:
             # Layer 7: Verify authentication MAC
             layer6 = self._verify_authentication_mac(encrypted_data)
 
-            # Layer 6: Remove quantum-resistant padding
-            layer5 = self._remove_quantum_resistant_padding(layer6)
+            # Layer 6: Remove randomized padding
+            layer5 = self._remove_randomized_padding(layer6)
 
             # Layer 5: Decrypt double encryption
             rotated_key = self._rotate_key(self._aes_key)
@@ -246,9 +247,8 @@ class GodTierEncryption:
         )
         return kdf.derive(key + self._pepper)
 
-    def _add_quantum_resistant_padding(self, data: bytes) -> bytes:
-        """Add quantum-resistant random padding"""
-        # Add random padding to resist quantum attacks
+    def _add_randomized_padding(self, data: bytes) -> bytes:
+        """Add randomized padding to obscure plaintext length."""
         padding_size = secrets.randbelow(512) + 256  # 256-768 bytes random padding
         padding = secrets.token_bytes(padding_size)
 
@@ -257,8 +257,8 @@ class GodTierEncryption:
 
         return length_bytes + padding + data
 
-    def _remove_quantum_resistant_padding(self, data: bytes) -> bytes:
-        """Remove quantum-resistant padding"""
+    def _remove_randomized_padding(self, data: bytes) -> bytes:
+        """Remove randomized padding."""
         padding_size = int.from_bytes(data[:4], "big")
         return data[4 + padding_size :]
 
@@ -296,7 +296,7 @@ class GodTierEncryption:
                 "AES-256-GCM (military-grade)",
                 "ChaCha20-Poly1305",
                 "AES-256-GCM Double Encryption",
-                "RSA-4096 (quantum-resistant)",
+                "RSA-4096 (classical asymmetric key material)",
                 "ECC-521 (highest elliptic curve)",
                 "HMAC-SHA512 Authentication",
             ],
@@ -306,7 +306,8 @@ class GodTierEncryption:
                 "ECC": "521-bit",
                 "ChaCha20": "256-bit",
             },
-            "quantum_resistant": True,
+            "quantum_resistant": False,
+            "post_quantum_backend_configured": False,
             "perfect_forward_secrecy": True,
             "zero_knowledge": True,
             "authentication": "HMAC-SHA512 with 500,000 iterations",
@@ -316,56 +317,46 @@ class GodTierEncryption:
 
 class QuantumResistantEncryption:
     """
-    Post-quantum cryptography for future-proof security.
-    Protects against quantum computer attacks.
+    Post-quantum encryption facade.
+
+    Standard v3 requires real backend evidence for this claim. Without a
+    configured post-quantum backend, this class fails closed instead of using
+    classical AES/Scrypt as a substitute for that claim.
     """
 
-    def __init__(self):
+    def __init__(self, post_quantum_backend: Optional[Any] = None):
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initializing Quantum-Resistant Encryption")
-
-        # Use lattice-based cryptography (quantum-resistant)
-        self._quantum_key = secrets.token_bytes(64)  # 512-bit quantum-resistant key
+        self.logger.info("Initializing Quantum-Resistant Encryption facade")
+        self._backend = post_quantum_backend
 
     def encrypt_quantum_resistant(self, data: bytes) -> bytes:
         """
-        Encrypt with quantum-resistant algorithms.
-        Uses lattice-based cryptography principles.
+        Encrypt with configured post-quantum backend.
+
+        Raises:
+            RuntimeError: if no real post-quantum backend is configured.
         """
-        # Implement quantum-resistant encryption
-        # In production, would use post-quantum algorithms like NTRU or Kyber
+        if self._backend is None:
+            raise RuntimeError("Post-quantum encryption backend is not configured")
 
-        # Layer 1: High-entropy key derivation
-        kdf = Scrypt(
-            salt=secrets.token_bytes(32),
-            length=32,
-            n=2**20,  # Quantum-resistant parameters
-            r=8,
-            p=1,
-            backend=default_backend(),
-        )
-        derived_key = kdf.derive(self._quantum_key)
+        return self._backend.encrypt(data)
 
-        # Layer 2: AES-256 with quantum-resistant mode
-        nonce = secrets.token_bytes(16)
-        cipher = Cipher(
-            algorithms.AES(derived_key), modes.CTR(nonce), backend=default_backend()
-        )
-        encryptor = cipher.encryptor()
-        ciphertext = encryptor.update(data) + encryptor.finalize()
+    def decrypt_quantum_resistant(
+        self, encrypted_data: bytes, salt: Optional[bytes] = None
+    ) -> bytes:
+        """Decrypt with configured post-quantum backend."""
+        if self._backend is None:
+            raise RuntimeError("Post-quantum encryption backend is not configured")
 
-        return nonce + ciphertext
+        if salt is not None:
+            return self._backend.decrypt(encrypted_data, salt=salt)
 
-    def decrypt_quantum_resistant(self, encrypted_data: bytes, salt: bytes) -> bytes:
-        """Decrypt quantum-resistant encrypted data"""
-        nonce = encrypted_data[:16]
-        ciphertext = encrypted_data[16:]
+        return self._backend.decrypt(encrypted_data)
 
-        kdf = Scrypt(salt=salt, length=32, n=2**20, r=8, p=1, backend=default_backend())
-        derived_key = kdf.derive(self._quantum_key)
-
-        cipher = Cipher(
-            algorithms.AES(derived_key), modes.CTR(nonce), backend=default_backend()
-        )
-        decryptor = cipher.decryptor()
-        return decryptor.update(ciphertext) + decryptor.finalize()
+    def get_status(self) -> dict:
+        """Return post-quantum backend evidence."""
+        return {
+            "backend_configured": self._backend is not None,
+            "accepted_post_quantum": self._backend is not None,
+            "backend": type(self._backend).__name__ if self._backend else None,
+        }

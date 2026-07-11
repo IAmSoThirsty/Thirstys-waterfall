@@ -191,6 +191,12 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\utils\encrypted_network.py tests\test_encrypted_network.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the encrypted-network parsing/scope change: 0 findings.
 - `python -m pytest -q` passed after the encrypted-network parsing/scope change: 414 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the encrypted-network parsing/scope change.
+- Replaced post-quantum encryption substitute behavior with a fail-closed post-quantum-backend contract and downgraded helper cryptography status to classical unless backend evidence exists.
+- `python -m pytest tests\test_god_tier_encryption.py -q` passed after the post-quantum backend-gating change: 3 tests passed.
+- `flake8 thirstys_waterfall\utils\god_tier_encryption.py tests\test_god_tier_encryption.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the post-quantum backend-gating change: 0 findings.
+- `python -m pytest tests\test_god_tier_encryption.py tests\test_orchestrator_status.py tests\test_remote_browser.py tests\test_remote_desktop.py tests\test_secure_tunnel.py tests\test_media_downloader.py tests\test_format_converter.py -q` passed after the post-quantum backend-gating change: 22 tests passed.
+- `python -m pytest -q` passed after the post-quantum backend-gating change: 417 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the post-quantum backend-gating change.
 
 ## Known Current Problems
 
@@ -213,6 +219,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Packet-filtering firewall now uses standard-library IPv4/IPv6 exact and CIDR matching instead of simplified string matching.
 - Nftables rule removal now looks up and deletes concrete OS rule handles instead of only updating local tracking state.
 - Encrypted-network helper now parses structured JSON payloads and reports payload-only scope instead of claiming unused extra encryption layers or host-wide interception.
+- Post-quantum encryption no longer uses classical AES/Scrypt as a substitute implementation; no real post-quantum backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
