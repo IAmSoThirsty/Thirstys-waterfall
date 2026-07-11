@@ -1,5 +1,5 @@
 """
-Production-Grade DOS (Denial-of-Service) Trap Mode
+Evidence-gated DOS (Denial-of-Service) Trap Mode
 Comprehensive system compromise detection and response with rootkit detection,
 kernel anomaly analysis, hardware integration, and emergency sanitization.
 """
@@ -18,9 +18,6 @@ from typing import Dict, Any, Optional, List, Tuple, Callable, Set
 from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
-
-# Cryptography imports removed - not used in current implementation
-# These were placeholders for future hardware-based encryption features
 
 
 def _command_path(command: str) -> str:
@@ -133,6 +130,14 @@ class KernelInterface:
         self._is_windows = platform.system() == "Windows"
         self._baseline_modules: Set[str] = set()
         self._baseline_syscalls: Optional[bytes] = None
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
 
     def get_loaded_kernel_modules(self) -> Set[str]:
         """Get list of loaded kernel modules"""
@@ -221,12 +226,20 @@ class KernelInterface:
                     return None
 
                 if syscall_data:
+                    self._record_evidence(
+                        "syscall_table_hash",
+                        "collected",
+                        source="/proc/kallsyms",
+                    )
                     return hashlib.sha256(b"".join(syscall_data)).digest()
 
             elif self._is_windows:
-                # On Windows, check SSDT (System Service Descriptor Table)
-                # This requires kernel-mode access, so we simulate
-                return hashlib.sha256(b"SSDT_PLACEHOLDER").digest()
+                self._record_evidence(
+                    "syscall_table_hash",
+                    "unavailable",
+                    reason="windows_kernel_backend_not_configured",
+                )
+                return None
 
         except Exception as e:
             self.logger.error(f"Failed to get syscall table hash: {e}")
@@ -742,6 +755,14 @@ class HardwareKeyDestroyer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self._destroyed_keys: Set[str] = set()
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
 
     def destroy_tpm_keys(self, tpm_interface) -> bool:
         """Destroy keys stored in TPM"""
@@ -769,15 +790,35 @@ class HardwareKeyDestroyer:
         try:
             self.logger.critical("Destroying HSM-stored keys")
 
-            # In production, this would:
-            # 1. Authenticate to HSM
-            # 2. Enumerate all keys
-            # 3. Issue delete commands for each key
-            # 4. Verify deletion
-            # 5. Log destruction events
+            if hasattr(hsm_interface, "_keys"):
+                key_ids = list(hsm_interface._keys.keys())
+            else:
+                list_keys = getattr(hsm_interface, "list_keys", None)
+                if not callable(list_keys):
+                    self._record_evidence(
+                        "destroy_hsm_keys",
+                        "unavailable",
+                        reason="hsm_key_enumeration_not_configured",
+                    )
+                    return False
+                key_ids = list(list_keys())
 
-            self.logger.info("HSM keys destroyed")
-            return True
+            deleted_keys = []
+            for key_id in key_ids:
+                if hsm_interface.delete_key(key_id):
+                    deleted_keys.append(key_id)
+                    self._destroyed_keys.add(key_id)
+
+            success = len(deleted_keys) == len(key_ids)
+            self._record_evidence(
+                "destroy_hsm_keys",
+                "destroyed" if success else "partial",
+                requested_count=len(key_ids),
+                deleted_count=len(deleted_keys),
+            )
+
+            self.logger.info(f"Destroyed {len(deleted_keys)} HSM keys")
+            return success
 
         except Exception as e:
             self.logger.error(f"Failed to destroy HSM keys: {e}")

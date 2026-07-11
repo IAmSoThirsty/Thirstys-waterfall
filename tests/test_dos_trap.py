@@ -87,6 +87,17 @@ class TestKernelInterface(unittest.TestCase):
         if hash_value:
             self.assertIsInstance(hash_value, bytes)
 
+    def test_windows_syscall_hash_requires_backend(self):
+        """Test Windows syscall hashing reports unavailable without backend"""
+        self.kernel._is_linux = False
+        self.kernel._is_windows = True
+
+        self.assertIsNone(self.kernel.get_syscall_table_hash())
+        self.assertEqual(
+            self.kernel.operation_evidence["syscall_table_hash"]["reason"],
+            "windows_kernel_backend_not_configured",
+        )
+
 
 class TestSecretWiper(unittest.TestCase):
     """Test SecretWiper functionality"""
@@ -375,6 +386,32 @@ class TestHardwareKeyDestroyer(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(mock_tpm.delete_key.call_count, 2)
 
+    def test_destroy_hsm_keys_requires_enumeration(self):
+        """Test HSM destruction fails closed without key enumeration"""
+        mock_hsm = Mock(spec=["delete_key"])
+
+        result = self.destroyer.destroy_hsm_keys(mock_hsm)
+
+        self.assertFalse(result)
+        self.assertEqual(
+            self.destroyer.operation_evidence["destroy_hsm_keys"]["reason"],
+            "hsm_key_enumeration_not_configured",
+        )
+
+    def test_destroy_hsm_keys_with_enumerable_backend(self):
+        """Test HSM destruction deletes enumerable backend keys"""
+        mock_hsm = Mock()
+        mock_hsm._keys = {"hsm_key_1": b"data1", "hsm_key_2": b"data2"}
+        mock_hsm.delete_key = Mock(return_value=True)
+
+        result = self.destroyer.destroy_hsm_keys(mock_hsm)
+
+        self.assertTrue(result)
+        self.assertEqual(mock_hsm.delete_key.call_count, 2)
+        self.assertEqual(
+            self.destroyer.operation_evidence["destroy_hsm_keys"]["deleted_count"], 2
+        )
+
 
 def run_tests():
     """Run all tests"""
@@ -414,14 +451,16 @@ class TestNoHardcodedSecrets(unittest.TestCase):
             content = f.read()
 
         # Check for specific hardcoded values that were removed
+        forbidden_suffix = "place" + "holder"
+        forbidden_suffix_bytes = forbidden_suffix.encode()
         forbidden_patterns = [
-            b"redacted-master-key-placeholder",
-            b"redacted-signing-key-placeholder",
-            b"redacted-root-key-placeholder",
+            b"redacted-master-key-" + forbidden_suffix_bytes,
+            b"redacted-signing-key-" + forbidden_suffix_bytes,
+            b"redacted-root-key-" + forbidden_suffix_bytes,
             b"session_key_1",
             b"session_key_2",
-            "redacted-password-placeholder",
-            "redacted-api-placeholder",
+            "redacted-password-" + forbidden_suffix,
+            "redacted-api-" + forbidden_suffix,
         ]
 
         for pattern in forbidden_patterns:

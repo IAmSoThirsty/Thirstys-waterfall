@@ -247,11 +247,19 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\security\hardware_root_of_trust.py tests\test_hardware_root_of_trust.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the hardware-root evidence-contract change: 0 findings.
 - `python -m pytest -q` passed after the hardware-root evidence-contract change: 459 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the hardware-root evidence-contract change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
+- Reworded the DOS trap module from production-grade to evidence-gated.
+- Replaced Windows syscall-table fake SSDT hashing with explicit unavailable evidence unless a Windows kernel backend is configured.
+- Replaced HSM key-destruction substitute success with enumerable-backend/key-list requirements and destruction evidence.
+- `python -m pytest tests\test_dos_trap.py -q` passed after the DOS trap evidence-contract change: 35 tests passed.
+- `flake8 thirstys_waterfall\security\dos_trap.py tests\test_dos_trap.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the DOS trap evidence-contract change: 0 findings.
+- `python -m pytest -q` passed after the DOS trap evidence-contract change: 462 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the DOS trap evidence-contract change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
+- Core source marker scan passed across `thirstys_waterfall\firewalls`, `thirstys_waterfall\wifi_network`, `thirstys_waterfall\security`, `thirstys_waterfall\browser`, and `thirstys_waterfall\utils`: `rg -n "Would|would|simulate|simulated|simplified|placeholder|TODO|production|quantum-resistant" thirstys_waterfall\firewalls thirstys_waterfall\wifi_network thirstys_waterfall\security thirstys_waterfall\browser thirstys_waterfall\utils -g "*.py"` returned no matches.
 
 ## Known Current Problems
 
 - README and public deployment/showcase/comparison docs now point to Standard v3 evidence instead of claiming final production readiness; remaining target-state capability language is explicitly gated by the matrix.
-- Several implementation paths still state they are simulated, simplified, placeholders, or production substitutes.
+- Core source marker scan is clean across the currently hardened firewall, WiFi, security, browser, and utility Python surfaces; docs, examples, web/static surfaces, and newly added code still need the same scan/cleanup discipline before final acceptance.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
 - Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
@@ -269,6 +277,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - MFA FIDO2 verification is limited to DER-encoded RSA/ECDSA public keys in the built-in verifier; full WebAuthn COSE attestation/verification, native biometric matching, and image QR generation still require configured or future backends.
 - MicroVM isolation now fails closed when boot assets are missing and no longer reports non-isolated networking, pause/resume control, or health metrics beyond process liveness without a configured platform backend.
 - Hardware root-of-trust now reports `software_fallback` unless a configured TPM, Secure Enclave, or HSM backend provides concrete hardware evidence; no real TPM, Secure Enclave, HSM, PKCS#11, or CloudHSM backend is bundled or configured.
+- DOS trap Windows syscall-table hashing now reports unavailable unless a configured Windows kernel backend provides evidence; HSM key destruction now requires enumerable HSM backend/key-list evidence before reporting destruction success.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
