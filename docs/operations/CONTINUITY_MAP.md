@@ -120,6 +120,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\remote_access\remote_desktop.py tests\test_remote_desktop.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the remote-desktop backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the remote-desktop backend-gating change: 351 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the remote-desktop backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced `FormatConverter` simulated completed-conversion paths with a fail-closed conversion-backend contract.
+- `python -m pytest tests\test_format_converter.py -q` passed after the format-converter backend-gating change: 3 tests passed.
+- `flake8 thirstys_waterfall\media_downloader\format_converter.py tests\test_format_converter.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the format-converter backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the format-converter backend-gating change: 354 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the format-converter backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -138,6 +143,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Remote browser no longer fabricates remote server/session command success without a backend, but no real remote-browser transport backend is bundled or configured.
 - Remote desktop no longer fabricates connection success without a backend, but no real remote-desktop backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
+- Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points
