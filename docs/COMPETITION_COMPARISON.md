@@ -53,7 +53,7 @@
 | **No External Deps** | ✅ **FULLY BUILT-IN** | ❌ Service Required | ❌ Service Required | ❌ Network Req | ❌ No | ❌ Varies |
 | **Python Native** | ✅ **100%** | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | **Config-Driven** | ✅ **FULL** | ❌ Limited | ❌ Limited | ❌ Limited | ❌ Limited | ✅ YES |
-| **Production-Ready** | ✅ **YES** | ✅ YES | ✅ YES | ❌ No | ✅ YES | ✅ YES |
+| **Deployment Acceptance** | Standard v3 gated | Public release evidence required | Public release evidence required | ❌ No | Public release evidence required | Public release evidence required |
 
 ## 🎯 Key Differentiators
 
@@ -152,13 +152,13 @@
 
 **Competitors:** None offer all protections in one system.
 
-### 10. **PRODUCTION-GRADE CODE**
+### 10. **STANDARD V3 TRACKED CODEBASE**
 
-- **No stubs**
-- **No placeholders**
-- **Complete implementation**
-- **Production-ready**
-- **Enterprise-grade**
+- **Local test suite passes**
+- **Full-repo Bandit scan passes**
+- **Locked deployment dependency scan passes**
+- **Docker build and container smoke pass locally**
+- **Remaining implementation gaps are tracked in `docs/operations/README_CLAIM_ACCEPTANCE.md`**
 
 **Competitors:** Many have incomplete features or beta components.
 

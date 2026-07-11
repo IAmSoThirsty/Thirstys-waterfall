@@ -15,13 +15,13 @@
 
 **Removed** (7 hardcoded secrets):
 
-- `b'secret_key_data_12345678'` (master_encryption_key)
-- `b'signing_key_data_87654321'` (master_signing_key)
-- `b'root_key_data_abcdefgh'` (root_key)
+- `b'redacted-master-key-placeholder'` (master_encryption_key)
+- `b'redacted-signing-key-placeholder'` (master_signing_key)
+- `b'redacted-root-key-placeholder'` (root_key)
 - `b'session_key_1'` (session key 1)
 - `b'session_key_2'` (session key 2)
-- `'super_secret_password'` (user password)
-- `'api_token_xyz123'` (API token)
+- `'redacted-password-placeholder'` (user password)
+- `redacted-api-placeholder` (removed sample API credential)
 
 **Added**:
 
@@ -77,9 +77,9 @@ Added `TestNoHardcodedSecrets` with 4 tests:
 
 ```python
 master_keys = {
-    'master_encryption_key': b'secret_key_data_12345678',  # ❌ Hardcoded
-    'master_signing_key': b'signing_key_data_87654321',    # ❌ Hardcoded
-    'root_key': b'root_key_data_abcdefgh'                  # ❌ Hardcoded
+    'master_encryption_key': b'redacted-master-key-placeholder',  # ❌ Hardcoded
+    'master_signing_key': b'redacted-signing-key-placeholder',    # ❌ Hardcoded
+    'root_key': b'redacted-root-key-placeholder'                  # ❌ Hardcoded
 }
 ```
 
@@ -121,7 +121,7 @@ OK ✓
 ### Manual Verification
 
 ```bash
-$ grep -r "secret_key_data\|super_secret_password" examples/
+$ grep -r "secret_key_data\|redacted-password-placeholder" examples/
 
 # No results ✓
 
@@ -163,7 +163,7 @@ export DEMO_MASTER_ENCRYPTION_KEY="<base64-encoded-32-bytes>"
 export DEMO_MASTER_SIGNING_KEY="<base64-encoded-32-bytes>"
 export DEMO_ROOT_KEY="<base64-encoded-32-bytes>"
 export DEMO_USER_PASSWORD="demo_password"
-export DEMO_API_TOKEN="demo_token"
+export DEMO_API_TOKEN="redacted-demo-token-placeholder"
 ```
 
 See `.env.example` for complete template.
@@ -206,7 +206,7 @@ See `.env.example` for complete template.
 3. **Verify cleanup**:
 
    ```bash
-   git log -p --all -S 'secret_key_data_12345678'
+   git log -p --all -S 'redacted-master-key-placeholder'
 
    # Should return no results
 

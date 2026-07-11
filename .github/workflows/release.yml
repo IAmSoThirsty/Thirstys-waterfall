@@ -23,14 +23,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.8', '3.11']
+        python-version: ['3.10', '3.11']
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -38,11 +38,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install -e .
+        pip install -e ".[test,web]"
     
     - name: Run tests
       run: |
-        python -m unittest discover -s tests -p "test_*.py" -v
+        python -m pytest -q
 
   # Build packages
   build:
@@ -52,12 +52,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
     
@@ -75,7 +75,7 @@ jobs:
         twine check dist/*
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-packages
         path: dist/
@@ -86,13 +86,16 @@ jobs:
     name: Build Docker Image
     needs: pre-release-tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
     
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
     
     - name: Extract version from tag
       id: version
@@ -103,22 +106,46 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
         fi
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Set image names
+      id: image
+      run: |
+        REPO="${GITHUB_REPOSITORY,,}"
+        echo "registry_image=ghcr.io/${REPO}" >> $GITHUB_OUTPUT
     
     - name: Build Docker image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: false
+        load: true
         tags: |
           thirstys-waterfall:latest
           thirstys-waterfall:${{ steps.version.outputs.version }}
+          ${{ steps.image.outputs.registry_image }}:latest
+          ${{ steps.image.outputs.registry_image }}:${{ steps.version.outputs.version }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
     - name: Test Docker image
       run: |
-        docker build -t thirstys-waterfall:test .
-        docker run --rm thirstys-waterfall:test thirstys-waterfall --help
+        python -m pip install --upgrade pip
+        pip install -r requirements-deploy.lock
+        pip install -e ".[dev,test,web]"
+        python scripts/verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:${{ steps.version.outputs.version }}
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push verified Docker image
+      run: |
+        docker push ${{ steps.image.outputs.registry_image }}:${{ steps.version.outputs.version }}
+        docker push ${{ steps.image.outputs.registry_image }}:latest
+        docker buildx imagetools inspect ${{ steps.image.outputs.registry_image }}:${{ steps.version.outputs.version }}
 
   # Create GitHub Release
   create-release:
@@ -128,12 +155,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
     
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist-packages
         path: dist/
@@ -181,7 +208,7 @@ jobs:
     
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist-packages
         path: dist/
@@ -191,5 +218,3 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
-        skip-existing: true
-      continue-on-error: true

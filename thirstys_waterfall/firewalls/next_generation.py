@@ -71,7 +71,7 @@ class NextGenerationFirewall(FirewallBase):
 
         # Calculate payload hash
         if payload:
-            payload_hash = hashlib.md5(str(payload).encode()).hexdigest()
+            payload_hash = hashlib.sha256(str(payload).encode()).hexdigest()
             if payload_hash in self._threat_signatures:
                 self.logger.warning(f"Threat signature detected: {payload_hash}")
                 return False

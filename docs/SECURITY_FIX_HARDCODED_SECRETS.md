@@ -278,17 +278,17 @@ def demo_secret_wiping():
     # ❌ INSECURE: Hard-coded secrets in demo
 
     master_keys = {
-        'master_encryption_key': b'secret_key_data_12345678',
-        'master_signing_key': b'signing_key_data_87654321',
-        'root_key': b'root_key_data_abcdefgh'
+        'master_encryption_key': b'redacted-master-key-placeholder',
+        'master_signing_key': b'redacted-signing-key-placeholder',
+        'root_key': b'redacted-root-key-placeholder'
     }
     session_keys = {
         'session_1': b'session_key_1',
         'session_2': b'session_key_2'
     }
     credentials = {
-        'user_password': 'super_secret_password',
-        'api_token': 'api_token_xyz123'
+        'user_password': 'redacted-password-placeholder',
+        'api_token': 'redacted-api-placeholder'
     }
 ```
 
@@ -412,7 +412,7 @@ See `docs/GIT_HISTORY_REMEDIATION.md` for detailed instructions.
 
 # Verify no hardcoded secrets in working tree
 
-$ grep -r "secret_key_data\|super_secret_password" examples/
+$ grep -r "secret_key_data\|redacted-password-placeholder" examples/
 
 # No results ✓
 

@@ -27,11 +27,11 @@ class TestNftablesBackend(unittest.TestCase):
         self.assertFalse(self.backend.active)
         self.assertEqual(len(self.backend.rules), 0)
 
-    @patch("subprocess.run")
-    def test_check_availability_linux(self, mock_run):
+    @patch("thirstys_waterfall.firewalls.backends.shutil.which")
+    def test_check_availability_linux(self, mock_which):
         """Test nftables availability on Linux"""
         self.backend.platform = "Linux"
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_which.return_value = "/usr/sbin/nft"
 
         result = self.backend.check_availability()
 
@@ -152,11 +152,11 @@ class TestWindowsFirewallBackend(unittest.TestCase):
         self.assertEqual(self.backend.rule_prefix, "TestPrefix")
         self.assertFalse(self.backend.active)
 
-    @patch("subprocess.run")
-    def test_check_availability_windows(self, mock_run):
+    @patch("thirstys_waterfall.firewalls.backends.shutil.which")
+    def test_check_availability_windows(self, mock_which):
         """Test Windows Firewall availability on Windows"""
         self.backend.platform = "Windows"
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_which.return_value = "C:\\Windows\\System32\\netsh.exe"
 
         result = self.backend.check_availability()
 
@@ -271,11 +271,11 @@ class TestPFBackend(unittest.TestCase):
         self.assertEqual(self.backend.rules_file, "/tmp/test_pf.rules")
         self.assertFalse(self.backend.active)
 
-    @patch("subprocess.run")
-    def test_check_availability_macos(self, mock_run):
+    @patch("thirstys_waterfall.firewalls.backends.shutil.which")
+    def test_check_availability_macos(self, mock_which):
         """Test PF availability on macOS"""
         self.backend.platform = "Darwin"
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_which.return_value = "/sbin/pfctl"
 
         result = self.backend.check_availability()
 

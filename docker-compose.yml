@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   thirstys-waterfall:
     build:
@@ -23,18 +21,22 @@ services:
       - LOG_LEVEL=info
       - WEB_HOST=0.0.0.0
       - WEB_PORT=8080
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      - THIRSTYS_ADMIN_USERNAME=${THIRSTYS_ADMIN_USERNAME:?THIRSTYS_ADMIN_USERNAME is required}
+      - THIRSTYS_ADMIN_PASSWORD_HASH=${THIRSTYS_ADMIN_PASSWORD_HASH:?THIRSTYS_ADMIN_PASSWORD_HASH is required}
+      - THIRSTYS_ALLOW_DEMO_LOGIN=false
+      - CORS_ORIGINS=${CORS_ORIGINS:?CORS_ORIGINS is required}
 
     # Environment file for secrets
     env_file:
-      - .env
+      - path: .env
+        required: false
 
-    # Volumes for persistent data and development
+    # Volumes for persistent data and read-only configuration
     volumes:
       - thirstys_data:/home/thirsty/.thirstys_waterfall
       - ./config:/app/config:ro
-      # Development volume mounts for live code updates
-      - ./web:/app/web:rw
-      - ./thirstys_waterfall:/app/thirstys_waterfall:rw
 
     # Network configuration
     networks:
@@ -70,7 +72,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "from thirstys_waterfall import ThirstysWaterfall; print('healthy')",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')",
         ]
       interval: 30s
       timeout: 10s
