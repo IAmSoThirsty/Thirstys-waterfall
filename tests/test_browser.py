@@ -357,6 +357,15 @@ class FakeSandboxResourceMonitor:
         }
 
 
+class FakeSandboxScriptExecutor:
+    def __init__(self):
+        self.calls = []
+
+    def execute_script(self, **kwargs):
+        self.calls.append(kwargs)
+        return {"result": "ok"}
+
+
 class InvalidSandboxPolicyBackend:
     def apply_sandbox_policies(self, **kwargs):
         return "not-a-dict"
@@ -365,6 +374,10 @@ class InvalidSandboxPolicyBackend:
 class InvalidSandboxResourceMonitor:
     def check_resource_usage(self, **kwargs):
         return "not-a-dict"
+
+
+class InvalidSandboxScriptExecutor:
+    pass
 
 
 class TestIncognitoBrowser(unittest.TestCase):
@@ -722,6 +735,77 @@ class TestBrowserSandbox(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "returned invalid result"):
             sandbox.check_resource_usage()
+
+    def test_script_execution_without_executor_fails_closed(self):
+        """Test safe scripts are not reported executed without backend evidence."""
+        sandbox = BrowserSandbox(
+            self.config,
+            policy_backend=FakeSandboxPolicyBackend(),
+        )
+        sandbox.start()
+
+        result = sandbox.execute_script("const value = 1;", {"tab_id": "tab-1"})
+        status = sandbox.get_script_execution_status()
+
+        self.assertIsNone(result)
+        self.assertEqual(status["status"], "unavailable")
+        self.assertEqual(
+            status["error"],
+            "Browser sandbox script executor is not configured",
+        )
+        self.assertFalse(status["script_executed"])
+        self.assertFalse(status["backend_configured"])
+
+    def test_unsafe_script_is_blocked_before_executor(self):
+        """Test unsafe scripts are blocked even with an executor configured."""
+        executor = FakeSandboxScriptExecutor()
+        sandbox = BrowserSandbox(
+            self.config,
+            policy_backend=FakeSandboxPolicyBackend(),
+            script_executor=executor,
+        )
+        sandbox.start()
+
+        result = sandbox.execute_script("window.open('https://example.invalid')", {})
+        status = sandbox.get_script_execution_status()
+
+        self.assertIsNone(result)
+        self.assertEqual(status["status"], "blocked")
+        self.assertFalse(status["script_executed"])
+        self.assertEqual(executor.calls, [])
+
+    def test_script_execution_delegates_to_executor_backend(self):
+        """Test safe script execution delegates to the configured backend."""
+        executor = FakeSandboxScriptExecutor()
+        sandbox = BrowserSandbox(
+            self.config,
+            policy_backend=FakeSandboxPolicyBackend(),
+            script_executor=executor,
+        )
+        sandbox.start()
+
+        result = sandbox.execute_script("const value = 1;", {"tab_id": "tab-1"})
+        status = sandbox.get_script_execution_status()
+
+        self.assertEqual(result, {"result": "ok"})
+        self.assertEqual(status["status"], "executed")
+        self.assertTrue(status["script_executed"])
+        self.assertTrue(status["backend_configured"])
+        self.assertEqual(status["backend"], "FakeSandboxScriptExecutor")
+        self.assertEqual(len(executor.calls), 1)
+        self.assertEqual(executor.calls[0]["context"], {"tab_id": "tab-1"})
+
+    def test_invalid_script_executor_fails_loudly(self):
+        """Test script executor must implement execute_script."""
+        sandbox = BrowserSandbox(
+            self.config,
+            policy_backend=FakeSandboxPolicyBackend(),
+            script_executor=InvalidSandboxScriptExecutor(),
+        )
+        sandbox.start()
+
+        with self.assertRaisesRegex(RuntimeError, "does not implement execute_script"):
+            sandbox.execute_script("const value = 1;", {})
 
 
 class TestContentBlocker(unittest.TestCase):

@@ -197,6 +197,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest tests\test_god_tier_encryption.py tests\test_orchestrator_status.py tests\test_remote_browser.py tests\test_remote_desktop.py tests\test_secure_tunnel.py tests\test_media_downloader.py tests\test_format_converter.py -q` passed after the post-quantum backend-gating change: 22 tests passed.
 - `python -m pytest -q` passed after the post-quantum backend-gating change: 417 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the post-quantum backend-gating change.
+- Replaced browser sandbox script execution placeholder behavior with a fail-closed script-executor backend contract and explicit execution status evidence.
+- `python -m pytest tests\test_browser.py -q` passed after the browser-sandbox script-executor change: 50 tests passed.
+- `flake8 thirstys_waterfall\browser\sandbox.py tests\test_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the browser-sandbox script-executor change: 0 findings.
+- `python -m pytest -q` passed after the browser-sandbox script-executor change: 421 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the browser-sandbox script-executor change.
 
 ## Known Current Problems
 
@@ -211,6 +216,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Global kill switch no longer implies all traffic was blocked without a backend, but no real global traffic blocker backend is bundled or configured.
 - VPN kill switch no longer implies traffic block/restore without a backend, but no real VPN traffic blocker backend is bundled or configured.
 - Browser sandbox no longer reports policy enforcement or zero/within-limit resource usage without configured backends, but no real browser sandbox policy backend or resource monitor is bundled or configured.
+- Browser sandbox no longer reports script execution without a configured script-executor backend, but no real sandboxed JavaScript execution backend is bundled or configured.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
