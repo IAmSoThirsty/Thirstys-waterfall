@@ -73,6 +73,9 @@ class TestNftablesBackend(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(len(self.backend.rules), 1)
         self.assertEqual(self.backend.rules[0]["id"], "rule_001")
+        add_cmd = mock_run.call_args.args[0]
+        self.assertIn("comment", add_cmd)
+        self.assertIn("rule_001", add_cmd)
 
     @patch("subprocess.run")
     def test_add_rule_with_source_ip(self, mock_run):
@@ -92,11 +95,19 @@ class TestNftablesBackend(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(len(self.backend.rules), 1)
 
-    def test_remove_rule(self):
+    @patch("subprocess.run")
+    def test_remove_rule(self, mock_run):
         """Test removing nftables rule"""
         self.backend.rules = [
             {"id": "rule_001", "rule": {"action": "accept"}},
             {"id": "rule_002", "rule": {"action": "drop"}},
+        ]
+        mock_run.side_effect = [
+            MagicMock(
+                returncode=0,
+                stdout='tcp dport 443 accept comment "rule_001" # handle 12',
+            ),
+            MagicMock(returncode=0),
         ]
 
         result = self.backend.remove_rule("rule_001")
@@ -104,6 +115,33 @@ class TestNftablesBackend(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(len(self.backend.rules), 1)
         self.assertEqual(self.backend.rules[0]["id"], "rule_002")
+        self.assertEqual(mock_run.call_count, 2)
+        delete_cmd = mock_run.call_args.args[0]
+        self.assertEqual(delete_cmd[-2:], ["handle", "12"])
+
+    @patch("subprocess.run")
+    def test_remove_rule_fails_when_handle_missing(self, mock_run):
+        """Test nftables remove fails if no OS handle is found"""
+        self.backend.rules = [{"id": "rule_001", "rule": {"action": "accept"}}]
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+
+        result = self.backend.remove_rule("rule_001")
+
+        self.assertFalse(result)
+        self.assertEqual(len(self.backend.rules), 1)
+        self.assertEqual(mock_run.call_count, 1)
+
+    def test_find_rule_handle(self):
+        """Test parsing nftables handle from rule comment"""
+        ruleset = '\n'.join(
+            [
+                'tcp dport 443 accept comment "allow_https" # handle 8',
+                'tcp dport 22 drop comment "block_ssh" # handle 12',
+            ]
+        )
+
+        self.assertEqual(self.backend._find_rule_handle("block_ssh", ruleset), "12")
+        self.assertIsNone(self.backend._find_rule_handle("missing", ruleset))
 
     @patch("subprocess.run")
     def test_enable_firewall(self, mock_run):
@@ -449,6 +487,14 @@ class TestFirewallRuleEnforcement(unittest.TestCase):
         self.assertEqual(len(backend.rules), 3)
 
         # Remove one rule
+        mock_run.side_effect = [
+            MagicMock(
+                returncode=0,
+                stdout='tcp dport 80 accept comment "allow_http" # handle 44',
+            ),
+            MagicMock(returncode=0),
+            MagicMock(returncode=0),
+        ]
         self.assertTrue(backend.remove_rule("allow_http"))
         self.assertEqual(len(backend.rules), 2)
 

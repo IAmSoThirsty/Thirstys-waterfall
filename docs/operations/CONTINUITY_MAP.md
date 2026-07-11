@@ -181,6 +181,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\firewalls\packet_filtering.py tests\test_packet_filtering.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the packet-filter IP matching change: 0 findings.
 - `python -m pytest -q` passed after the packet-filter IP matching change: 407 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the packet-filter IP matching change.
+- Replaced nftables local-only rule removal with comment-tagged rule creation, handle lookup, and OS rule deletion.
+- `python -m pytest tests\test_firewall_backends.py -q` passed after the nftables handle-removal change: 37 tests passed.
+- `flake8 thirstys_waterfall\firewalls\backends.py tests\test_firewall_backends.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the nftables handle-removal change: 0 findings.
+- `python -m pytest -q` passed after the nftables handle-removal change: 409 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the nftables handle-removal change.
 
 ## Known Current Problems
 
@@ -201,6 +206,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Hardware and cloud firewalls no longer report hardware/cloud packet protection without configured backends, but no real hardware firewall backend or cloud firewall backend is bundled or configured.
 - Encrypted navigation no longer reports empty history-search results from a production substitute when no encrypted-search backend is configured, but no real encrypted-navigation search backend is bundled or configured.
 - Packet-filtering firewall now uses standard-library IPv4/IPv6 exact and CIDR matching instead of simplified string matching.
+- Nftables rule removal now looks up and deletes concrete OS rule handles instead of only updating local tracking state.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
