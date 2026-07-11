@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thirstys-waterfall"
-version = "1.0.1"
+version = "1.0.2"
 description = "Integrated privacy-first system with 8 firewalls, built-in VPN, and incognito browser"
 readme = "README.md"
 license = "MIT"
