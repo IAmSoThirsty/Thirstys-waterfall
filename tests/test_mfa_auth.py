@@ -21,6 +21,7 @@ from thirstys_waterfall.security.mfa_auth import (
     CertificateProvider,
     BiometricProvider,
     generate_totp_secret,
+    generate_qr_code_data,
 )
 
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -389,6 +390,98 @@ class TestBiometricProvider(unittest.TestCase):
 
         success = self.provider.revoke(self.user_id, template_id)
         self.assertTrue(success)
+
+    def test_biometric_exact_hash_fallback(self):
+        """Test built-in biometric verification requires exact template match"""
+        credential_data = {
+            "type": BiometricType.FINGERPRINT.value,
+            "template": "test_fingerprint_template_data",
+            "quality_score": 0.95,
+        }
+        self.provider.enroll(self.user_id, credential_data)
+        context = AuthContext(
+            user_id=self.user_id,
+            session_id="session",
+            ip_address="127.0.0.1",
+            user_agent="Test",
+        )
+
+        self.assertTrue(
+            self.provider.authenticate(
+                {
+                    "type": BiometricType.FINGERPRINT.value,
+                    "sample": "test_fingerprint_template_data",
+                },
+                context,
+            )
+        )
+        self.assertEqual(self.provider.last_match_result["status"], "exact_hash_match")
+
+        self.assertFalse(
+            self.provider.authenticate(
+                {
+                    "type": BiometricType.FINGERPRINT.value,
+                    "sample": "different_fingerprint_sample",
+                },
+                context,
+            )
+        )
+        self.assertEqual(
+            self.provider.last_match_result["status"], "no_exact_hash_match"
+        )
+
+    def test_biometric_matcher_backend(self):
+        """Test configured biometric matcher supplies non-exact match evidence"""
+
+        class Matcher:
+            def match(
+                self, stored_template_hash, sample_hash, biometric_type, user_id
+            ):
+                return {
+                    "status": "device_match",
+                    "score": 0.97,
+                    "device": "test-sensor",
+                    "user_id": user_id,
+                }
+
+        provider = BiometricProvider(biometric_matcher=Matcher())
+        provider.enroll(
+            self.user_id,
+            {
+                "type": BiometricType.FINGERPRINT.value,
+                "template": "template",
+                "quality_score": 0.95,
+            },
+        )
+        context = AuthContext(
+            user_id=self.user_id,
+            session_id="session",
+            ip_address="127.0.0.1",
+            user_agent="Test",
+        )
+
+        self.assertTrue(
+            provider.authenticate(
+                {
+                    "type": BiometricType.FINGERPRINT.value,
+                    "sample": "different_sample",
+                },
+                context,
+            )
+        )
+        self.assertEqual(provider.last_match_result["matcher"], "Matcher")
+        self.assertEqual(provider.last_match_result["device"], "test-sensor")
+
+
+class TestProvisioningPayload(unittest.TestCase):
+    """Test TOTP provisioning payload helpers"""
+
+    def test_generate_qr_code_data_returns_base64_uri_payload(self):
+        uri = "otpauth://totp/Thirstys:test?secret=ABC"
+
+        encoded = generate_qr_code_data(uri)
+
+        self.assertEqual(base64.b64decode(encoded).decode("utf-8"), uri)
 
 
 class TestAuthLevelCalculation(unittest.TestCase):

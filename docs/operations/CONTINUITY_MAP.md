@@ -225,6 +225,13 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\wifi_network\mesh_networking.py tests\test_mesh_networking.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the mesh networking backend/routing change: 0 findings.
 - `python -m pytest -q` passed after the mesh networking backend/routing change: 444 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the mesh networking backend/routing change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
+- Reworded MFA FIDO2 signature verification to state the built-in verifier's DER-encoded RSA/ECDSA scope instead of implying full WebAuthn/COSE coverage.
+- Replaced biometric similarity substitute behavior with an exact-hash fallback plus optional biometric matcher backend evidence.
+- Reworded the TOTP provisioning helper so it reports a base64 provisioning URI payload, not generated QR image data.
+- `python -m pytest tests\test_mfa_auth.py -q` passed after the MFA evidence-language change: 31 tests passed.
+- `flake8 thirstys_waterfall\security\mfa_auth.py tests\test_mfa_auth.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the MFA evidence-language change: 0 findings.
+- `python -m pytest -q` passed after the MFA evidence-language change: 447 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the MFA evidence-language change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
 
 ## Known Current Problems
 
@@ -244,6 +251,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - WiFi security no longer reports deauth monitoring, evil-twin detection, or 802.11r fast-roaming configuration success without a configured WiFi security backend. PMF-only deauth protection is reported separately from active monitoring evidence.
 - WiFi controller now parses platform scan output into network records, but actual connect/disconnect/channel optimization still require a configured WiFi backend.
 - Mesh networking now calculates local routes and bottlenecks from known topology, but actual mesh interface creation and peer discovery still require a configured mesh backend.
+- MFA FIDO2 verification is limited to DER-encoded RSA/ECDSA public keys in the built-in verifier; full WebAuthn COSE attestation/verification, native biometric matching, and image QR generation still require configured or future backends.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.

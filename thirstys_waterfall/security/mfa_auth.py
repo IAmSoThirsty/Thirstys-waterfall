@@ -495,10 +495,8 @@ class FIDO2Provider(AuthenticationProvider):
     def _verify_signature(
         self, public_key_bytes: bytes, data: bytes, signature: bytes
     ) -> bool:
-        """Verify FIDO2 signature"""
+        """Verify signatures for DER-encoded RSA/ECDSA public keys."""
         try:
-            # In production, decode COSE key format and verify with appropriate algorithm
-            # This is a simplified verification
             public_key = serialization.load_der_public_key(
                 public_key_bytes, backend=default_backend()
             )
@@ -507,6 +505,9 @@ class FIDO2Provider(AuthenticationProvider):
                 public_key.verify(signature, data, padding.PKCS1v15(), hashes.SHA256())
             elif isinstance(public_key, ec.EllipticCurvePublicKey):
                 public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
+            else:
+                self.logger.warning("Unsupported FIDO2 public key type")
+                return False
 
             return True
 
@@ -772,9 +773,11 @@ class BiometricProvider(AuthenticationProvider):
     Supports fingerprint, face recognition, and behavioral biometrics.
     """
 
-    def __init__(self):
+    def __init__(self, biometric_matcher: Optional[Any] = None):
         self.logger = logging.getLogger(__name__)
         self._templates: Dict[str, List[BiometricTemplate]] = {}
+        self.biometric_matcher = biometric_matcher
+        self.last_match_result: Optional[Dict[str, Any]] = None
         self._lock = threading.Lock()
 
     def enroll(self, user_id: str, credential_data: Dict[str, Any]) -> bool:
@@ -825,10 +828,11 @@ class BiometricProvider(AuthenticationProvider):
                     if template.biometric_type != biometric_type:
                         continue
 
-                    # Calculate similarity (simplified - production would use
-                    # sophisticated biometric matching algorithms)
                     similarity = self._calculate_similarity(
-                        template.template_hash, sample_hash
+                        template.template_hash,
+                        sample_hash,
+                        biometric_type=biometric_type,
+                        user_id=context.user_id,
                     )
 
                     if similarity >= 0.95:  # 95% match threshold
@@ -861,12 +865,52 @@ class BiometricProvider(AuthenticationProvider):
 
             return False
 
-    def _calculate_similarity(self, hash1: bytes, hash2: bytes) -> float:
+    def _calculate_similarity(
+        self,
+        hash1: bytes,
+        hash2: bytes,
+        biometric_type: Optional[BiometricType] = None,
+        user_id: Optional[str] = None,
+    ) -> float:
         """Calculate similarity between biometric hashes"""
-        # Simplified similarity calculation
-        # Production systems would use sophisticated matching algorithms
-        matching_bytes = sum(a == b for a, b in zip(hash1, hash2))
-        return matching_bytes / len(hash1)
+        matcher = getattr(self.biometric_matcher, "match", None)
+        if callable(matcher):
+            result = matcher(
+                stored_template_hash=hash1,
+                sample_hash=hash2,
+                biometric_type=biometric_type,
+                user_id=user_id,
+            )
+            if isinstance(result, (int, float)):
+                score = float(result)
+                self.last_match_result = {
+                    "status": "matched",
+                    "matcher": self.biometric_matcher.__class__.__name__,
+                    "score": score,
+                }
+                return score
+
+            if not isinstance(result, dict):
+                raise TypeError("Biometric matcher must return a score or dict")
+
+            if "score" not in result or not isinstance(
+                result["score"], (int, float)
+            ):
+                raise ValueError("Biometric matcher result must include numeric score")
+
+            self.last_match_result = dict(result)
+            self.last_match_result.setdefault(
+                "matcher", self.biometric_matcher.__class__.__name__
+            )
+            return float(result["score"])
+
+        score = 1.0 if hmac.compare_digest(hash1, hash2) else 0.0
+        self.last_match_result = {
+            "status": "exact_hash_match" if score == 1.0 else "no_exact_hash_match",
+            "matcher": None,
+            "score": score,
+        }
+        return score
 
 
 class MFAAuthenticator:
@@ -1365,16 +1409,14 @@ def generate_totp_secret() -> bytes:
 
 def generate_qr_code_data(provisioning_uri: str) -> str:
     """
-    Generate QR code data for TOTP provisioning.
+    Generate transport-safe TOTP provisioning payload data.
 
     Args:
         provisioning_uri: otpauth:// URI
 
     Returns:
-        Base64-encoded QR code data
+        Base64-encoded provisioning URI. This is not an image QR code.
     """
-    # In production, this would generate actual QR code image
-    # For now, return the URI itself
     return base64.b64encode(provisioning_uri.encode()).decode("utf-8")
 
 
