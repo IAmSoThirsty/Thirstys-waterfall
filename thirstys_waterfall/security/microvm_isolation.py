@@ -211,6 +211,7 @@ class MicroVMInstance:
         network_config: Optional[VMNetworkConfig] = None,
         kernel_path: Optional[str] = None,
         rootfs_path: Optional[str] = None,
+        platform_backend: Optional[Any] = None,
     ):
         self.logger = logging.getLogger(__name__)
 
@@ -224,6 +225,8 @@ class MicroVMInstance:
         self.network_config = network_config or VMNetworkConfig()
         self.kernel_path = kernel_path or self._get_default_kernel_path()
         self.rootfs_path = rootfs_path or self._get_default_rootfs_path()
+        self.platform_backend = platform_backend
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
 
         # Runtime state
         self._state = VMState.CREATED
@@ -248,13 +251,72 @@ class MicroVMInstance:
 
     def _get_default_kernel_path(self) -> str:
         """Get default kernel path for MicroVM"""
-        # In production: Point to actual microvm kernel
         return "/var/lib/thirstys/kernels/vmlinux-microvm"
 
     def _get_default_rootfs_path(self) -> str:
         """Get default rootfs path for MicroVM"""
-        # In production: Point to actual minimal rootfs image
         return "/var/lib/thirstys/images/rootfs.ext4"
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
+
+    def _backend_call(self, method_name: str, **kwargs: Any) -> Optional[Any]:
+        method = getattr(self.platform_backend, method_name, None)
+        if not callable(method):
+            return None
+        return method(vm=self, **kwargs)
+
+    def _validate_boot_assets(self) -> bool:
+        """Validate kernel and root filesystem evidence before launch."""
+        backend_result = self._backend_call(
+            "validate_boot_assets",
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+        )
+        if backend_result is not None:
+            if isinstance(backend_result, dict):
+                status = backend_result.get("status", "available")
+                self.operation_evidence["boot_assets"] = dict(backend_result)
+                return status == "available"
+            accepted = bool(backend_result)
+            self._record_evidence(
+                "boot_assets",
+                "available" if accepted else "unavailable",
+                source="platform_backend",
+            )
+            return accepted
+
+        missing = [
+            path
+            for path in (self.kernel_path, self.rootfs_path)
+            if not os.path.isfile(path)
+        ]
+        if missing:
+            self._record_evidence(
+                "boot_assets",
+                "unavailable",
+                reason="missing_boot_assets",
+                missing_paths=missing,
+            )
+            self.logger.error(
+                "MicroVM boot assets missing for VM %s: %s",
+                self.vm_id,
+                ", ".join(missing),
+            )
+            return False
+
+        self._record_evidence(
+            "boot_assets",
+            "available",
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+            source="filesystem",
+        )
+        return True
 
     def start(self) -> bool:
         """Start the MicroVM instance"""
@@ -275,6 +337,10 @@ class MicroVMInstance:
             self._state = VMState.STARTING
 
             try:
+                if not self._validate_boot_assets():
+                    self._state = VMState.ERROR
+                    return False
+
                 # Create configuration
                 if not self._create_vm_config():
                     self._state = VMState.ERROR
@@ -282,7 +348,9 @@ class MicroVMInstance:
 
                 # Setup networking
                 if not self._setup_networking():
-                    self.logger.warning(f"Network setup failed for VM {self.vm_id}")
+                    self.logger.error(f"Network setup failed for VM {self.vm_id}")
+                    self._state = VMState.ERROR
+                    return False
 
                 # Launch VM process
                 if not self._launch_vm_process():
@@ -399,17 +467,45 @@ class MicroVMInstance:
         try:
             if self.network_config.isolated_network:
                 # No external network access
+                self._record_evidence(
+                    "network_setup",
+                    "isolated",
+                    reason="external_network_not_requested",
+                )
                 self.logger.info(f"VM {self.vm_id} configured with isolated network")
                 return True
 
             # Create TAP device
             tap_name = self.network_config.tap_device or f"tap_{self.vm_id[:8]}"
+            backend_result = self._backend_call("setup_networking", tap_name=tap_name)
+            if backend_result is None:
+                self._record_evidence(
+                    "network_setup",
+                    "unavailable",
+                    reason="network_backend_not_configured",
+                    tap_device=tap_name,
+                )
+                return False
 
-            # In production: Use proper network namespace and bridge setup
-            # Commands would be:
-            # ip tuntap add dev {tap_name} mode tap
-            # ip link set {tap_name} up
-            # ip link set {tap_name} master br0
+            if isinstance(backend_result, dict):
+                self.operation_evidence["network_setup"] = dict(backend_result)
+                if backend_result.get("status") not in {"applied", "available"}:
+                    return False
+            elif not backend_result:
+                self._record_evidence(
+                    "network_setup",
+                    "unavailable",
+                    reason="network_backend_rejected_setup",
+                    tap_device=tap_name,
+                )
+                return False
+            else:
+                self._record_evidence(
+                    "network_setup",
+                    "applied",
+                    source="platform_backend",
+                    tap_device=tap_name,
+                )
 
             self.network_config.tap_device = tap_name
             self.logger.info(f"Network setup completed for VM {self.vm_id}")
@@ -570,7 +666,24 @@ class MicroVMInstance:
 
             self.logger.info(f"Pausing MicroVM {self.vm_id}")
 
-            # In production: Send pause command via QMP/Firecracker API
+            backend_result = self._backend_call("pause")
+            if backend_result is None:
+                self._record_evidence(
+                    "pause",
+                    "unavailable",
+                    reason="control_backend_not_configured",
+                )
+                return False
+            if isinstance(backend_result, dict):
+                self.operation_evidence["pause"] = dict(backend_result)
+                if backend_result.get("status") not in {"paused", "applied"}:
+                    return False
+            elif not backend_result:
+                self._record_evidence("pause", "unavailable")
+                return False
+            else:
+                self._record_evidence("pause", "paused", source="platform_backend")
+
             self._state = VMState.PAUSED
             return True
 
@@ -582,7 +695,24 @@ class MicroVMInstance:
 
             self.logger.info(f"Resuming MicroVM {self.vm_id}")
 
-            # In production: Send resume command via QMP/Firecracker API
+            backend_result = self._backend_call("resume")
+            if backend_result is None:
+                self._record_evidence(
+                    "resume",
+                    "unavailable",
+                    reason="control_backend_not_configured",
+                )
+                return False
+            if isinstance(backend_result, dict):
+                self.operation_evidence["resume"] = dict(backend_result)
+                if backend_result.get("status") not in {"running", "applied"}:
+                    return False
+            elif not backend_result:
+                self._record_evidence("resume", "unavailable")
+                return False
+            else:
+                self._record_evidence("resume", "running", source="platform_backend")
+
             self._state = VMState.RUNNING
             return True
 
@@ -590,8 +720,33 @@ class MicroVMInstance:
         """Cleanup networking resources"""
         try:
             if self.network_config.tap_device:
-                # In production: Remove TAP device
-                # ip link delete {self.network_config.tap_device}
+                backend_result = self._backend_call(
+                    "cleanup_networking", tap_device=self.network_config.tap_device
+                )
+                if backend_result is None:
+                    self._record_evidence(
+                        "network_cleanup",
+                        "unavailable",
+                        reason="network_backend_not_configured",
+                        tap_device=self.network_config.tap_device,
+                    )
+                    return
+                if isinstance(backend_result, dict):
+                    self.operation_evidence["network_cleanup"] = dict(backend_result)
+                elif backend_result:
+                    self._record_evidence(
+                        "network_cleanup",
+                        "removed",
+                        source="platform_backend",
+                        tap_device=self.network_config.tap_device,
+                    )
+                else:
+                    self._record_evidence(
+                        "network_cleanup",
+                        "unavailable",
+                        reason="network_backend_rejected_cleanup",
+                        tap_device=self.network_config.tap_device,
+                    )
                 self.logger.debug(f"Cleaned up network for VM {self.vm_id}")
         except Exception as e:
             self.logger.error(f"Network cleanup failed: {e}")
@@ -629,13 +784,29 @@ class MicroVMInstance:
             if not self._process or not self._pid:
                 return
 
-            # In production: Read from /proc/{pid}/* or use psutil
-            # For now, simulate basic metrics
+            backend_result = self._backend_call("collect_metrics", pid=self._pid)
+            if isinstance(backend_result, VMHealthMetrics):
+                self._health_metrics = backend_result
+                self._record_evidence("health_metrics", "collected")
+                return
+            if isinstance(backend_result, dict):
+                for field_name in VMHealthMetrics.__dataclass_fields__:
+                    if field_name in backend_result:
+                        setattr(
+                            self._health_metrics, field_name, backend_result[field_name]
+                        )
+                self._record_evidence("health_metrics", "collected")
+                return
 
             self._health_metrics.uptime_seconds = (
                 time.time() - self._start_time if self._start_time else 0.0
             )
             self._health_metrics.last_health_check = time.time()
+            self._record_evidence(
+                "health_metrics",
+                "process_liveness_only",
+                reason="metrics_backend_not_configured",
+            )
 
             # Check if process is alive
             if self._process.poll() is not None:
@@ -697,6 +868,7 @@ class MicroVMInstance:
                 "cpu_usage": self._health_metrics.cpu_usage_percent,
                 "memory_usage_mb": self._health_metrics.memory_usage_mb,
             },
+            "operation_evidence": dict(self.operation_evidence),
         }
 
 
@@ -729,6 +901,7 @@ class MicroVMIsolationManager:
             memory_mb=self.config.get("default_memory_mb", 512),
             disk_size_mb=self.config.get("default_disk_size_mb", 1024),
         )
+        self._platform_backend = self.config.get("platform_backend")
 
         # Thread safety
         self._lock = threading.Lock()
@@ -774,6 +947,7 @@ class MicroVMIsolationManager:
         backend: Optional[VMBackend] = None,
         network_config: Optional[VMNetworkConfig] = None,
         vm_id: Optional[str] = None,
+        platform_backend: Optional[Any] = None,
     ) -> Optional[str]:
         """
         Create a new MicroVM instance.
@@ -784,6 +958,7 @@ class MicroVMIsolationManager:
             backend: VM backend (defaults to configured backend)
             network_config: Network configuration
             vm_id: Optional VM identifier
+            platform_backend: Optional platform evidence backend
 
         Returns:
             VM ID if successful, None otherwise
@@ -814,6 +989,7 @@ class MicroVMIsolationManager:
                     isolation_type=isolation_type,
                     resource_limits=resource_limits,
                     network_config=network_config,
+                    platform_backend=platform_backend or self._platform_backend,
                 )
 
                 self._vms[vm_id] = vm
