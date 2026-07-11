@@ -1,7 +1,7 @@
 """WiFi Security Manager - God Tier Security with WPA3, OWE, SAE, and PMF"""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from enum import Enum
 from dataclasses import dataclass
 
@@ -38,14 +38,17 @@ class WiFiSecurityManager:
     Enforces God Tier security standards and blocks deprecated protocols.
     """
 
-    def __init__(self):
+    def __init__(self, security_backend: Optional[Any] = None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.current_security: Optional[WiFiSecurityConfig] = None
+        self.security_backend = security_backend
 
         # Security monitoring
         self.detected_threats: List[str] = []
         self.deauth_attack_count = 0
         self.evil_twin_detected = False
+        self.fast_roaming_enabled = False
+        self.last_security_checks: Dict[str, Dict[str, Any]] = {}
 
     def configure_security(self, config: WiFiSecurityConfig) -> bool:
         """
@@ -159,16 +162,58 @@ class WiFiSecurityManager:
         Returns:
             True if attack detected
         """
-        # Would monitor for excessive deauth frames
-        # PMF (Protected Management Frames) prevents this attack
+        detector = getattr(self.security_backend, "detect_deauth_attack", None)
 
-        if self.current_security and self.current_security.enable_pmf:
+        if (
+            self.current_security
+            and self.current_security.enable_pmf
+            and not callable(detector)
+        ):
             self.logger.debug("PMF active - deauth attacks prevented")
+            self._record_security_check(
+                "deauth_attack",
+                {
+                    "status": "protected_by_pmf",
+                    "attack_detected": False,
+                    "backend": None,
+                    "evidence": "Protected Management Frames are enabled",
+                },
+            )
             return False
 
-        # If PMF not active, vulnerable to deauth attacks
-        self.logger.warning("PMF not active - vulnerable to deauth attacks")
-        return False
+        if not callable(detector):
+            self.logger.warning(
+                "PMF not active and no WiFi security backend is configured "
+                "for deauth monitoring"
+            )
+            self._record_security_check(
+                "deauth_attack",
+                {
+                    "status": "unavailable",
+                    "attack_detected": None,
+                    "backend": None,
+                    "error": (
+                        "WiFi security backend is not configured for "
+                        "deauth monitoring"
+                    ),
+                },
+            )
+            return False
+
+        result = detector(current_security=self.current_security)
+        normalized = self._normalize_bool_or_dict_result(
+            result, "attack_detected", "deauth monitoring"
+        )
+        normalized.setdefault("status", "checked")
+        normalized["backend"] = self.security_backend.__class__.__name__
+        self._record_security_check("deauth_attack", normalized)
+
+        attack_detected = normalized["attack_detected"]
+        if attack_detected:
+            self.deauth_attack_count += 1
+            self._add_detected_threat("deauth_attack")
+
+        return attack_detected
 
     def detect_evil_twin(self, ssid: str, bssid: str) -> bool:
         """
@@ -181,12 +226,45 @@ class WiFiSecurityManager:
         Returns:
             True if evil twin suspected
         """
-        # Would check for:
-        # - Multiple APs with same SSID but different BSSID
-        # - Signal strength anomalies
-        # - Security downgrade attacks (WPA3 -> WPA2)
+        detector = getattr(self.security_backend, "detect_evil_twin", None)
+        if not callable(detector):
+            self.logger.warning(
+                "No WiFi security backend is configured for evil-twin checks"
+            )
+            self._record_security_check(
+                "evil_twin",
+                {
+                    "status": "unavailable",
+                    "evil_twin_detected": None,
+                    "backend": None,
+                    "error": (
+                        "WiFi security backend is not configured for "
+                        "evil-twin checks"
+                    ),
+                    "ssid": ssid,
+                    "bssid": bssid,
+                },
+            )
+            return False
 
-        return False
+        result = detector(
+            ssid=ssid, bssid=bssid, current_security=self.current_security
+        )
+        normalized = self._normalize_bool_or_dict_result(
+            result, "evil_twin_detected", "evil-twin detection"
+        )
+        normalized.setdefault("status", "checked")
+        normalized["backend"] = self.security_backend.__class__.__name__
+        normalized.setdefault("ssid", ssid)
+        normalized.setdefault("bssid", bssid)
+        self._record_security_check("evil_twin", normalized)
+
+        evil_twin_detected = normalized["evil_twin_detected"]
+        self.evil_twin_detected = evil_twin_detected
+        if evil_twin_detected:
+            self._add_detected_threat("evil_twin")
+
+        return evil_twin_detected
 
     def enable_fast_roaming(self) -> bool:
         """
@@ -197,17 +275,57 @@ class WiFiSecurityManager:
         """
         try:
             self.logger.info("Enabling 802.11r Fast BSS Transition")
-            # Would configure 802.11r on WiFi adapter
-            return True
+            enabler = getattr(self.security_backend, "enable_fast_roaming", None)
+            if not callable(enabler):
+                self.logger.error(
+                    "No WiFi security backend is configured for 802.11r"
+                )
+                self.fast_roaming_enabled = False
+                self._record_security_check(
+                    "fast_roaming",
+                    {
+                        "status": "unavailable",
+                        "enabled": False,
+                        "backend": None,
+                        "error": (
+                            "WiFi security backend is not configured for "
+                            "802.11r Fast BSS Transition"
+                        ),
+                    },
+                )
+                return False
+
+            result = enabler(current_security=self.current_security)
+            normalized = self._normalize_bool_or_dict_result(
+                result, "enabled", "fast roaming configuration"
+            )
+            normalized.setdefault("status", "configured")
+            normalized["backend"] = self.security_backend.__class__.__name__
+            self._record_security_check("fast_roaming", normalized)
+
+            self.fast_roaming_enabled = normalized["enabled"]
+            return self.fast_roaming_enabled
 
         except Exception as e:
             self.logger.error(f"Fast roaming enable failed: {e}")
+            self.fast_roaming_enabled = False
+            self._record_security_check(
+                "fast_roaming",
+                {"status": "error", "enabled": False, "error": str(e)},
+            )
             return False
 
     def get_security_status(self) -> Dict:
         """Get current security status"""
         if not self.current_security:
-            return {"configured": False, "security_level": "NONE"}
+            return {
+                "configured": False,
+                "security_level": "NONE",
+                "backend_configured": self.security_backend is not None,
+                "backend": self._backend_name(),
+                "fast_roaming_enabled": self.fast_roaming_enabled,
+                "last_security_checks": dict(self.last_security_checks),
+            }
 
         # Determine security level
         if self.current_security.protocol in [WiFiSecurityProtocol.WPA3_ENTERPRISE]:
@@ -230,6 +348,10 @@ class WiFiSecurityManager:
             "transition_mode": self.current_security.transition_mode,
             "detected_threats": self.detected_threats,
             "deauth_attack_protected": self.current_security.enable_pmf,
+            "backend_configured": self.security_backend is not None,
+            "backend": self._backend_name(),
+            "fast_roaming_enabled": self.fast_roaming_enabled,
+            "last_security_checks": dict(self.last_security_checks),
         }
 
     def audit_security(self) -> Dict:
@@ -293,4 +415,39 @@ class WiFiSecurityManager:
                 WiFiSecurityProtocol.WPA3_ENTERPRISE,
             ]
             and self.current_security.enable_pmf,
+            "backend_configured": self.security_backend is not None,
+            "last_security_checks": dict(self.last_security_checks),
         }
+
+    def _record_security_check(self, check_name: str, result: Dict[str, Any]) -> None:
+        """Record latest evidence for a security check."""
+        self.last_security_checks[check_name] = result
+
+    def _normalize_bool_or_dict_result(
+        self, result: Any, bool_field: str, operation: str
+    ) -> Dict[str, Any]:
+        """Normalize backend bool/dict result and fail loudly on invalid output."""
+        if isinstance(result, bool):
+            return {bool_field: result}
+
+        if not isinstance(result, dict):
+            raise TypeError(
+                f"WiFi security backend {operation} must return bool or dict"
+            )
+
+        if bool_field not in result or not isinstance(result[bool_field], bool):
+            raise ValueError(
+                f"WiFi security backend {operation} result must include "
+                f"boolean {bool_field!r}"
+            )
+
+        return dict(result)
+
+    def _add_detected_threat(self, threat_name: str) -> None:
+        if threat_name not in self.detected_threats:
+            self.detected_threats.append(threat_name)
+
+    def _backend_name(self) -> Optional[str]:
+        if self.security_backend is None:
+            return None
+        return self.security_backend.__class__.__name__
