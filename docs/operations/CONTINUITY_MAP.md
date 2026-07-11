@@ -125,6 +125,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\media_downloader\format_converter.py tests\test_format_converter.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the format-converter backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the format-converter backend-gating change: 354 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the format-converter backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced `IncognitoBrowser.download_file()` silent production-substitute behavior with a fail-closed browser-download-backend contract.
+- `python -m pytest tests\test_browser.py -q` passed after the browser-download backend-gating change: 38 tests passed.
+- `flake8 thirstys_waterfall\browser\browser_engine.py tests\test_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the browser-download backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the browser-download backend-gating change: 357 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the browser-download backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -138,6 +143,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
+- Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
 - Remote browser no longer fabricates remote server/session command success without a backend, but no real remote-browser transport backend is bundled or configured.

@@ -19,9 +19,10 @@ class IncognitoBrowser:
     end-to-end browser-data encryption remains evidence-gated.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], download_backend: Optional[Any] = None):
         self.config = config
         self.logger = logging.getLogger(__name__)
+        self.download_backend = download_backend
 
         # Privacy settings
         self.incognito_mode = config.get("incognito_mode", True)
@@ -236,20 +237,44 @@ class IncognitoBrowser:
             self.logger.warning(f"Extension not whitelisted: {extension_id}")
             return False
 
-    def download_file(self, url: str, tab_id: str) -> Optional[str]:
+    def download_file(self, url: str, tab_id: str) -> Dict[str, Any]:
         """
         Download file with isolation.
 
         Returns:
-            Download path if successful
+            Structured download result.
         """
         if not self._download_isolation:
             self.logger.warning("Download isolation not enabled")
 
-        # Downloads are isolated and scanned
-        self.logger.info(f"Downloading file: {url}")
-        # In production, would download to isolated directory
-        return None
+        self.logger.info("Downloading file through configured browser backend")
+
+        if self.download_backend is None:
+            return {
+                "status": "unavailable",
+                "error": "Browser download backend is not configured",
+                "url": url,
+                "tab_id": tab_id,
+                "download_isolated": self._download_isolation,
+            }
+
+        download_file = getattr(self.download_backend, "download_file", None)
+        if not callable(download_file):
+            raise RuntimeError("Browser download backend does not implement download_file")
+
+        result = download_file(
+            url=url,
+            tab_id=tab_id,
+            download_isolated=self._download_isolation,
+        )
+        if not isinstance(result, dict):
+            raise RuntimeError("Browser download backend returned invalid result")
+
+        result.setdefault("status", "unknown")
+        result.setdefault("tab_id", tab_id)
+        result.setdefault("download_isolated", self._download_isolation)
+        result.setdefault("backend", type(self.download_backend).__name__)
+        return result
 
     def get_fingerprint_protection_status(self) -> Dict[str, Any]:
         """Get fingerprint protection status"""
@@ -298,4 +323,5 @@ class IncognitoBrowser:
             "native_engine": True,
             "native_engine_accepted": False,
             "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
+            "download_backend_configured": self.download_backend is not None,
         }

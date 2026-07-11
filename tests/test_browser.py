@@ -259,6 +259,29 @@ class TestEncryptedNavigationHistory(unittest.TestCase):
         self.assertFalse(self.nav_history._active)
 
 
+class FakeBrowserDownloadBackend:
+    def __init__(self):
+        self.calls = []
+
+    def download_file(self, url: str, tab_id: str, download_isolated: bool):
+        self.calls.append(
+            {
+                "url": url,
+                "tab_id": tab_id,
+                "download_isolated": download_isolated,
+            }
+        )
+        return {
+            "status": "completed",
+            "download_path": f"/isolated/{tab_id}/example.bin",
+        }
+
+
+class InvalidBrowserDownloadBackend:
+    def download_file(self, **kwargs):
+        return "not-a-dict"
+
+
 class TestIncognitoBrowser(unittest.TestCase):
     """Test incognito browser engine"""
 
@@ -405,6 +428,49 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.assertFalse(status["native_engine_accepted"])
         self.assertTrue(status["searches_encrypted"])
         self.assertTrue(status["navigation_encrypted"])
+        self.assertFalse(status["download_backend_configured"])
+
+    def test_download_without_backend_returns_unavailable_not_silent_none(self):
+        """Test browser downloads fail closed when no backend is configured."""
+        self.browser.start()
+
+        tab_id = self.browser.create_tab()
+        result = self.browser.download_file("https://example.invalid/file.bin", tab_id)
+
+        self.assertEqual(result["status"], "unavailable")
+        self.assertEqual(result["error"], "Browser download backend is not configured")
+        self.assertEqual(result["tab_id"], tab_id)
+        self.assertTrue(result["download_isolated"])
+
+    def test_download_delegates_to_configured_backend(self):
+        """Test browser downloads use configured backend results."""
+        backend = FakeBrowserDownloadBackend()
+        browser = IncognitoBrowser(self.config, download_backend=backend)
+        self.addCleanup(lambda: browser._active and browser.stop())
+        browser.start()
+
+        tab_id = browser.create_tab()
+        result = browser.download_file("https://example.invalid/file.bin", tab_id)
+
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["download_path"], f"/isolated/{tab_id}/example.bin")
+        self.assertEqual(result["backend"], "FakeBrowserDownloadBackend")
+        self.assertTrue(result["download_isolated"])
+        self.assertEqual(len(backend.calls), 1)
+        self.assertEqual(backend.calls[0]["tab_id"], tab_id)
+
+    def test_download_backend_result_must_be_mapping(self):
+        """Test invalid browser download backend results fail loudly."""
+        browser = IncognitoBrowser(
+            self.config,
+            download_backend=InvalidBrowserDownloadBackend(),
+        )
+        self.addCleanup(lambda: browser._active and browser.stop())
+        browser.start()
+
+        tab_id = browser.create_tab()
+        with self.assertRaisesRegex(RuntimeError, "returned invalid result"):
+            browser.download_file("https://example.invalid/file.bin", tab_id)
 
 
 class TestTabManager(unittest.TestCase):
