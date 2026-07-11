@@ -1,7 +1,7 @@
 """Privacy Auditor - Real-time privacy monitoring"""
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 
@@ -14,12 +14,18 @@ class PrivacyAuditor:
     def __init__(self, config: Dict[str, Any]):
         self.enabled = config.get("session_auditing", True)
         self.leak_auditing = config.get("leak_auditing", True)
+        self.leak_audit_backend = config.get("leak_audit_backend")
         self.logger = logging.getLogger(__name__)
         self._active = False
 
         self._audit_log: List[Dict[str, Any]] = []
         self._privacy_violations: List[Dict[str, Any]] = []
         self._leak_tests = []
+        self._last_leak_results: Dict[str, Optional[Dict[str, Any]]] = {
+            "dns": None,
+            "ipv6": None,
+            "webrtc": None,
+        }
 
     def start(self):
         """Start privacy auditor"""
@@ -77,9 +83,8 @@ class PrivacyAuditor:
         if not self.leak_auditing:
             return True
 
-        # Would perform actual DNS leak test
-        self.log_event("dns_leak_check", {"result": "no_leak"})
-        return True
+        result = self._run_leak_check("dns", "audit_dns_leak")
+        return bool(result.get("protected"))
 
     def audit_ipv6_leak(self) -> bool:
         """
@@ -91,9 +96,8 @@ class PrivacyAuditor:
         if not self.leak_auditing:
             return True
 
-        # Would perform actual IPv6 leak test
-        self.log_event("ipv6_leak_check", {"result": "no_leak"})
-        return True
+        result = self._run_leak_check("ipv6", "audit_ipv6_leak")
+        return bool(result.get("protected"))
 
     def audit_webrtc_leak(self) -> bool:
         """
@@ -105,9 +109,8 @@ class PrivacyAuditor:
         if not self.leak_auditing:
             return True
 
-        # Would check WebRTC configuration
-        self.log_event("webrtc_leak_check", {"result": "no_leak"})
-        return True
+        result = self._run_leak_check("webrtc", "audit_webrtc_leak")
+        return bool(result.get("protected"))
 
     def run_full_audit(self) -> Dict[str, Any]:
         """
@@ -122,6 +125,8 @@ class PrivacyAuditor:
             "webrtc_leak": self.audit_webrtc_leak(),
             "violations": len(self._privacy_violations),
             "events_logged": len(self._audit_log),
+            "leak_audit_backend_configured": self.leak_audit_backend is not None,
+            "leak_results": self._last_leak_results.copy(),
         }
 
         self.logger.info(f"Full privacy audit completed: {results}")
@@ -139,3 +144,36 @@ class PrivacyAuditor:
         """Clear audit logs"""
         self._audit_log.clear()
         self._privacy_violations.clear()
+
+    def _run_leak_check(self, leak_type: str, backend_method: str) -> Dict[str, Any]:
+        """Run a leak audit through a configured backend."""
+        event_type = f"{leak_type}_leak_check"
+        if self.leak_audit_backend is None:
+            result = {
+                "status": "unavailable",
+                "error": "Privacy leak audit backend is not configured",
+                "protected": False,
+                "leak_type": leak_type,
+            }
+            self._last_leak_results[leak_type] = result
+            self.log_event(event_type, result)
+            return result
+
+        check = getattr(self.leak_audit_backend, backend_method, None)
+        if not callable(check):
+            raise RuntimeError(
+                f"Privacy leak audit backend does not implement {backend_method}"
+            )
+
+        result = check()
+        if not isinstance(result, dict):
+            raise RuntimeError("Privacy leak audit backend returned invalid result")
+
+        result.setdefault("status", "verified")
+        if "protected" not in result:
+            result["protected"] = not bool(result.get("leak_detected", True))
+        result.setdefault("leak_type", leak_type)
+        result.setdefault("backend", type(self.leak_audit_backend).__name__)
+        self._last_leak_results[leak_type] = result
+        self.log_event(event_type, result)
+        return result

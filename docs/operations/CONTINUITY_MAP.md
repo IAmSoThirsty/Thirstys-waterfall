@@ -160,6 +160,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\network\advanced_stealth.py tests\test_advanced_stealth.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the advanced-stealth backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the advanced-stealth backend-gating change: 387 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the advanced-stealth backend-gating change.
+- Replaced privacy-auditor DNS/IPv6/WebRTC leak-check production substitutes with an evidence-reporting leak-audit-backend contract.
+- `python -m pytest tests\test_privacy_auditor.py -q` passed after the privacy-auditor backend-gating change: 4 tests passed.
+- `flake8 thirstys_waterfall\privacy\privacy_auditor.py tests\test_privacy_auditor.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the privacy-auditor backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the privacy-auditor backend-gating change: 391 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the privacy-auditor backend-gating change.
 
 ## Known Current Problems
 
@@ -176,6 +181,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Browser sandbox no longer reports policy enforcement or zero/within-limit resource usage without configured backends, but no real browser sandbox policy backend or resource monitor is bundled or configured.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
+- Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
