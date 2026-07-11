@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="thirstys-waterfall",
-    version="1.0.1",
+    version="1.0.2",
     author="Thirsty Security Team",
     author_email="security@thirstys.local",
     description="Integrated privacy-first system with 8 firewalls, built-in VPN, and incognito browser",
