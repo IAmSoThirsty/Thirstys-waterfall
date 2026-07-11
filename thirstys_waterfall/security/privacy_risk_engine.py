@@ -83,9 +83,18 @@ class PrivacyRiskEngine:
     - Predictive threat modeling
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        model_backend: Optional[Any] = None,
+        hardening_backend: Optional[Any] = None,
+    ):
         self.logger = logging.getLogger(__name__)
         self.config = config or {}
+        self._model_backend = model_backend or self.config.get("model_backend")
+        self._hardening_backend = hardening_backend or self.config.get(
+            "hardening_backend"
+        )
 
         # Risk analysis state
         self._current_risk_level = RiskLevel.MINIMAL
@@ -106,13 +115,15 @@ class PrivacyRiskEngine:
             level: [] for level in RiskLevel
         }
 
-        # AI model state (simplified - in production would use actual ML)
-        self._model_weights = self._initialize_model()
+        # Heuristic model state. A real ML model must be supplied as a backend.
+        self._model_weights = self._initialize_heuristic_model()
+        self._hardening_results: deque = deque(maxlen=1000)
+        self._learning_results: deque = deque(maxlen=1000)
 
         # Thread control
         self._active = False
         self._monitor_thread = None
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def start(self):
         """Start privacy risk monitoring"""
@@ -128,7 +139,7 @@ class PrivacyRiskEngine:
         )
         self._monitor_thread.start()
 
-        self.logger.info("Privacy Risk Engine active - AI monitoring engaged")
+        self.logger.info("Privacy Risk Engine active - heuristic monitoring engaged")
 
     def stop(self):
         """Stop privacy risk monitoring"""
@@ -138,9 +149,8 @@ class PrivacyRiskEngine:
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5.0)
 
-    def _initialize_model(self) -> Dict[str, float]:
-        """Initialize AI model weights for threat detection"""
-        # Simplified model - in production would load trained ML model
+    def _initialize_heuristic_model(self) -> Dict[str, float]:
+        """Initialize heuristic weights for threat detection."""
         return {
             "request_rate_weight": 0.2,
             "data_volume_weight": 0.15,
@@ -196,7 +206,22 @@ class PrivacyRiskEngine:
     def _classify_event(
         self, event_type: str, source: str, metadata: Dict[str, Any]
     ) -> Optional[ThreatEvent]:
-        """Classify event as potential threat using AI model"""
+        """Classify event as potential threat using configured model or heuristics."""
+        if self._model_backend is not None:
+            classify_event = getattr(self._model_backend, "classify_event", None)
+            if not callable(classify_event):
+                raise RuntimeError(
+                    "Privacy risk model backend does not implement classify_event"
+                )
+            threat = classify_event(
+                event_type=event_type,
+                source=source,
+                metadata=metadata.copy(),
+                metrics=self._snapshot_metrics(),
+            )
+            if threat is None or isinstance(threat, ThreatEvent):
+                return threat
+            raise RuntimeError("Privacy risk model backend returned invalid threat")
 
         # Check for known threat patterns
         if event_type == "auth_failure":
@@ -251,7 +276,7 @@ class PrivacyRiskEngine:
                 self._escalate_hardening(threat)
 
     def _analyze_behavior_patterns(self):
-        """Analyze behavior patterns for anomalies using AI"""
+        """Analyze behavior patterns for anomalies using heuristics."""
         with self._lock:
             current_time = time.time()
 
@@ -277,8 +302,24 @@ class PrivacyRiskEngine:
             self._behavior_profile.connection_patterns.append(connection_count)
 
     def _detect_anomalies(self):
-        """Detect anomalous behavior using AI model"""
+        """Detect anomalous behavior using configured model or heuristics."""
         with self._lock:
+            if self._model_backend is not None:
+                detect_anomalies = getattr(self._model_backend, "detect_anomalies", None)
+                if callable(detect_anomalies):
+                    threat = detect_anomalies(
+                        metrics=self._snapshot_metrics(),
+                        behavior_profile=self._behavior_profile,
+                    )
+                    if threat is None:
+                        return
+                    if not isinstance(threat, ThreatEvent):
+                        raise RuntimeError(
+                            "Privacy risk model backend returned invalid anomaly"
+                        )
+                    self._handle_threat(threat)
+                    return
+
             # Calculate anomaly score
             score = 0.0
 
@@ -382,35 +423,68 @@ class PrivacyRiskEngine:
 
         # Trigger hardening based on threat type
         if threat.threat_type == ThreatType.NETWORK_ATTACK:
-            self._harden_network_layer()
+            self._harden_network_layer(threat)
         elif threat.threat_type == ThreatType.BROWSER_EXPLOITATION:
-            self._harden_browser_layer()
+            self._harden_browser_layer(threat)
         elif threat.threat_type == ThreatType.DATA_EXFILTRATION:
-            self._harden_data_layer()
+            self._harden_data_layer(threat)
         elif threat.risk_level.value >= RiskLevel.CRITICAL.value:
-            self._harden_all_layers()
+            self._harden_all_layers(threat)
 
-    def _harden_network_layer(self):
+    def _harden_network_layer(self, threat: Optional[ThreatEvent] = None):
         """Harden network layer security"""
         self.logger.info("Hardening network layer")
-        # In production: Increase firewall strictness, enable additional filtering
+        return self._apply_hardening("network", threat)
 
-    def _harden_browser_layer(self):
+    def _harden_browser_layer(self, threat: Optional[ThreatEvent] = None):
         """Harden browser layer security"""
         self.logger.info("Hardening browser layer")
-        # In production: Enable stricter content policies, disable risky features
+        return self._apply_hardening("browser", threat)
 
-    def _harden_data_layer(self):
+    def _harden_data_layer(self, threat: Optional[ThreatEvent] = None):
         """Harden data layer security"""
         self.logger.info("Hardening data layer")
-        # In production: Increase encryption strength, limit data access
+        return self._apply_hardening("data", threat)
 
-    def _harden_all_layers(self):
+    def _harden_all_layers(self, threat: Optional[ThreatEvent] = None):
         """Maximum hardening across all layers"""
         self.logger.critical("MAXIMUM HARDENING ACTIVATED")
-        self._harden_network_layer()
-        self._harden_browser_layer()
-        self._harden_data_layer()
+        return [
+            self._harden_network_layer(threat),
+            self._harden_browser_layer(threat),
+            self._harden_data_layer(threat),
+        ]
+
+    def _apply_hardening(
+        self, layer: str, threat: Optional[ThreatEvent] = None
+    ) -> Dict[str, Any]:
+        """Apply hardening through configured backend or report unavailable."""
+        if self._hardening_backend is None:
+            result = {
+                "status": "unavailable",
+                "layer": layer,
+                "hardening_applied": False,
+                "error": "Privacy risk hardening backend is not configured",
+            }
+            self._hardening_results.append(result)
+            return result
+
+        harden_layer = getattr(self._hardening_backend, "harden_layer", None)
+        if not callable(harden_layer):
+            raise RuntimeError(
+                "Privacy risk hardening backend does not implement harden_layer"
+            )
+
+        result = harden_layer(layer=layer, threat=threat)
+        if not isinstance(result, dict):
+            raise RuntimeError("Privacy risk hardening backend returned invalid result")
+
+        result.setdefault("status", "applied")
+        result.setdefault("layer", layer)
+        result.setdefault("hardening_applied", result["status"] == "applied")
+        result.setdefault("backend", type(self._hardening_backend).__name__)
+        self._hardening_results.append(result)
+        return result
 
     def register_escalation_callback(self, risk_level: RiskLevel, callback: Callable):
         """Register callback to be triggered when risk reaches specified level"""
@@ -465,8 +539,23 @@ class PrivacyRiskEngine:
                     "learned_patterns": len(self._behavior_profile.request_patterns),
                 },
                 "ai_model": {
-                    "initialized": True,
+                    "initialized": self._model_backend is not None,
+                    "model_type": (
+                        type(self._model_backend).__name__
+                        if self._model_backend is not None
+                        else "heuristic"
+                    ),
+                    "backend_configured": self._model_backend is not None,
                     "weights": self._model_weights,
+                },
+                "hardening": {
+                    "backend_configured": self._hardening_backend is not None,
+                    "backend": (
+                        type(self._hardening_backend).__name__
+                        if self._hardening_backend is not None
+                        else None
+                    ),
+                    "last_results": list(self._hardening_results)[-10:],
                 },
             }
 
@@ -486,10 +575,32 @@ class PrivacyRiskEngine:
         self, event_type: str, metadata: Dict[str, Any], is_threat: bool
     ):
         """
-        Learn from classified events to improve detection (online learning).
-        In production, this would update ML model weights.
+        Learn from classified events to improve detection.
+
+        Delegates to a configured model backend when available. Without one,
+        only the local heuristic weights are adjusted.
         """
         with self._lock:
+            if self._model_backend is not None:
+                learn_from_event = getattr(self._model_backend, "learn_from_event", None)
+                if not callable(learn_from_event):
+                    raise RuntimeError(
+                        "Privacy risk model backend does not implement learn_from_event"
+                    )
+                result = learn_from_event(
+                    event_type=event_type,
+                    metadata=metadata.copy(),
+                    is_threat=is_threat,
+                )
+                if not isinstance(result, dict):
+                    raise RuntimeError(
+                        "Privacy risk model backend returned invalid learning result"
+                    )
+                result.setdefault("status", "learned")
+                result.setdefault("backend", type(self._model_backend).__name__)
+                self._learning_results.append(result)
+                return result
+
             # Update model based on feedback
             if is_threat:
                 # Increase weight for this event type
@@ -502,3 +613,21 @@ class PrivacyRiskEngine:
             self.logger.debug(
                 f"Model updated from event: {event_type} (threat: {is_threat})"
             )
+            result = {
+                "status": "heuristic_updated",
+                "backend": None,
+                "event_type": event_type,
+                "is_threat": is_threat,
+            }
+            self._learning_results.append(result)
+            return result
+
+    def _snapshot_metrics(self) -> Dict[str, Any]:
+        """Return a backend-safe metrics snapshot."""
+        return {
+            "request_rate": list(self._metrics["request_rate"]),
+            "data_volume": list(self._metrics["data_volume"]),
+            "connection_count": list(self._metrics["connection_count"]),
+            "failed_auth_attempts": self._metrics["failed_auth_attempts"],
+            "suspicious_patterns": self._metrics["suspicious_patterns"],
+        }
