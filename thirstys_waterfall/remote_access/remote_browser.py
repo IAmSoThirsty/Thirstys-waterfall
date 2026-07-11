@@ -3,7 +3,7 @@ Remote Browser - Connect to browser remotely with God tier encryption
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import time
 from cryptography.fernet import Fernet
 
@@ -20,10 +20,16 @@ class RemoteBrowser:
     - No logging of remote sessions
     """
 
-    def __init__(self, config: Dict[str, Any], god_tier_encryption):
+    def __init__(
+        self,
+        config: Dict[str, Any],
+        god_tier_encryption,
+        transport_backend: Optional[Any] = None,
+    ):
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.god_tier_encryption = god_tier_encryption
+        self.transport_backend = transport_backend
 
         # God tier encryption for all remote traffic
         self._cipher = Fernet(Fernet.generate_key())
@@ -36,7 +42,6 @@ class RemoteBrowser:
         self._sessions: Dict[str, Dict[str, Any]] = {}
 
         self._active = False
-        self._server_socket = None
 
     def start(self):
         """Start remote browser server"""
@@ -44,7 +49,13 @@ class RemoteBrowser:
         self.logger.info("All remote connections encrypted with 7 layers")
         self.logger.info(f"Listening on {self.host}:{self.port}")
 
-        # Initialize server (simulated)
+        if self.transport_backend is None:
+            raise RuntimeError("Remote browser transport backend is not configured")
+
+        start_backend = getattr(self.transport_backend, "start", None)
+        if callable(start_backend):
+            start_backend(self.host, self.port)
+
         self._active = True
 
     def stop(self):
@@ -54,6 +65,10 @@ class RemoteBrowser:
         # Close all sessions
         for session_id in list(self._sessions.keys()):
             self.disconnect_session(session_id)
+
+        stop_backend = getattr(self.transport_backend, "stop", None)
+        if callable(stop_backend):
+            stop_backend()
 
         self._active = False
 
@@ -83,21 +98,38 @@ class RemoteBrowser:
             "id": session_id,
             "encrypted_client_id": encrypted_client_id,
             "created_time": time.time(),
-            "status": "active",
+            "status": "pending_backend",
             "god_tier_encrypted": True,
             "encryption_layers": 7,
         }
 
+        create_backend_session = getattr(
+            self.transport_backend, "create_session", None
+        )
+        if not callable(create_backend_session):
+            raise RuntimeError(
+                "Remote browser transport backend does not implement create_session"
+            )
+
+        backend_result = create_backend_session(
+            session_id=session_id,
+            encrypted_client_id=encrypted_client_id,
+        )
+        if not isinstance(backend_result, dict):
+            raise RuntimeError("Remote browser backend returned invalid session result")
+
+        session["status"] = backend_result.get("status", "active")
         self._sessions[session_id] = session
 
         self.logger.info(f"Remote browser session created: {session_id}")
 
         return {
             "session_id": session_id,
-            "status": "connected",
+            "status": session["status"],
             "god_tier_encrypted": True,
-            "tunnel": "VPN multi-hop",
             "encryption_layers": 7,
+            "backend": type(self.transport_backend).__name__,
+            "transport_connected": backend_result.get("transport_connected", False),
         }
 
     def send_command(self, session_id: str, command: str) -> Dict[str, Any]:
@@ -115,15 +147,25 @@ class RemoteBrowser:
             return {"error": "Session not found"}
 
         # Encrypt command
-        self.god_tier_encryption.encrypt_god_tier(command.encode())
+        encrypted_command = self.god_tier_encryption.encrypt_god_tier(command.encode())
 
         self.logger.info(f"Sending encrypted command to session {session_id}")
 
-        # Process command (simulated)
+        send_backend_command = getattr(self.transport_backend, "send_command", None)
+        if not callable(send_backend_command):
+            raise RuntimeError(
+                "Remote browser transport backend does not implement send_command"
+            )
+
+        result = send_backend_command(session_id, encrypted_command)
+        if not isinstance(result, dict):
+            raise RuntimeError("Remote browser backend returned invalid command result")
+
         return {
-            "status": "success",
+            **result,
             "session_id": session_id,
             "god_tier_encrypted": True,
+            "backend": type(self.transport_backend).__name__,
         }
 
     def disconnect_session(self, session_id: str):
@@ -145,5 +187,10 @@ class RemoteBrowser:
             "host": self.host,
             "port": self.port,
             "active_sessions": len(self._sessions),
-            "tunnel": "VPN with multi-hop routing",
+            "backend_configured": self.transport_backend is not None,
+            "backend": (
+                type(self.transport_backend).__name__
+                if self.transport_backend is not None
+                else None
+            ),
         }
