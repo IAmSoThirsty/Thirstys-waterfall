@@ -1,5 +1,6 @@
 """Encrypted Search Engine - All searches are encrypted"""
 
+import json
 import logging
 from typing import Dict, Any
 from cryptography.fernet import Fernet
@@ -73,25 +74,29 @@ class EncryptedSearchEngine:
             return {
                 "encrypted_results": self._encrypted_cache[query_hash],
                 "from_cache": True,
+                "success": True,
+                "backend_available": True,
             }
 
-        # Perform search (in production would use encrypted search API)
-        encrypted_results = self._perform_encrypted_search(encrypted_query)
+        encrypted_results = self._build_unavailable_search_response()
 
-        # Cache encrypted results (using hash as key)
-        self._encrypted_cache[query_hash] = encrypted_results
+        return {
+            "encrypted_results": encrypted_results,
+            "from_cache": False,
+            "success": False,
+            "backend_available": False,
+            "error": "Encrypted search backend is not configured",
+        }
 
-        return {"encrypted_results": encrypted_results, "from_cache": False}
-
-    def _perform_encrypted_search(self, encrypted_query: bytes) -> bytes:
-        """
-        Perform actual encrypted search.
-        Query remains encrypted throughout.
-        """
-        # In production, would send encrypted query to privacy-respecting search API
-        # Results returned encrypted
-        dummy_results = "encrypted_search_results_placeholder"
-        return self._cipher.encrypt(dummy_results.encode())
+    def _build_unavailable_search_response(self) -> bytes:
+        """Return an encrypted fail-closed response when no backend is configured."""
+        payload = {
+            "success": False,
+            "backend_available": False,
+            "error": "Encrypted search backend is not configured",
+            "results": [],
+        }
+        return self._cipher.encrypt(json.dumps(payload, sort_keys=True).encode())
 
     def decrypt_results(self, encrypted_results: bytes) -> str:
         """

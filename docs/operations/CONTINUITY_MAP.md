@@ -95,6 +95,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Replaced `VPNManager` synthetic protocol endpoints with backend-factory connection attempts; VPN startup now fails closed when no configured backend is available or when backend connection fails.
 - Changed orchestrator startup/status reporting so runtime output no longer claims full operation, total encryption, accepted encryption tier, or deployment acceptance without Standard v3 evidence.
 - Changed browser startup/status reporting so it no longer claims accepted total browser encryption or native-engine acceptance while helper-only evidence remains partial.
+- Replaced encrypted-search placeholder results with an encrypted fail-closed unavailable response when no search backend is configured.
+- `python -m pytest tests\test_browser.py -q` passed after the encrypted-search unavailable-response change: 35 tests passed.
+- `python -m pytest tests\test_browser.py tests\test_native_web_engine.py tests\test_web_app_import.py -q` passed after the encrypted-search unavailable-response change: 51 tests passed.
+- `python -m pytest -q` passed after the encrypted-search unavailable-response change: 339 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after restoring the sparse-hidden verifier script with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py`.
 
 ## Known Current Problems
 
@@ -108,6 +113,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
+- Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points

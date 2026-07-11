@@ -3,6 +3,7 @@ Comprehensive Browser Testing Suite
 Tests for incognito browser, encrypted search, encrypted navigation, tab isolation, and sandbox
 """
 
+import json
 import unittest
 from cryptography.fernet import Fernet
 
@@ -81,22 +82,38 @@ class TestEncryptedSearchEngine(unittest.TestCase):
         decrypted = self.search_engine.decrypt_results(encrypted_results)
         self.assertIsInstance(decrypted, str)
 
+    def test_search_without_backend_returns_encrypted_unavailable_payload(self):
+        """Test that missing search backend fails closed without fake results"""
+        self.search_engine.start()
+
+        result = self.search_engine.search("test query")
+
+        self.assertFalse(result["success"])
+        self.assertFalse(result["backend_available"])
+        self.assertEqual(result["error"], "Encrypted search backend is not configured")
+        decrypted = self.search_engine.decrypt_results(result["encrypted_results"])
+        payload = json.loads(decrypted)
+        self.assertFalse(payload["success"])
+        self.assertFalse(payload["backend_available"])
+        self.assertEqual(payload["results"], [])
+        self.assertNotIn("encrypted_search_results_placeholder", decrypted)
+
     def test_search_caching_encrypted(self):
-        """Test that search cache uses encrypted queries as keys"""
+        """Test that unavailable backend responses are not cached as results"""
         self.search_engine.start()
 
         # First search
         result1 = self.search_engine.search("cached query")
         self.assertFalse(result1["from_cache"])
+        self.assertFalse(result1["success"])
 
         # Second search (same query)
         result2 = self.search_engine.search("cached query")
-        self.assertTrue(result2["from_cache"])
+        self.assertFalse(result2["from_cache"])
+        self.assertFalse(result2["success"])
 
-        # Verify cache uses hashed keys (since encryption is non-deterministic)
-        self.assertGreater(len(self.search_engine._encrypted_cache), 0)
-        for key in self.search_engine._encrypted_cache.keys():
-            self.assertIsInstance(key, str)  # Hash strings as cache keys
+        # Verify unavailable responses are not stored as accepted search cache.
+        self.assertEqual(len(self.search_engine._encrypted_cache), 0)
 
     def test_no_plaintext_in_history(self):
         """Test that no plaintext queries are stored in history"""
@@ -339,6 +356,8 @@ class TestIncognitoBrowser(unittest.TestCase):
 
         self.assertIn("encrypted_results", result)
         self.assertIsInstance(result["encrypted_results"], bytes)
+        self.assertFalse(result["success"])
+        self.assertFalse(result["backend_available"])
 
     def test_privacy_mode_verification(self):
         """Test that privacy mode is enforced"""
