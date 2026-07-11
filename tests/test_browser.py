@@ -374,6 +374,19 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.assertIn("canvas_randomized", status)
         self.assertIn("webgl_blocked", status)
 
+    def test_browser_status_is_evidence_gated(self):
+        """Test browser status separates helper activity from accepted claims."""
+        self.browser.start()
+
+        status = self.browser.get_status()
+
+        self.assertFalse(status["everything_encrypted"])
+        self.assertFalse(status["everything_encrypted_accepted"])
+        self.assertFalse(status["browser_encryption_accepted"])
+        self.assertFalse(status["native_engine_accepted"])
+        self.assertTrue(status["searches_encrypted"])
+        self.assertTrue(status["navigation_encrypted"])
+
 
 class TestTabManager(unittest.TestCase):
     """Test tab management and isolation"""
