@@ -258,6 +258,57 @@ class TestEncryptedNavigationHistory(unittest.TestCase):
         self.assertEqual(len(self.nav_history._encrypted_bookmarks), 0)
         self.assertFalse(self.nav_history._active)
 
+    def test_search_requires_backend(self):
+        """Test encrypted navigation search fails closed without backend"""
+        self.nav_history.start()
+
+        with self.assertRaisesRegex(RuntimeError, "backend is not configured"):
+            self.nav_history.search_encrypted_history(b"encrypted-query")
+
+    def test_search_uses_backend(self):
+        """Test encrypted navigation search delegates to backend"""
+
+        class FakeNavigationSearchBackend:
+            def __init__(self):
+                self.calls = []
+
+            def search_encrypted_history(self, encrypted_query, encrypted_history):
+                self.calls.append(
+                    {
+                        "encrypted_query": encrypted_query,
+                        "encrypted_history": encrypted_history,
+                    }
+                )
+                return encrypted_history[:1]
+
+        backend = FakeNavigationSearchBackend()
+        nav_history = EncryptedNavigationHistory(self.cipher, search_backend=backend)
+        nav_history.start()
+        nav_history.record_navigation("https://example.com", "tab1")
+
+        results = nav_history.search_encrypted_history(b"encrypted-query")
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(backend.calls[0]["encrypted_query"], b"encrypted-query")
+        self.assertEqual(len(backend.calls[0]["encrypted_history"]), 1)
+        nav_history.stop()
+
+    def test_search_rejects_invalid_backend_result(self):
+        """Test invalid backend search result fails loudly"""
+
+        class InvalidNavigationSearchBackend:
+            def search_encrypted_history(self, encrypted_query, encrypted_history):
+                return "not-a-list"
+
+        nav_history = EncryptedNavigationHistory(
+            self.cipher, search_backend=InvalidNavigationSearchBackend()
+        )
+        nav_history.start()
+
+        with self.assertRaisesRegex(RuntimeError, "returned invalid result"):
+            nav_history.search_encrypted_history(b"encrypted-query")
+        nav_history.stop()
+
 
 class FakeBrowserDownloadBackend:
     def __init__(self):

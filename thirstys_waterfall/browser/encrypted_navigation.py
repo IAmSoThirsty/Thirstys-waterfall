@@ -1,7 +1,7 @@
 """Encrypted Navigation History - All visited sites encrypted"""
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from cryptography.fernet import Fernet
 import time
 import hashlib
@@ -13,9 +13,10 @@ class EncryptedNavigationHistory:
     Every site, every navigation is encrypted. Never stored in plaintext.
     """
 
-    def __init__(self, cipher: Fernet):
+    def __init__(self, cipher: Fernet, search_backend: Optional[Any] = None):
         self.logger = logging.getLogger(__name__)
         self._cipher = cipher
+        self._search_backend = search_backend
         self._active = False
 
         # All URLs encrypted
@@ -110,7 +111,24 @@ class EncryptedNavigationHistory:
     def search_encrypted_history(self, encrypted_query: bytes) -> List[Dict[str, Any]]:
         """
         Search through encrypted history.
-        Search is performed on encrypted data.
+        Search must be performed by a configured encrypted-search backend.
         """
-        # Would use encrypted search index in production
-        return []
+        if self._search_backend is None:
+            raise RuntimeError(
+                "Encrypted navigation search backend is not configured"
+            )
+
+        search = getattr(self._search_backend, "search_encrypted_history", None)
+        if not callable(search):
+            raise RuntimeError(
+                "Encrypted navigation search backend does not implement "
+                "search_encrypted_history"
+            )
+
+        results = search(encrypted_query, self.get_encrypted_history())
+        if not isinstance(results, list):
+            raise RuntimeError(
+                "Encrypted navigation search backend returned invalid result"
+            )
+
+        return results

@@ -171,6 +171,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\firewalls\hardware.py thirstys_waterfall\firewalls\cloud.py tests\test_firewall_hardware_cloud_evidence.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the hardware/cloud firewall backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the hardware/cloud firewall backend-gating change: 398 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the hardware/cloud firewall backend-gating change.
+- Replaced encrypted-navigation history search production substitute with a fail-closed encrypted-search-backend contract.
+- `python -m pytest tests\test_browser.py -q` passed after the encrypted-navigation search backend-gating change: 46 tests passed.
+- `flake8 thirstys_waterfall\browser\encrypted_navigation.py tests\test_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the encrypted-navigation search backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the encrypted-navigation search backend-gating change: 401 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the encrypted-navigation search backend-gating change.
 
 ## Known Current Problems
 
@@ -189,6 +194,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
 - Hardware and cloud firewalls no longer report hardware/cloud packet protection without configured backends, but no real hardware firewall backend or cloud firewall backend is bundled or configured.
+- Encrypted navigation no longer reports empty history-search results from a production substitute when no encrypted-search backend is configured, but no real encrypted-navigation search backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
