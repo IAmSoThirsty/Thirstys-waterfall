@@ -186,6 +186,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\firewalls\backends.py tests\test_firewall_backends.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the nftables handle-removal change: 0 findings.
 - `python -m pytest -q` passed after the nftables handle-removal change: 409 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the nftables handle-removal change.
+- Replaced encrypted-network Python stringification and unused extra-layer claim with deterministic JSON payload encryption and explicit payload-only status evidence.
+- `python -m pytest tests\test_encrypted_network.py -q` passed after the encrypted-network parsing/scope change: 5 tests passed.
+- `flake8 thirstys_waterfall\utils\encrypted_network.py tests\test_encrypted_network.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the encrypted-network parsing/scope change: 0 findings.
+- `python -m pytest -q` passed after the encrypted-network parsing/scope change: 414 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the encrypted-network parsing/scope change.
 
 ## Known Current Problems
 
@@ -207,6 +212,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Encrypted navigation no longer reports empty history-search results from a production substitute when no encrypted-search backend is configured, but no real encrypted-navigation search backend is bundled or configured.
 - Packet-filtering firewall now uses standard-library IPv4/IPv6 exact and CIDR matching instead of simplified string matching.
 - Nftables rule removal now looks up and deletes concrete OS rule handles instead of only updating local tracking state.
+- Encrypted-network helper now parses structured JSON payloads and reports payload-only scope instead of claiming unused extra encryption layers or host-wide interception.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.

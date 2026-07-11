@@ -1,32 +1,31 @@
 """Encrypted Network Traffic Handler"""
 
+import json
 import logging
 from typing import Dict, Any
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 class EncryptedNetworkHandler:
     """
-    Handles all network traffic with end-to-end encryption.
-    Every packet, every request, every response is encrypted.
+    Encrypts and decrypts payloads explicitly passed through this handler.
+
+    This helper does not claim host-wide traffic interception. Callers that need
+    full transport coverage must route their network backend through this class
+    or provide separate evidence for the platform-level tunnel.
     """
 
     def __init__(self, cipher: Fernet):
         self.logger = logging.getLogger(__name__)
         self._cipher = cipher
         self._active = False
-
-        # Generate RSA key pair for additional encryption layer
-        self._private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-        )
-        self._public_key = self._private_key.public_key()
+        self._encryption_layers = ("fernet",)
 
     def start(self):
         """Start encrypted network handler"""
-        self.logger.info("Starting Encrypted Network Handler - All traffic encrypted")
+        self.logger.info(
+            "Starting Encrypted Network Handler - explicit payload encryption active"
+        )
         self._active = True
 
     def stop(self):
@@ -37,7 +36,7 @@ class EncryptedNetworkHandler:
     def encrypt_request(self, request: Dict[str, Any]) -> bytes:
         """
         Encrypt outgoing network request.
-        Request is encrypted with multiple layers.
+        Request payload is JSON-serialized and encrypted.
 
         Args:
             request: Request data
@@ -48,14 +47,9 @@ class EncryptedNetworkHandler:
         if not self._active:
             return b""
 
-        # Convert request to bytes
-        request_bytes = str(request).encode()
+        request_bytes = self._serialize_payload(request)
 
-        # Layer 1: Symmetric encryption
         encrypted_layer1 = self._cipher.encrypt(request_bytes)
-
-        # Layer 2: Additional encryption for extra security
-        # In production would add more encryption layers
 
         self.logger.debug(f"Encrypted outgoing request: {len(encrypted_layer1)} bytes")
         return encrypted_layer1
@@ -74,12 +68,8 @@ class EncryptedNetworkHandler:
             return {}
 
         try:
-            # Decrypt response
             decrypted = self._cipher.decrypt(encrypted_response)
-
-            # Parse response
-            # In production would properly parse
-            return {"data": decrypted.decode()}
+            return self._parse_payload(decrypted)
 
         except Exception as e:
             self.logger.error(f"Failed to decrypt response: {e}")
@@ -95,16 +85,47 @@ class EncryptedNetworkHandler:
     def encrypt_packet(self, packet: Dict[str, Any]) -> bytes:
         """
         Encrypt individual network packet.
-        Every packet is encrypted.
+        Packet payload is JSON-serialized and encrypted.
         """
-        packet_bytes = str(packet).encode()
+        packet_bytes = self._serialize_payload(packet)
         return self._cipher.encrypt(packet_bytes)
 
     def decrypt_packet(self, encrypted_packet: bytes) -> Dict[str, Any]:
         """Decrypt network packet"""
         try:
-            self._cipher.decrypt(encrypted_packet)
-            # Parse packet
-            return {"decrypted": True}
+            decrypted = self._cipher.decrypt(encrypted_packet)
+            packet = self._parse_payload(decrypted)
+            packet.setdefault("decrypted", True)
+            return packet
         except Exception:
             return {}
+
+    def get_status(self) -> Dict[str, Any]:
+        """Return evidence about the handler's configured encryption surface."""
+        return {
+            "active": self._active,
+            "handler_scope": "explicit_payloads_only",
+            "host_wide_interception": False,
+            "encryption_layers": list(self._encryption_layers),
+        }
+
+    @staticmethod
+    def _serialize_payload(payload: Dict[str, Any]) -> bytes:
+        return json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+    @staticmethod
+    def _parse_payload(payload: bytes) -> Dict[str, Any]:
+        decoded = payload.decode("utf-8")
+        try:
+            parsed = json.loads(decoded)
+        except json.JSONDecodeError:
+            return {"data": decoded}
+
+        if isinstance(parsed, dict):
+            return parsed
+
+        return {"data": parsed}
