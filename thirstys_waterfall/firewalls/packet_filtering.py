@@ -1,5 +1,6 @@
 """Packet-Filtering Firewall implementation"""
 
+import ipaddress
 from typing import Dict, Any
 from .base import FirewallBase
 
@@ -120,13 +121,19 @@ class PacketFilteringFirewall(FirewallBase):
         if isinstance(rule_ips, str):
             rule_ips = [rule_ips]
 
-        # Simplified IP matching (production would use ipaddress module)
+        try:
+            packet_ip = ipaddress.ip_address(ip)
+        except (TypeError, ValueError):
+            return False
+
         for rule_ip in rule_ips:
-            if (
-                ip == rule_ip
-                or rule_ip.endswith("/8")
-                and ip.startswith(rule_ip.split("/")[0].rsplit(".", 3)[0])
-            ):
-                return True
+            try:
+                if "/" in rule_ip:
+                    if packet_ip in ipaddress.ip_network(rule_ip, strict=False):
+                        return True
+                elif packet_ip == ipaddress.ip_address(rule_ip):
+                    return True
+            except (TypeError, ValueError):
+                self.logger.warning(f"Ignoring invalid IP rule: {rule_ip}")
 
         return False
