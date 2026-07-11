@@ -5,6 +5,7 @@ import logging
 import threading
 import time
 from cryptography.fernet import Fernet
+from .backends import VPNBackendFactory
 from .multi_hop import MultiHopRouter
 from .kill_switch import KillSwitch
 from .dns_protection import DNSProtection
@@ -12,10 +13,8 @@ from .dns_protection import DNSProtection
 
 class VPNManager:
     """
-    BUILT-IN VPN Manager with end-to-end encryption.
-    All VPN traffic is encrypted with multiple encryption layers.
-    Manages VPN connections with multi-hop routing, kill switch,
-    and DNS protection - completely native implementation.
+    Coordinates configured VPN backends, multi-hop state, kill switch,
+    and DNS protection.
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -46,13 +45,14 @@ class VPNManager:
         self._active = False
         self._connected = False
         self._current_route = []
+        self._active_backend = None
+        self._last_error = None
         self._lock = threading.Lock()
         self._connection_thread = None
 
     def start(self):
-        """Start VPN manager with encrypted connections"""
-        self.logger.info("Starting BUILT-IN VPN Manager")
-        self.logger.info("All VPN traffic encrypted end-to-end")
+        """Start VPN manager and connect through an available backend."""
+        self.logger.info("Starting VPN Manager")
 
         with self._lock:
             if self._active:
@@ -64,11 +64,15 @@ class VPNManager:
             # Start DNS protection (encrypted DNS)
             self.dns_protection.start()
 
-            # Establish encrypted VPN connection
-            self._establish_connection()
-
-            self._active = True
-            self.logger.info("Built-in VPN active with full encryption")
+            try:
+                self._establish_connection()
+                self._active = True
+                self.logger.info("VPN manager active")
+            except Exception:
+                self.dns_protection.stop()
+                self._active = False
+                self._connected = False
+                raise
 
     def stop(self):
         """Stop VPN manager"""
@@ -89,20 +93,21 @@ class VPNManager:
             self._active = False
 
     def _establish_connection(self):
-        """Establish VPN connection"""
+        """Establish VPN connection through a real backend."""
+        self._current_route = []
         if self.multi_hop:
-            self._current_route = self.router.establish_route()
             self.logger.info(
-                f"Multi-hop route established: {len(self._current_route)} hops"
+                "Multi-hop requested; active route requires real backend evidence"
             )
-        else:
-            self._current_route = [self._connect_single_node()]
-
+        backend_status = self._connect_single_node()
+        self._current_route.append(backend_status)
         self._connected = True
-        self.logger.info("VPN connection established")
+        self._last_error = None
+        self.logger.info("VPN connection established through backend")
 
     def _connect_single_node(self) -> Dict[str, Any]:
         """Connect to single VPN node"""
+        failures = []
         # Try protocols in fallback order
         for protocol in self.protocol_fallback:
             try:
@@ -110,25 +115,51 @@ class VPNManager:
                 self.logger.info(f"Connected via {protocol}")
                 return node
             except Exception as e:
+                failures.append(f"{protocol}: {e}")
                 self.logger.warning(f"Failed to connect via {protocol}: {e}")
 
-        raise ConnectionError("All VPN protocols failed")
+        self._last_error = "All VPN protocols failed: " + "; ".join(failures)
+        raise ConnectionError(self._last_error)
+
+    def _backend_config(self, protocol: str) -> Dict[str, Any]:
+        """Return backend-specific configuration."""
+        backend_configs = self.config.get("backends", {})
+        protocol_config = backend_configs.get(protocol, {})
+        if isinstance(protocol_config, dict):
+            return protocol_config
+        return {}
 
     def _connect_with_protocol(self, protocol: str) -> Dict[str, Any]:
-        """Connect using specific protocol"""
-        # Simulate protocol connection
-        return {
-            "protocol": protocol,
-            "endpoint": f"{protocol}.vpn.thirstys.local",
-            "port": 443 if protocol == "wireguard" else 1194,
-            "connected": True,
-        }
+        """Connect using a concrete backend for the requested protocol."""
+        backend = VPNBackendFactory.create_backend(
+            protocol, self._backend_config(protocol)
+        )
+        if backend is None:
+            raise ConnectionError(f"Unsupported VPN protocol: {protocol}")
+
+        if not backend.check_availability():
+            raise ConnectionError(f"VPN backend unavailable: {protocol}")
+
+        if not backend.connect():
+            raise ConnectionError(f"VPN backend failed to connect: {protocol}")
+
+        self._active_backend = backend
+        status = backend.get_status()
+        status["protocol"] = protocol
+        status["real_backend"] = True
+        return status
 
     def _disconnect(self):
         """Disconnect VPN"""
         if self._connected:
+            if self._active_backend is not None:
+                disconnected = self._active_backend.disconnect()
+                if not disconnected:
+                    self._last_error = "VPN backend disconnect failed"
+                    self.logger.error(self._last_error)
             self._current_route.clear()
             self._connected = False
+            self._active_backend = None
             self.logger.info("VPN disconnected")
 
     def reconnect(self):
@@ -169,18 +200,26 @@ class VPNManager:
 
     def get_status(self) -> Dict[str, Any]:
         """Get VPN status"""
+        backend_status = None
+        if self._active_backend is not None:
+            backend_status = self._active_backend.get_status()
+
         return {
             "active": self._active,
             "connected": self._connected,
-            "built_in": True,  # Emphasize built-in VPN
+            "built_in": True,
             "multi_hop": self.multi_hop,
+            "multi_hop_accepted": False,
             "route": self._current_route,
+            "backend": backend_status,
+            "backend_available": self._active_backend is not None,
             "kill_switch": self.kill_switch.is_active(),
             "dns_protected": self.dns_protection.is_active(),
             "stealth_mode": self.stealth_mode,
             "split_tunneling": self.split_tunneling,
-            "traffic_encrypted": True,  # All traffic encrypted
+            "traffic_encrypted": self._connected,
             "no_logging": self.logging_policy == "never",
+            "error": self._last_error,
         }
 
     def is_connected(self) -> bool:
