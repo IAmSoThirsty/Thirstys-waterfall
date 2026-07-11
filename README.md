@@ -489,7 +489,7 @@ See `examples/config.json` for full configuration options.
 
 ## 🚀 Deployment Verification
 
-Thirstys Waterfall currently has **local deployment-smoke verification**, not final production Deployment Verified status. The local verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, and Docker container health/auth smoke.
+Thirstys Waterfall currently has **release and local deployment-smoke verification**, not final target-host Production Deployment Verified status. The verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, and local rollback smoke. Release `v1.0.1` also pushed a verified GHCR image that was pulled and smoke-tested locally.
 
 ```powershell
 python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
@@ -499,13 +499,13 @@ See [Production Deployment Verification](docs/operations/PRODUCTION_DEPLOYMENT_V
 
 ### Deployment Methods
 
-1. **Docker Deployment** (current local smoke path)
+1. **Docker Deployment** (verified release-image smoke path)
 
    - Locked deployment dependencies through `requirements-deploy.lock`
    - Docker Compose orchestration
    - Health checks and resource limits
    - Non-root user security
-   - Local container smoke verified
+   - GHCR release image pull, container smoke, and local rollback smoke verified
 
 1. **Python Package**
 
@@ -547,9 +547,10 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 - ✅ **Local wheel build verified**: Standard Python packaging with `pyproject.toml`
 - ✅ **Local Docker image build verified**: Container starts and passes health/auth smoke
-- ⚠️ **Registry publishing not yet verified**: Docker Hub or registry pull evidence is still required
-- ⚠️ **GitHub Releases not yet verified**: Release workflow evidence is still required
-- ⚠️ **Multi-platform support not yet accepted**: Linux, Windows, and macOS CI/platform evidence is still required
+- ✅ **GitHub Release verified**: `v1.0.1` published with wheel and source artifacts
+- ✅ **GHCR image verified**: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1` published with digest `sha256:0e35d575f8d431795fccaf53c804000d6aeec29414512a5f9c2da404de80473f`
+- ⚠️ **Target-host deployment not yet accepted**: production host logs, secret rotation, target rollback, and host network policy evidence are still required
+- ⚠️ **Platform backend support not yet accepted**: real VPN/firewall execution evidence is still required beyond availability tests
 
 📖 **[Deployment Verification Guide →](docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md)**
 
@@ -945,7 +946,7 @@ Thirstys Waterfall is being built as a comprehensive privacy ecosystem that inte
 
 ### Production Readiness Status
 
-Current accepted evidence includes local tests, production-mode secret/CORS startup checks, local wheel build, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, Docker container smoke, local container log capture, and local Docker rollback smoke. Full production Deployment Verified status still requires CI/CodeQL evidence, published image pull evidence, target rollback evidence, production logs, secrets rotation evidence, and platform proof for real VPN/firewall backend execution.
+Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, production-mode secret/CORS startup checks, local wheel build, release wheel/source artifacts, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, release workflow Docker smoke, GHCR push, published image pull, published image container smoke, local container log capture, and local Docker rollback smoke. Full target-host Production Deployment Verified status still requires CodeQL evidence, target rollback evidence, production host logs, secrets rotation evidence, host network policy evidence, and platform proof for real VPN/firewall backend execution.
 
 ### Proof of Implementation
 
