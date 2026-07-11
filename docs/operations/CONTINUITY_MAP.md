@@ -93,6 +93,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Rewrote `docs/SHOWCASE.md` and `docs/COMPETITION_COMPARISON.md` as evidence-gated Standard v3 documents instead of broad marketing superiority claims.
 - Rewrote high-risk README feature, architecture, platform, security, and comparison language so accepted-looking claims point back to the Standard v3 matrix.
 - Replaced `VPNManager` synthetic protocol endpoints with backend-factory connection attempts; VPN startup now fails closed when no configured backend is available or when backend connection fails.
+- Changed orchestrator startup/status reporting so runtime output no longer claims full operation, total encryption, accepted encryption tier, or deployment acceptance without Standard v3 evidence.
 
 ## Known Current Problems
 
@@ -104,6 +105,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Release workflow run `29138685612` passed for `v1.0.2` and commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
+- Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points
