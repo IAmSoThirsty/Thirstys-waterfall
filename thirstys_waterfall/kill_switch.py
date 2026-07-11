@@ -1,7 +1,7 @@
 """Global Kill Switch - Coordinates all subsystem kill switches"""
 
 import logging
-from typing import Callable, List
+from typing import Callable, List, Optional, Any, Dict
 import threading
 
 
@@ -11,12 +11,14 @@ class GlobalKillSwitch:
     Ensures complete privacy protection by blocking all traffic if any component fails.
     """
 
-    def __init__(self):
+    def __init__(self, traffic_blocker: Optional[Any] = None):
         self.logger = logging.getLogger(__name__)
+        self.traffic_blocker = traffic_blocker
         self._active = False
         self._triggered = False
         self._callbacks: List[Callable] = []
         self._lock = threading.Lock()
+        self._traffic_block_result: Optional[Dict[str, Any]] = None
 
         # Component kill switches
         self._vpn_kill_switch = None
@@ -109,10 +111,31 @@ class GlobalKillSwitch:
     def _block_all_traffic(self):
         """Block all network traffic immediately"""
         self.logger.critical("BLOCKING ALL NETWORK TRAFFIC")
-        # In production, would set iptables to block all traffic
-        # iptables -P INPUT DROP
-        # iptables -P OUTPUT DROP
-        # iptables -P FORWARD DROP
+
+        if self.traffic_blocker is None:
+            self._traffic_block_result = {
+                "status": "unavailable",
+                "error": "Global traffic blocker backend is not configured",
+                "traffic_blocked": False,
+            }
+            self.logger.critical(self._traffic_block_result["error"])
+            return self._traffic_block_result
+
+        block_all = getattr(self.traffic_blocker, "block_all_traffic", None)
+        if not callable(block_all):
+            raise RuntimeError(
+                "Global traffic blocker backend does not implement block_all_traffic"
+            )
+
+        result = block_all()
+        if not isinstance(result, dict):
+            raise RuntimeError("Global traffic blocker backend returned invalid result")
+
+        result.setdefault("status", "unknown")
+        result.setdefault("traffic_blocked", result["status"] == "blocked")
+        result.setdefault("backend", type(self.traffic_blocker).__name__)
+        self._traffic_block_result = result
+        return result
 
     def _on_vpn_failure(self, reason: str):
         """Callback for VPN failure"""
@@ -146,3 +169,26 @@ class GlobalKillSwitch:
     def is_triggered(self) -> bool:
         """Check if kill switch is triggered"""
         return self._triggered
+
+    def get_traffic_block_status(self) -> Dict[str, Any]:
+        """Return the latest traffic blocking evidence."""
+        if self._traffic_block_result is None:
+            return {
+                "status": "not_attempted",
+                "traffic_blocked": False,
+                "backend_configured": self.traffic_blocker is not None,
+                "backend": (
+                    type(self.traffic_blocker).__name__
+                    if self.traffic_blocker is not None
+                    else None
+                ),
+            }
+        return {
+            **self._traffic_block_result,
+            "backend_configured": self.traffic_blocker is not None,
+            "backend": (
+                type(self.traffic_blocker).__name__
+                if self.traffic_blocker is not None
+                else None
+            ),
+        }
