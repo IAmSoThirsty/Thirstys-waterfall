@@ -2,7 +2,7 @@
 
 Standard: Thirsty's Standard v3
 
-Status: local deployment verification is automated; full production deployment verification still requires external CI, registry, target host, target rollback, and operations evidence.
+Status: local verification, hosted CI, release workflow, GHCR publishing, and published-image local smoke are verified. Full target-host production deployment verification still requires target host, target rollback, secret rotation, host network policy, CodeQL, and operations log evidence.
 
 ## Local Verification Gate
 
@@ -47,7 +47,19 @@ To smoke-test a release image that was already built by CI instead of rebuilding
 python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:<version>
 ```
 
-This mode is used by the release workflow so the Docker smoke covers the actual loaded release image tag.
+This mode is used by the release workflow so the Docker smoke covers the actual loaded release image tag. It was also run locally against the pulled release image `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1`.
+
+## Release Evidence
+
+- Release workflow run: `29137207054`
+- Commit: `7b459a7ab0fa0873152a614ab2f751a8a037bedf`
+- GitHub release: `v1.0.1`
+- Wheel asset: `thirstys_waterfall-1.0.1-py3-none-any.whl`, digest `sha256:5edf2d5f5c7e956f43b26f1893f6f635b86d6023c91c7f84620b0e3238d077d7`
+- Source asset: `thirstys_waterfall-1.0.1.tar.gz`, digest `sha256:be1f850612e46ca740ba560876c1e72cc7f9d0aadadf87b60214dbe6b3c5f825`
+- GHCR image: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1`
+- GHCR digest: `sha256:0e35d575f8d431795fccaf53c804000d6aeec29414512a5f9c2da404de80473f`
+- Published image pull: `docker pull ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1` succeeded.
+- Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.1 --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed.
 
 ## Deployment Inputs
 
@@ -160,10 +172,10 @@ Rotation checklist:
 
 ## Evidence Still Required For Full Production Deployment Verified
 
-- GitHub Actions run for the exact commit being deployed.
+- GitHub Actions run for the exact commit being deployed. Current release evidence: run `29137207054` for commit `7b459a7ab0fa0873152a614ab2f751a8a037bedf`.
 - CodeQL/security workflow evidence for the exact commit being deployed.
-- Published image digest from the target registry.
-- Pull-and-run evidence using the published image, not only a local image.
+- Published image digest from the target registry. Current release evidence: `sha256:0e35d575f8d431795fccaf53c804000d6aeec29414512a5f9c2da404de80473f`.
+- Pull-and-run evidence using the published image, not only a local image. Current local published-image evidence exists; target-host pull/run evidence is still missing.
 - Rollback execution evidence on the target host or orchestrator, not only local Docker rollback smoke.
 - Production log capture from startup, health check, login smoke, and shutdown/rollback on the target host, not only local container log capture.
 - Real platform evidence for claimed VPN/firewall backends, or README claim narrowing.
