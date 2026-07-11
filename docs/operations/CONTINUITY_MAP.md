@@ -208,6 +208,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\security\privacy_risk_engine.py tests\test_privacy_risk_engine.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the privacy-risk backend-evidence change: 0 findings.
 - `python -m pytest -q` passed after the privacy-risk backend-evidence change: 427 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the privacy-risk backend-evidence change.
+- Replaced WiFi deauth monitoring, evil-twin detection, and 802.11r fast-roaming substitute paths with explicit WiFi security backend evidence contracts.
+- `python -m pytest tests\test_wifi_security.py -q` passed after the WiFi security backend-evidence change: 6 tests passed.
+- `flake8 thirstys_waterfall\wifi_network\wifi_security.py tests\test_wifi_security.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the WiFi security backend-evidence change: 0 findings.
+- `python -m pytest -q` passed after the WiFi security backend-evidence change: 433 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the WiFi security backend-evidence change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
 
 ## Known Current Problems
 
@@ -224,6 +229,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Browser sandbox no longer reports policy enforcement or zero/within-limit resource usage without configured backends, but no real browser sandbox policy backend or resource monitor is bundled or configured.
 - Browser sandbox no longer reports script execution without a configured script-executor backend, but no real sandboxed JavaScript execution backend is bundled or configured.
 - Privacy risk engine now reports heuristic analysis unless a real model backend is configured, and hardening actions report unavailable unless a hardening backend is configured.
+- WiFi security no longer reports deauth monitoring, evil-twin detection, or 802.11r fast-roaming configuration success without a configured WiFi security backend. PMF-only deauth protection is reported separately from active monitoring evidence.
 - VPN DNS/IPv6 leak protection no longer reports DNS changes or leak-free verification without configured DNS and leak-detector backends, but no real DNS protection backend or leak detector is bundled or configured.
 - Advanced stealth no longer activates synthetic transports, fabricated onion nodes, or fabricated domain fronts without configured backends/providers, but no real advanced-stealth transport backend, node provider, or domain-fronting backend is bundled or configured.
 - Privacy auditor no longer reports DNS/IPv6/WebRTC leak checks as passed without a configured leak-audit backend, but no real privacy leak-audit backend is bundled or configured.
