@@ -13,15 +13,10 @@ from .engine import FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 class IncognitoBrowser:
     """
-    Privacy-first incognito browser with:
-    - No history, cache, cookies, or persistent data
-    - No pop-ups or redirects
-    - Tab isolation
-    - Anti-fingerprinting
-    - Sandboxed execution
-    - Extension whitelisting
-    - Keyboard/mouse cloaking
-    - Zero telemetry
+    Privacy-first browser runtime.
+
+    Standard v3 acceptance for native rendering, session behavior, and
+    end-to-end browser-data encryption remains evidence-gated.
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -68,7 +63,7 @@ class IncognitoBrowser:
         self.sandbox = self._sandbox
         self.content_blocker = self._content_blocker
 
-        # ENCRYPTED COMPONENTS: Everything encrypted
+        # Local encrypted helper components.
         self._search_engine = EncryptedSearchEngine(self._cipher)
         self._nav_history = EncryptedNavigationHistory(self._cipher)
         self._web_engine = ThirstyWebEngine(
@@ -109,9 +104,9 @@ class IncognitoBrowser:
         self._nav_history.start()
 
         self._active = True
-        self.logger.info("Incognito browser started - EVERYTHING ENCRYPTED")
-        self.logger.info("NO history, cache, cookies, pop-ups, or redirects")
-        self.logger.info("ALL searches encrypted, ALL sites encrypted")
+        self.logger.info("Incognito browser runtime started")
+        self.logger.info("Browser privacy controls enabled")
+        self.logger.info("Browser encryption claims remain Standard v3 gated")
 
     def stop(self):
         """Stop browser and clear all data"""
@@ -295,9 +290,12 @@ class IncognitoBrowser:
             "fingerprint_protection": self.fingerprint_protection,
             "tracker_blocking": self.tracker_blocking,
             "sandbox_enabled": self.sandbox.is_active(),
-            "everything_encrypted": True,  # NEW: Everything encrypted
+            "everything_encrypted": False,
+            "everything_encrypted_accepted": False,
             "searches_encrypted": self.encrypted_search._active,
             "navigation_encrypted": self.encrypted_navigation._active,
+            "browser_encryption_accepted": False,
             "native_engine": True,
+            "native_engine_accepted": False,
             "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
         }
