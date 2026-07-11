@@ -41,16 +41,16 @@
             </div>
 
             <input type="text" id="address-bar" class="address-bar"
-                placeholder="Search or enter address (All queries encrypted)" autocomplete="off" spellcheck="false" />
+                placeholder="Search or enter address" autocomplete="off" spellcheck="false" />
 
             <div class="privacy-indicators">
-                <div class="indicator" id="vpn-indicator" title="VPN Active">
+                <div class="indicator" id="vpn-indicator" title="VPN status">
                     <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="indicator" id="firewall-indicator" title="Firewalls Active">
+                <div class="indicator" id="firewall-indicator" title="Firewall status">
                     <i class="fas fa-fire"></i>
                 </div>
-                <div class="indicator" id="encryption-indicator" title="7-Layer Encryption">
+                <div class="indicator" id="encryption-indicator" title="Encryption status">
                     <i class="fas fa-key"></i>
                 </div>
                 <div class="indicator" id="tracker-blocker" title="Trackers Blocked">
@@ -108,22 +108,22 @@
                         <div class="status-card vpn-card">
                             <i class="fas fa-shield-alt"></i>
                             <h3>VPN Protection</h3>
-                            <p class="status-value">Multi-Hop Active</p>
-                            <p class="status-detail">3 hops • WireGuard</p>
+                            <p class="status-value">Not connected</p>
+                            <p class="status-detail">Awaiting backend status</p>
                         </div>
 
                         <div class="status-card firewall-card">
                             <i class="fas fa-fire"></i>
                             <h3>Firewalls</h3>
-                            <p class="status-value">8 Types Active</p>
-                            <p class="status-detail">All layers protected</p>
+                            <p class="status-value">Status pending</p>
+                            <p class="status-detail">Awaiting backend status</p>
                         </div>
 
                         <div class="status-card encryption-card">
                             <i class="fas fa-key"></i>
                             <h3>Encryption</h3>
-                            <p class="status-value">7-Layer Active</p>
-                            <p class="status-detail">Everything encrypted</p>
+                            <p class="status-value">Evidence gated</p>
+                            <p class="status-detail">See acceptance matrix</p>
                         </div>
 
                         <div class="status-card privacy-card">
@@ -139,7 +139,7 @@
                         <div class="search-wrapper">
                             <i class="fas fa-search"></i>
                             <input type="text" id="quick-search" class="quick-search-input"
-                                placeholder="Search the web (Encrypted)" />
+                                placeholder="Search the web" />
                         </div>
                     </div>
 
@@ -205,16 +205,16 @@
                     <div class="control-panel">
                         <div class="status-indicator connected">
                             <span class="status-dot"></span>
-                            <span>Connected</span>
+                            <span>Not connected</span>
                         </div>
                         <div class="vpn-info">
-                            <p><strong>Protocol:</strong> <span id="vpn-protocol">WireGuard</span></p>
-                            <p><strong>Hops:</strong> <span id="vpn-hops">3</span></p>
-                            <p><strong>Location:</strong> <span id="vpn-location">Multi-hop chain</span></p>
+                            <p><strong>Protocol:</strong> <span id="vpn-protocol">Unavailable</span></p>
+                            <p><strong>Hops:</strong> <span id="vpn-hops">0</span></p>
+                            <p><strong>Location:</strong> <span id="vpn-location">Not connected</span></p>
                         </div>
                         <div class="control-buttons">
                             <button id="btn-vpn-toggle" class="btn-primary">
-                                <i class="fas fa-power-off"></i> Disconnect
+                                <i class="fas fa-power-off"></i> Connect
                             </button>
                             <button id="btn-vpn-settings" class="btn-secondary">
                                 <i class="fas fa-cog"></i> Settings

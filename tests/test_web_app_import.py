@@ -2,6 +2,7 @@
 
 import importlib
 import os
+from pathlib import Path
 import subprocess
 import sys
 import unittest
@@ -83,6 +84,80 @@ class TestWebAppImport(unittest.TestCase):
         self.assertIn("access_token", payload)
         self.assertEqual(payload["user"]["username"], "operator")
         self.assertEqual(payload["user"]["auth_mode"], "configured")
+
+    def test_vpn_connect_does_not_report_success_when_service_fails(self):
+        app_module = importlib.import_module("web.app")
+        token = None
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        with mock.patch.object(
+            app_module.service,
+            "vpn_connect",
+            return_value={"success": False, "error": "VPN not available"},
+        ):
+            response = app_module.app.test_client().post(
+                "/api/vpn/connect",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"protocol": "wireguard"},
+            )
+            payload = response.get_json()
+
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(payload["success"])
+        self.assertNotIn("connected", payload)
+
+    def test_firewall_list_does_not_report_fake_active_state_on_backend_failure(self):
+        app_module = importlib.import_module("web.app")
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        with mock.patch.object(
+            app_module.service,
+            "get_firewalls_status",
+            return_value={"success": False, "error": "Firewalls not available"},
+        ):
+            response = app_module.app.test_client().get(
+                "/api/firewalls/list",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            payload = response.get_json()
+
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(payload["success"])
+        self.assertTrue(payload["firewalls"])
+        self.assertTrue(all(not item["active"] for item in payload["firewalls"]))
+
+    def test_frontend_does_not_embed_demo_credentials_or_fake_active_claims(self):
+        root = Path(__file__).resolve().parents[1]
+        app_js = (root / "web" / "static" / "js" / "app.js").read_text(
+            encoding="utf-8"
+        )
+        index_html = (root / "web" / "static" / "index.html").read_text(
+            encoding="utf-8"
+        )
+
+        forbidden_js = [
+            "api.login('admin', 'admin')",
+            "For demo purposes",
+            "Running in demo mode",
+            "VPN Active",
+            "7-layer protection",
+            "Trackers Blocked",
+        ]
+        forbidden_html = [
+            "All queries encrypted",
+            "Search the web (Encrypted)",
+            "Multi-Hop Active",
+            "8 Types Active",
+            "Everything encrypted",
+            "<span>Connected</span>",
+        ]
+
+        for value in forbidden_js:
+            self.assertNotIn(value, app_js)
+        for value in forbidden_html:
+            self.assertNotIn(value, index_html)
 
     def test_production_import_requires_explicit_secrets(self):
         completed = self.run_web_import({"THIRSTYS_ENV": "production"})

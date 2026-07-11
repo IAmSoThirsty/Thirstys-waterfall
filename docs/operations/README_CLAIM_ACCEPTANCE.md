@@ -13,12 +13,12 @@ Current conclusion: the repository now passes the reproducible local Standard v3
 | README claim | Current status | Evidence now present | Remaining acceptance work |
 | --- | --- | --- | --- |
 | Complete deployment-accepted ecosystem | Partial | `python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passes; CodeQL run `29138681694` passed for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`; release workflow run `29138685612` passed; release `v1.0.2` published; GHCR image `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2` has digest `sha256:4095d4d28f4d39aa9859783d2a9f170be919aba0435061f3d6ee9b3af95db059`; published image pull and local rollback/log smoke pass | Target production logs, target rollback execution evidence, secrets rotation execution evidence, host network policy evidence, and real platform backend evidence |
-| Built-in VPN | Partial | VPN backend modules and tests exist; subprocess execution paths are shell-free and command-resolved | Prove real OS integration on supported platforms, document privilege requirements, and separate mocked/backend-availability tests from real integration tests |
-| 8 firewall types | Partial | Firewall modules and backend factory tests exist; backend command paths are shell-free and command-resolved | Prove each firewall backend applies and rolls back real rules on its supported OS, or clearly mark unsupported modes |
-| Privacy-first incognito browser | Partial | Added native document/parser/fetcher engine layer and compatibility tests | Add layout/rendering/navigation/session behavior acceptance tests; define what "native web engine" includes and excludes |
+| Built-in VPN | Partial | VPN backend modules and tests exist; subprocess execution paths are shell-free and command-resolved; web VPN connect/disconnect endpoints no longer return fabricated success payloads | Prove real OS integration on supported platforms, document privilege requirements, and separate mocked/backend-availability tests from real integration tests |
+| 8 firewall types | Partial | Firewall modules and backend factory tests exist; backend command paths are shell-free and command-resolved; web firewall list no longer reports static active firewalls when backend status is unavailable | Prove each firewall backend applies and rolls back real rules on its supported OS, or clearly mark unsupported modes |
+| Privacy-first incognito browser | Partial | Added native document/parser/fetcher engine layer and compatibility tests; web UI no longer auto-logs in with demo credentials or displays fake rendered-page VPN/encryption claims | Add layout/rendering/navigation/session behavior acceptance tests; define what "native web engine" includes and excludes |
 | Total encryption of all data | Not accepted | Crypto modules and encrypted storage helpers exist | End-to-end proof for stored state, browser data, logs, telemetry, downloads, and transport paths |
-| No stubs, placeholders, or TODOs | Not accepted | New continuity map identifies current simulated and placeholder paths | Replace or explicitly reclassify each simulated, placeholder, simplified, and production-substitute path |
-| Real backends | Partial | Backend factories exist; some tests exercise backend availability; local Docker web backend starts and serves health/auth | Add real VPN/firewall backend execution evidence and fail-closed handling when required OS tools are absent |
+| No stubs, placeholders, or TODOs | Not accepted | New continuity map identifies current simulated and placeholder paths; web static demo-login/fake-active status paths are covered by regression tests | Replace or explicitly reclassify each simulated, placeholder, simplified, and production-substitute path |
+| Real backends | Partial | Backend factories exist; some tests exercise backend availability; local Docker web backend starts and serves health/auth; IKEv2 availability now requires a concrete OS command path instead of platform name alone | Add real VPN/firewall backend execution evidence and fail-closed handling when required OS tools are absent |
 | Comprehensive testing | Partial | Latest full local verifier ran `python -m pytest -q`: 326 tests passed with no pytest warning summary; hosted PR and release workflows passed Linux, Windows, and macOS on Python 3.10-3.11 | Keep separating availability/unit coverage from real OS backend execution tests |
 | CI/CD pipeline | Partial | CI test install path now includes `.[test,web]`; flake8 syntax gate is hard; Bandit/Safety no longer swallow failures; Python matrix is now 3.10-3.11 to match the patched web dependency stack; CodeQL run `29138681694` passed; release Docker smoke tests the loaded release image tag without rebuilding; release workflow run `29138685612` passed; PyPI publish is skipped for workflow-dispatch releases | Add target deployment workflow evidence |
 | Security audits | Partial | Full-repo Bandit passes with 0 findings; deployment lock vulnerability check passes with 0 vulnerabilities and 0 ignored vulnerabilities; CodeQL run `29138681694` passed on main | Continue scheduled CodeQL monitoring and triage any future findings |
@@ -29,11 +29,11 @@ Current conclusion: the repository now passes the reproducible local Standard v3
 
 ## Immediate Completion Plan
 
-1. Replace web static demo/placeholder behavior or mark the web UI as development-only until complete.
-2. Convert simulated implementation paths into real backends or adjust the README claim language.
-3. Execute rollback and secret rotation procedure against the target deployment and capture target logs.
-4. Attach target-host deployment, rollback, secret-rotation, and log evidence to this matrix.
-5. Prove real OS VPN/firewall backend execution or narrow the related README claims further.
+1. Convert remaining simulated implementation paths into real backends or adjust the README claim language.
+2. Execute rollback and secret rotation procedure against the target deployment and capture target logs.
+3. Attach target-host deployment, rollback, secret-rotation, and log evidence to this matrix.
+4. Prove real OS VPN/firewall backend execution or narrow the related README claims further.
+5. Clean broad marketing/showcase docs so they cannot be mistaken for accepted Standard v3 evidence.
 
 ## Evidence Required Before Marking Complete
 

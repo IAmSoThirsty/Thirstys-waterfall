@@ -331,8 +331,14 @@ class IKEv2Backend(VPNBackend):
         self.connection_name = config.get("connection_name", "ThirstysVPN")
 
     def check_availability(self) -> bool:
-        """IKEv2 is built into most modern OSes"""
-        return self.platform in ["Linux", "Windows", "Darwin"]
+        """Check whether the current OS exposes an IKEv2 command path."""
+        if self.platform == "Linux":
+            return _command_path("ipsec") is not None or _command_path("swanctl") is not None
+        if self.platform == "Windows":
+            return _command_path("rasdial") is not None
+        if self.platform == "Darwin":
+            return _command_path("scutil") is not None
+        return False
 
     def connect(self) -> bool:
         """Establish IKEv2 connection"""

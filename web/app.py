@@ -66,6 +66,7 @@ from flask_jwt_extended import (
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash
+from thirstys_waterfall.firewalls.manager import FirewallManager
 from thirstys_waterfall.sovereign_binding import (
     execute_sovereign_protocol,
     get_sovereign_binding_status,
@@ -744,37 +745,25 @@ def vpn_connect():
     - IPv6 leak protection
     - Stealth mode
     """
-    data = request.get_json() or {}
-
-    # Demo implementation
-    result = {
-        "success": True,
-        "protocol": data.get("protocol", "wireguard"),
-        "multi_hop": data.get("multi_hop", True),
-        "hop_count": data.get("hop_count", 3),
-        "connected": True,
-    }
-
-    service.system_state["vpn"] = {"connected": True, "status": "connected", **result}
-
-    return jsonify(result), 200
+    result = service.vpn_connect()
+    status_code = 200 if result.get("success") else 503
+    return jsonify(result), status_code
 
 
 @app.route("/api/vpn/disconnect", methods=["POST"])
 @jwt_required()
 def vpn_disconnect():
     """Disconnect from VPN."""
-    service.system_state["vpn"]["connected"] = False
-    service.system_state["vpn"]["status"] = "disconnected"
-
-    return jsonify({"success": True, "connected": False}), 200
+    result = service.vpn_disconnect()
+    status_code = 200 if result.get("success") else 503
+    return jsonify(result), status_code
 
 
 @app.route("/api/vpn/status", methods=["GET"])
 @jwt_required()
 def vpn_status():
     """Get detailed VPN status."""
-    return jsonify(service.system_state["vpn"]), 200
+    return jsonify(service.get_vpn_status()), 200
 
 
 # ============================================================================
@@ -798,18 +787,16 @@ def list_firewalls():
     7. Hardware Firewall
     8. Cloud Firewall
     """
-    firewalls = [
-        {"id": "packet-filter", "name": "Packet-Filtering Firewall", "active": True},
-        {"id": "circuit-level", "name": "Circuit-Level Gateway", "active": True},
-        {"id": "stateful", "name": "Stateful Inspection", "active": True},
-        {"id": "proxy", "name": "Proxy Firewall", "active": True},
-        {"id": "ngfw", "name": "Next-Generation Firewall", "active": True},
-        {"id": "software", "name": "Software Firewall", "active": True},
-        {"id": "hardware", "name": "Hardware Firewall", "active": False},
-        {"id": "cloud", "name": "Cloud Firewall", "active": True},
-    ]
+    result = service.get_firewalls_status()
+    if result.get("success"):
+        return jsonify(result), 200
 
-    return jsonify({"firewalls": firewalls}), 200
+    capabilities = [
+        {"id": name, "name": firewall.__class__.__name__, "active": False}
+        for name, firewall in FirewallManager({}).firewalls.items()
+    ]
+    result["firewalls"] = capabilities
+    return jsonify(result), 503
 
 
 @app.route("/api/firewalls/<firewall_id>/toggle", methods=["POST"])
@@ -850,7 +837,7 @@ def create_browser_tab():
     - No cookies
     - Anti-fingerprinting
     - Anti-tracking
-    - All queries encrypted
+    - Query and navigation privacy remains governed by browser engine acceptance
     """
     data = request.get_json() or {}
     url = data.get("url", "about:blank")
