@@ -100,6 +100,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest tests\test_browser.py tests\test_native_web_engine.py tests\test_web_app_import.py -q` passed after the encrypted-search unavailable-response change: 51 tests passed.
 - `python -m pytest -q` passed after the encrypted-search unavailable-response change: 339 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after restoring the sparse-hidden verifier script with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py`.
+- Replaced `LocalInferenceEngine` simulated model loading and response generation with a fail-closed backend-injection contract.
+- `python -m pytest tests\test_local_inference.py -q` passed after the local-inference backend-gating change: 3 tests passed.
+- `flake8 thirstys_waterfall\ai_assistant\local_inference.py tests\test_local_inference.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the local-inference backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the local-inference backend-gating change: 342 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the local-inference backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -114,6 +119,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
+- Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points
