@@ -1,7 +1,7 @@
 """Browser Sandbox for secure execution"""
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class BrowserSandbox:
@@ -33,7 +33,12 @@ class BrowserSandbox:
     - Sandbox escape attempt: Immediate termination
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(
+        self,
+        config: Dict[str, Any] = None,
+        policy_backend: Optional[Any] = None,
+        resource_monitor: Optional[Any] = None,
+    ):
         """Initialize sandbox
 
         Args:
@@ -41,11 +46,17 @@ class BrowserSandbox:
                 - enabled: bool (default True)
                 - memory_limit_mb: int (default 512)
                 - cpu_limit_percent: int (default 50)
+            policy_backend: Backend that actually applies sandbox policies.
+            resource_monitor: Backend that reports measured resource usage.
         """
         config = config or {}
         self.enabled = config.get("enabled", True)
         self.logger = logging.getLogger(__name__)
         self._active = False
+        self._policy_backend = policy_backend or config.get("policy_backend")
+        self._resource_monitor = resource_monitor or config.get("resource_monitor")
+        self._policy_apply_result: Optional[Dict[str, Any]] = None
+        self._resource_usage_result: Optional[Dict[str, Any]] = None
 
         # MAXIMUM ALLOWED DESIGN: Resource limits
         self._resource_limits = {
@@ -84,11 +95,17 @@ class BrowserSandbox:
     def start(self):
         """Start sandbox"""
         if not self.enabled:
-            return
+            self._active = False
+            self._policy_apply_result = {
+                "status": "disabled",
+                "policies_enforced": False,
+            }
+            return self._policy_apply_result
 
         self.logger.info("Starting Browser Sandbox")
-        self._apply_sandbox_policies()
-        self._active = True
+        result = self._apply_sandbox_policies()
+        self._active = bool(result.get("policies_enforced"))
+        return result
 
     def stop(self):
         """Stop sandbox"""
@@ -98,7 +115,35 @@ class BrowserSandbox:
     def _apply_sandbox_policies(self):
         """Apply sandbox security policies"""
         self.logger.debug("Applying sandbox policies")
-        # In production, would set actual OS-level sandbox policies
+        if self._policy_backend is None:
+            self._policy_apply_result = {
+                "status": "unavailable",
+                "error": "Browser sandbox policy backend is not configured",
+                "policies_enforced": False,
+            }
+            self.logger.error(self._policy_apply_result["error"])
+            return self._policy_apply_result
+
+        apply_policies = getattr(self._policy_backend, "apply_sandbox_policies", None)
+        if not callable(apply_policies):
+            raise RuntimeError(
+                "Browser sandbox policy backend does not implement "
+                "apply_sandbox_policies"
+            )
+
+        result = apply_policies(
+            policies=self._sandbox_policies.copy(),
+            resource_limits=self._resource_limits.copy(),
+            security_boundaries=self._security_boundaries.copy(),
+        )
+        if not isinstance(result, dict):
+            raise RuntimeError("Browser sandbox policy backend returned invalid result")
+
+        result.setdefault("status", "unknown")
+        result.setdefault("policies_enforced", result["status"] == "enforced")
+        result.setdefault("backend", type(self._policy_backend).__name__)
+        self._policy_apply_result = result
+        return result
 
     def execute_script(self, script: str, context: Dict[str, Any]) -> Any:
         """
@@ -147,6 +192,29 @@ class BrowserSandbox:
     def is_active(self) -> bool:
         """Check if sandbox is active"""
         return self._active
+
+    def get_policy_status(self) -> Dict[str, Any]:
+        """Return latest sandbox policy enforcement evidence."""
+        if self._policy_apply_result is None:
+            return {
+                "status": "not_attempted",
+                "policies_enforced": False,
+                "backend_configured": self._policy_backend is not None,
+                "backend": (
+                    type(self._policy_backend).__name__
+                    if self._policy_backend is not None
+                    else None
+                ),
+            }
+        return {
+            **self._policy_apply_result,
+            "backend_configured": self._policy_backend is not None,
+            "backend": (
+                type(self._policy_backend).__name__
+                if self._policy_backend is not None
+                else None
+            ),
+        }
 
     def get_policies(self) -> Dict[str, bool]:
         """Get sandbox policies"""
@@ -225,11 +293,42 @@ class BrowserSandbox:
             Time: O(1)
             Space: O(1)
         """
-        # In production, would query actual resource usage
-        return {
-            "memory_used_mb": 0,  # Placeholder
-            "memory_limit_mb": self._resource_limits["memory_mb"],
-            "cpu_used_percent": 0,  # Placeholder
-            "cpu_limit_percent": self._resource_limits["cpu_percent"],
-            "within_limits": True,
-        }
+        if self._resource_monitor is None:
+            self._resource_usage_result = {
+                "status": "unavailable",
+                "error": "Browser sandbox resource monitor is not configured",
+                "memory_limit_mb": self._resource_limits["memory_mb"],
+                "cpu_limit_percent": self._resource_limits["cpu_percent"],
+                "within_limits": False,
+                "resource_usage_verified": False,
+            }
+            return self._resource_usage_result
+
+        check_usage = getattr(self._resource_monitor, "check_resource_usage", None)
+        if not callable(check_usage):
+            check_usage = getattr(self._resource_monitor, "get_resource_usage", None)
+        if not callable(check_usage):
+            raise RuntimeError(
+                "Browser sandbox resource monitor does not implement "
+                "check_resource_usage"
+            )
+
+        result = check_usage(resource_limits=self._resource_limits.copy())
+        if not isinstance(result, dict):
+            raise RuntimeError("Browser sandbox resource monitor returned invalid result")
+
+        result.setdefault("status", "measured")
+        result.setdefault("memory_limit_mb", self._resource_limits["memory_mb"])
+        result.setdefault("cpu_limit_percent", self._resource_limits["cpu_percent"])
+        result.setdefault("resource_usage_verified", True)
+        if "within_limits" not in result:
+            memory_ok = result.get("memory_used_mb", result["memory_limit_mb"]) <= result[
+                "memory_limit_mb"
+            ]
+            cpu_ok = result.get("cpu_used_percent", result["cpu_limit_percent"]) <= result[
+                "cpu_limit_percent"
+            ]
+            result["within_limits"] = memory_ok and cpu_ok
+        result.setdefault("backend", type(self._resource_monitor).__name__)
+        self._resource_usage_result = result
+        return result

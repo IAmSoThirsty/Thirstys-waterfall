@@ -282,6 +282,40 @@ class InvalidBrowserDownloadBackend:
         return "not-a-dict"
 
 
+class FakeSandboxPolicyBackend:
+    def __init__(self):
+        self.calls = []
+
+    def apply_sandbox_policies(self, **kwargs):
+        self.calls.append(kwargs)
+        return {"status": "enforced", "policy_id": "sandbox-policy-1"}
+
+
+class FakeSandboxResourceMonitor:
+    def __init__(self, memory_used_mb=128, cpu_used_percent=10):
+        self.memory_used_mb = memory_used_mb
+        self.cpu_used_percent = cpu_used_percent
+        self.calls = []
+
+    def check_resource_usage(self, **kwargs):
+        self.calls.append(kwargs)
+        return {
+            "status": "measured",
+            "memory_used_mb": self.memory_used_mb,
+            "cpu_used_percent": self.cpu_used_percent,
+        }
+
+
+class InvalidSandboxPolicyBackend:
+    def apply_sandbox_policies(self, **kwargs):
+        return "not-a-dict"
+
+
+class InvalidSandboxResourceMonitor:
+    def check_resource_usage(self, **kwargs):
+        return "not-a-dict"
+
+
 class TestIncognitoBrowser(unittest.TestCase):
     """Test incognito browser engine"""
 
@@ -322,7 +356,11 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.assertTrue(self.browser._search_engine._active)
         self.assertTrue(self.browser._nav_history._active)
         self.assertTrue(self.browser._tab_manager._active)
-        self.assertTrue(self.browser._sandbox._active)
+        self.assertFalse(self.browser._sandbox._active)
+        self.assertEqual(
+            self.browser._sandbox.get_policy_status()["status"],
+            "unavailable",
+        )
         self.assertTrue(self.browser._content_blocker._active)
 
     def test_browser_stop_clears_all_data(self):
@@ -428,6 +466,7 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.assertFalse(status["native_engine_accepted"])
         self.assertTrue(status["searches_encrypted"])
         self.assertTrue(status["navigation_encrypted"])
+        self.assertFalse(status["sandbox_enabled"])
         self.assertFalse(status["download_backend_configured"])
 
     def test_download_without_backend_returns_unavailable_not_silent_none(self):
@@ -542,25 +581,96 @@ class TestBrowserSandbox(unittest.TestCase):
         self.assertTrue(self.sandbox.enabled)
 
     def test_sandbox_process_isolation(self):
-        """Test sandbox creates isolated processes"""
+        """Test sandbox does not report active without backend evidence."""
         self.sandbox.start()
 
-        # Sandbox should be active
-        self.assertTrue(self.sandbox._active)
+        self.assertFalse(self.sandbox._active)
+        status = self.sandbox.get_policy_status()
+        self.assertEqual(status["status"], "unavailable")
+        self.assertEqual(
+            status["error"],
+            "Browser sandbox policy backend is not configured",
+        )
+        self.assertFalse(status["policies_enforced"])
+        self.assertFalse(status["backend_configured"])
 
         # Verify process limits are set
         limits = self.sandbox.get_resource_limits()
         self.assertIn("memory_limit", limits)
         self.assertIn("cpu_limit", limits)
 
+    def test_sandbox_delegates_policy_enforcement_to_backend(self):
+        """Test sandbox only becomes active after backend enforcement."""
+        backend = FakeSandboxPolicyBackend()
+        sandbox = BrowserSandbox(self.config, policy_backend=backend)
+
+        result = sandbox.start()
+
+        self.assertTrue(sandbox._active)
+        self.assertEqual(result["status"], "enforced")
+        self.assertTrue(result["policies_enforced"])
+        self.assertEqual(result["backend"], "FakeSandboxPolicyBackend")
+        self.assertEqual(len(backend.calls), 1)
+        self.assertIn("policies", backend.calls[0])
+        self.assertIn("resource_limits", backend.calls[0])
+        self.assertIn("security_boundaries", backend.calls[0])
+
+    def test_invalid_sandbox_policy_backend_fails_loudly(self):
+        """Test invalid policy backend results are rejected."""
+        sandbox = BrowserSandbox(
+            self.config,
+            policy_backend=InvalidSandboxPolicyBackend(),
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "returned invalid result"):
+            sandbox.start()
+
     def test_sandbox_security_boundaries(self):
-        """Test sandbox enforces security boundaries"""
+        """Test sandbox exposes configured security boundaries."""
         self.sandbox.start()
 
-        # Verify security boundaries are active
         boundaries = self.sandbox.get_security_boundaries()
         self.assertIn("filesystem_isolation", boundaries)
         self.assertIn("network_restrictions", boundaries)
+
+    def test_resource_usage_without_monitor_is_unavailable_not_zero(self):
+        """Test resource usage is not fabricated without a monitor."""
+        usage = self.sandbox.check_resource_usage()
+
+        self.assertEqual(usage["status"], "unavailable")
+        self.assertEqual(
+            usage["error"],
+            "Browser sandbox resource monitor is not configured",
+        )
+        self.assertFalse(usage["within_limits"])
+        self.assertFalse(usage["resource_usage_verified"])
+        self.assertNotIn("memory_used_mb", usage)
+        self.assertNotIn("cpu_used_percent", usage)
+
+    def test_resource_usage_delegates_to_monitor(self):
+        """Test resource usage comes from a configured monitor backend."""
+        monitor = FakeSandboxResourceMonitor(memory_used_mb=64, cpu_used_percent=5)
+        sandbox = BrowserSandbox(self.config, resource_monitor=monitor)
+
+        usage = sandbox.check_resource_usage()
+
+        self.assertEqual(usage["status"], "measured")
+        self.assertEqual(usage["memory_used_mb"], 64)
+        self.assertEqual(usage["cpu_used_percent"], 5)
+        self.assertTrue(usage["within_limits"])
+        self.assertTrue(usage["resource_usage_verified"])
+        self.assertEqual(usage["backend"], "FakeSandboxResourceMonitor")
+        self.assertEqual(len(monitor.calls), 1)
+
+    def test_invalid_resource_monitor_fails_loudly(self):
+        """Test invalid monitor results are rejected."""
+        sandbox = BrowserSandbox(
+            self.config,
+            resource_monitor=InvalidSandboxResourceMonitor(),
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "returned invalid result"):
+            sandbox.check_resource_usage()
 
 
 class TestContentBlocker(unittest.TestCase):
