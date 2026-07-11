@@ -38,6 +38,7 @@ class BrowserSandbox:
         config: Dict[str, Any] = None,
         policy_backend: Optional[Any] = None,
         resource_monitor: Optional[Any] = None,
+        script_executor: Optional[Any] = None,
     ):
         """Initialize sandbox
 
@@ -48,6 +49,7 @@ class BrowserSandbox:
                 - cpu_limit_percent: int (default 50)
             policy_backend: Backend that actually applies sandbox policies.
             resource_monitor: Backend that reports measured resource usage.
+            script_executor: Backend that executes safe scripts inside sandbox.
         """
         config = config or {}
         self.enabled = config.get("enabled", True)
@@ -55,8 +57,10 @@ class BrowserSandbox:
         self._active = False
         self._policy_backend = policy_backend or config.get("policy_backend")
         self._resource_monitor = resource_monitor or config.get("resource_monitor")
+        self._script_executor = script_executor or config.get("script_executor")
         self._policy_apply_result: Optional[Dict[str, Any]] = None
         self._resource_usage_result: Optional[Dict[str, Any]] = None
+        self._script_execution_result: Optional[Dict[str, Any]] = None
 
         # MAXIMUM ALLOWED DESIGN: Resource limits
         self._resource_limits = {
@@ -157,16 +161,45 @@ class BrowserSandbox:
             Script result or None if blocked
         """
         if not self._active:
+            self._script_execution_result = {
+                "status": "blocked",
+                "error": "Browser sandbox is not active",
+                "script_executed": False,
+            }
             return None
 
         # Check if script is safe
         if not self._is_safe_script(script):
             self.logger.warning("Blocked unsafe script execution")
+            self._script_execution_result = {
+                "status": "blocked",
+                "error": "Unsafe script blocked by sandbox policy",
+                "script_executed": False,
+            }
             return None
 
-        # Execute in sandbox (simplified)
-        self.logger.debug("Executing script in sandbox")
-        return None
+        if self._script_executor is None:
+            self._script_execution_result = {
+                "status": "unavailable",
+                "error": "Browser sandbox script executor is not configured",
+                "script_executed": False,
+            }
+            self.logger.error(self._script_execution_result["error"])
+            return None
+
+        execute_script = getattr(self._script_executor, "execute_script", None)
+        if not callable(execute_script):
+            raise RuntimeError(
+                "Browser sandbox script executor does not implement execute_script"
+            )
+
+        result = execute_script(script=script, context=context.copy())
+        self._script_execution_result = {
+            "status": "executed",
+            "script_executed": True,
+            "backend": type(self._script_executor).__name__,
+        }
+        return result
 
     def _is_safe_script(self, script: str) -> bool:
         """Check if script is safe to execute"""
@@ -192,6 +225,29 @@ class BrowserSandbox:
     def is_active(self) -> bool:
         """Check if sandbox is active"""
         return self._active
+
+    def get_script_execution_status(self) -> Dict[str, Any]:
+        """Return latest sandboxed script execution evidence."""
+        if self._script_execution_result is None:
+            return {
+                "status": "not_attempted",
+                "script_executed": False,
+                "backend_configured": self._script_executor is not None,
+                "backend": (
+                    type(self._script_executor).__name__
+                    if self._script_executor is not None
+                    else None
+                ),
+            }
+        return {
+            **self._script_execution_result,
+            "backend_configured": self._script_executor is not None,
+            "backend": (
+                type(self._script_executor).__name__
+                if self._script_executor is not None
+                else None
+            ),
+        }
 
     def get_policy_status(self) -> Dict[str, Any]:
         """Return latest sandbox policy enforcement evidence."""
