@@ -8,6 +8,7 @@ from thirstys_waterfall.security import (
     TPMInterface,
     SecureEnclaveInterface,
     HSMInterface,
+    HardwareType,
     AttestationStatus,
 )
 
@@ -20,6 +21,44 @@ class TestTPMInterface(unittest.TestCase):
         tpm = TPMInterface()
         self.assertTrue(tpm.initialize())
         self.assertTrue(tpm._initialized)
+        self.assertFalse(tpm._hardware_backed)
+        self.assertEqual(
+            tpm.operation_evidence["initialize"]["status"], "software_emulated"
+        )
+
+    def test_tpm_requires_backend_when_fallback_disabled(self):
+        """Test TPM hardware mode fails closed without backend evidence"""
+        tpm = TPMInterface(allow_software_fallback=False)
+
+        self.assertFalse(tpm.initialize())
+        self.assertFalse(tpm._initialized)
+        self.assertEqual(
+            tpm.operation_evidence["initialize"]["reason"],
+            "tpm_backend_not_configured",
+        )
+
+    def test_tpm_backend_evidence(self):
+        """Test TPM accepts configured backend evidence"""
+
+        class TPMBackend:
+            def initialize_tpm(self):
+                return {"available": True, "device": "/dev/tpm-test"}
+
+            def get_hardware_id(self):
+                return "TPM-BACKEND-ID"
+
+            def attest_boot(self):
+                return AttestationStatus.VALID
+
+        tpm = TPMInterface(
+            hardware_backend=TPMBackend(), allow_software_fallback=False
+        )
+
+        self.assertTrue(tpm.initialize())
+        self.assertTrue(tpm._hardware_backed)
+        self.assertEqual(tpm.get_hardware_id(), "TPM-BACKEND-ID")
+        self.assertEqual(tpm.attest_boot(), AttestationStatus.VALID)
+        self.assertTrue(tpm.operation_evidence["attest_boot"]["hardware_backed"])
 
     def test_tpm_unique_salt(self):
         """Test TPM generates unique salt per instance"""
@@ -74,6 +113,9 @@ class TestTPMInterface(unittest.TestCase):
 
         unsealed = tpm.unseal_data(sealed)
         self.assertEqual(unsealed, test_data)
+        self.assertEqual(
+            tpm.operation_evidence["seal_data"]["status"], "software_emulated"
+        )
 
 
 class TestSecureEnclaveInterface(unittest.TestCase):
@@ -84,6 +126,17 @@ class TestSecureEnclaveInterface(unittest.TestCase):
         enclave = SecureEnclaveInterface()
         self.assertTrue(enclave.initialize())
         self.assertTrue(enclave._initialized)
+        self.assertFalse(enclave._hardware_backed)
+
+    def test_enclave_requires_backend_when_fallback_disabled(self):
+        """Test Secure Enclave hardware mode fails closed without backend"""
+        enclave = SecureEnclaveInterface(allow_software_fallback=False)
+
+        self.assertFalse(enclave.initialize())
+        self.assertEqual(
+            enclave.operation_evidence["initialize"]["reason"],
+            "secure_enclave_backend_not_configured",
+        )
 
     def test_enclave_unique_salt(self):
         """Test Secure Enclave generates unique salt per instance"""
@@ -117,6 +170,17 @@ class TestHSMInterface(unittest.TestCase):
         hsm = HSMInterface()
         self.assertTrue(hsm.initialize())
         self.assertTrue(hsm._initialized)
+        self.assertFalse(hsm._hardware_backed)
+
+    def test_hsm_requires_backend_when_fallback_disabled(self):
+        """Test HSM hardware mode fails closed without backend"""
+        hsm = HSMInterface(allow_software_fallback=False)
+
+        self.assertFalse(hsm.initialize())
+        self.assertEqual(
+            hsm.operation_evidence["initialize"]["reason"],
+            "hsm_backend_not_configured",
+        )
 
     def test_hsm_unique_salt(self):
         """Test HSM generates unique salt per instance"""
@@ -157,6 +221,7 @@ class TestHardwareRootOfTrust(unittest.TestCase):
         """Test Hardware Root-of-Trust initializes"""
         hw_root = HardwareRootOfTrust()
         self.assertTrue(hw_root.initialize())
+        self.assertEqual(hw_root._active_type, HardwareType.SOFTWARE_FALLBACK)
 
     def test_master_key_storage(self):
         """Test storing and retrieving master key"""
@@ -184,8 +249,32 @@ class TestHardwareRootOfTrust(unittest.TestCase):
 
         info = hw_root.get_hardware_info()
         self.assertTrue(info["active"])
-        self.assertIsNotNone(info["type"])
+        self.assertEqual(info["type"], HardwareType.SOFTWARE_FALLBACK.value)
+        self.assertFalse(info["hardware_backed"])
         self.assertIsNotNone(info["hardware_id"])
+
+    def test_hardware_root_uses_backend_when_available(self):
+        """Test manager selects hardware type when backend evidence exists"""
+
+        class HSMBackend:
+            def initialize_hsm(self, config):
+                return True
+
+            def get_hardware_id(self):
+                return "HSM-BACKEND-ID"
+
+            def attest_boot(self):
+                return AttestationStatus.VALID
+
+        hw_root = HardwareRootOfTrust(
+            hardware_backends={HardwareType.HSM: HSMBackend()}
+        )
+
+        self.assertTrue(hw_root.initialize())
+        info = hw_root.get_hardware_info()
+        self.assertEqual(info["type"], HardwareType.HSM.value)
+        self.assertTrue(info["hardware_backed"])
+        self.assertEqual(info["hardware_id"], "HSM-BACKEND-ID")
 
     def test_no_hardcoded_secrets(self):
         """Test that no hard-coded secrets remain in the code"""

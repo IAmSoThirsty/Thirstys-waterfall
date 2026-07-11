@@ -1,7 +1,7 @@
 """
 Hardware Root-of-Trust Integration
-Provides TPM, Secure Enclave, and HSM support for cryptographic key storage
-and attested secure boot, protecting against OS/root compromise.
+Provides evidence-gated TPM, Secure Enclave, HSM, and explicit software-fallback
+interfaces for cryptographic key storage and boot-attestation workflows.
 """
 
 import logging
@@ -82,35 +82,80 @@ class HardwareInterface(ABC):
 class TPMInterface(HardwareInterface):
     """
     Trusted Platform Module (TPM) interface.
-    Provides hardware-backed key storage and secure boot attestation.
+    Uses a configured TPM backend when present; otherwise uses an explicit
+    software fallback only when allowed by the caller.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        hardware_backend: Optional[Any] = None,
+        allow_software_fallback: bool = True,
+    ):
         self.logger = logging.getLogger(__name__)
+        self.hardware_backend = hardware_backend
+        self.allow_software_fallback = allow_software_fallback
         self._initialized = False
         self._keys: Dict[str, bytes] = {}
         self._pcr_banks: Dict[int, bytes] = {}
+        self._sealed_policies: Dict[bytes, List[int]] = {}
         self._hardware_id = self._generate_hardware_id()
-        # Generate unique salt from hardware ID instead of hard-coding
         self._salt = hashlib.sha256(f"TPM_SRK_{self._hardware_id}".encode()).digest()
+        self._hardware_backed = False
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
+
+    def _backend_call(self, method_name: str, **kwargs: Any) -> Optional[Any]:
+        method = getattr(self.hardware_backend, method_name, None)
+        if not callable(method):
+            return None
+        return method(**kwargs)
 
     def initialize(self) -> bool:
         """Initialize TPM interface"""
         try:
             self.logger.info("Initializing TPM interface")
 
-            # In production, this would:
-            # 1. Connect to TPM device (/dev/tpm0)
-            # 2. Take ownership if needed
-            # 3. Initialize PCR banks
-            # 4. Verify TPM is in operational state
+            backend_result = self._backend_call("initialize_tpm")
+            if backend_result is not None:
+                accepted = bool(
+                    backend_result.get("available", True)
+                    if isinstance(backend_result, dict)
+                    else backend_result
+                )
+                self.operation_evidence["initialize"] = (
+                    dict(backend_result)
+                    if isinstance(backend_result, dict)
+                    else {"status": "available" if accepted else "unavailable"}
+                )
+                self._initialized = accepted
+                self._hardware_backed = accepted
+                return accepted
 
-            # Initialize PCR banks with boot measurements
+            if not self.allow_software_fallback:
+                self._record_evidence(
+                    "initialize",
+                    "unavailable",
+                    reason="tpm_backend_not_configured",
+                )
+                return False
+
             self._initialize_pcr_banks()
+            self._record_evidence(
+                "initialize",
+                "software_emulated",
+                hardware_backed=False,
+                reason="tpm_backend_not_configured",
+            )
 
             self._initialized = True
-            self.logger.info("TPM interface initialized successfully")
+            self.logger.info("TPM software fallback initialized successfully")
             return True
 
         except Exception as e:
@@ -119,8 +164,6 @@ class TPMInterface(HardwareInterface):
 
     def _initialize_pcr_banks(self):
         """Initialize Platform Configuration Register banks"""
-        # Simulate PCR measurements
-        # In production, these would be actual boot chain measurements
         boot_measurements = [
             b"BIOS_MEASUREMENT",
             b"BOOTLOADER_MEASUREMENT",
@@ -136,9 +179,24 @@ class TPMInterface(HardwareInterface):
         """Store key in TPM's non-volatile memory"""
         with self._lock:
             try:
-                # In production: Use TPM2_NV_Write to store in NVRAM
-                # Keys are encrypted with TPM's storage root key
+                backend_result = self._backend_call(
+                    "store_key", key_id=key_id, key_data=key_data
+                )
+                if backend_result is not None:
+                    accepted = bool(backend_result)
+                    self._record_evidence(
+                        f"store_key:{key_id}",
+                        "stored" if accepted else "unavailable",
+                        hardware_backed=accepted,
+                    )
+                    return accepted
+
                 self._keys[key_id] = self._encrypt_with_srk(key_data)
+                self._record_evidence(
+                    f"store_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 self.logger.info(f"Stored key {key_id} in TPM")
                 return True
             except Exception as e:
@@ -149,9 +207,22 @@ class TPMInterface(HardwareInterface):
         """Retrieve key from TPM"""
         with self._lock:
             try:
+                backend_result = self._backend_call("retrieve_key", key_id=key_id)
+                if backend_result is not None:
+                    self._record_evidence(
+                        f"retrieve_key:{key_id}",
+                        "retrieved" if backend_result else "missing",
+                        hardware_backed=True,
+                    )
+                    return backend_result
+
                 encrypted_key = self._keys.get(key_id)
                 if encrypted_key:
-                    # In production: Use TPM2_NV_Read
+                    self._record_evidence(
+                        f"retrieve_key:{key_id}",
+                        "software_emulated",
+                        hardware_backed=False,
+                    )
                     return self._decrypt_with_srk(encrypted_key)
                 return None
             except Exception as e:
@@ -162,9 +233,23 @@ class TPMInterface(HardwareInterface):
         """Securely delete key from TPM"""
         with self._lock:
             try:
+                backend_result = self._backend_call("delete_key", key_id=key_id)
+                if backend_result is not None:
+                    accepted = bool(backend_result)
+                    self._record_evidence(
+                        f"delete_key:{key_id}",
+                        "deleted" if accepted else "unavailable",
+                        hardware_backed=accepted,
+                    )
+                    return accepted
+
                 if key_id in self._keys:
-                    # In production: Use TPM2_NV_UndefineSpace
                     del self._keys[key_id]
+                    self._record_evidence(
+                        f"delete_key:{key_id}",
+                        "software_emulated",
+                        hardware_backed=False,
+                    )
                     self.logger.info(f"Deleted key {key_id} from TPM")
                 return True
             except Exception as e:
@@ -177,16 +262,31 @@ class TPMInterface(HardwareInterface):
         Returns status indicating if boot chain is trusted.
         """
         try:
-            # In production: Use TPM2_Quote to get signed PCR values
-            # and verify against known-good values
+            backend_result = self._backend_call("attest_boot")
+            if backend_result is not None:
+                status = (
+                    backend_result
+                    if isinstance(backend_result, AttestationStatus)
+                    else AttestationStatus(str(backend_result))
+                )
+                self._record_evidence(
+                    "attest_boot", status.value, hardware_backed=True
+                )
+                return status
 
             expected_pcr0 = hashlib.sha256(b"BIOS_MEASUREMENT").digest()
             actual_pcr0 = self._pcr_banks.get(0)
 
             if actual_pcr0 == expected_pcr0:
+                self._record_evidence(
+                    "attest_boot", "software_emulated", hardware_backed=False
+                )
                 self.logger.info("Boot attestation: VALID")
                 return AttestationStatus.VALID
             else:
+                self._record_evidence(
+                    "attest_boot", "tampered", hardware_backed=False
+                )
                 self.logger.critical("Boot attestation: TAMPERED - PCR mismatch!")
                 return AttestationStatus.TAMPERED
 
@@ -200,7 +300,9 @@ class TPMInterface(HardwareInterface):
 
     def _generate_hardware_id(self) -> str:
         """Generate unique hardware identifier"""
-        # In production: Read TPM endorsement key
+        backend_result = self._backend_call("get_hardware_id")
+        if backend_result is not None:
+            return str(backend_result)
         return hashlib.sha256(secrets.token_bytes(32)).hexdigest()
 
     def seal_data(self, data: bytes, pcr_values: List[int]) -> bytes:
@@ -209,12 +311,21 @@ class TPMInterface(HardwareInterface):
         Data can only be unsealed when PCRs match.
         """
         try:
+            backend_result = self._backend_call(
+                "seal_data", data=data, pcr_values=pcr_values
+            )
+            if backend_result is not None:
+                self._record_evidence("seal_data", "sealed", hardware_backed=True)
+                return backend_result
+
             # Create policy digest from PCR values
             policy_digest = self._create_policy_digest(pcr_values)
 
-            # In production: Use TPM2_Create with policy
-            # Encrypt data with a key that's sealed to the policy
             sealed = self._encrypt_with_policy(data, policy_digest)
+            self._sealed_policies[policy_digest] = list(pcr_values)
+            self._record_evidence(
+                "seal_data", "software_emulated", hardware_backed=False
+            )
 
             self.logger.info(f"Sealed data to PCRs: {pcr_values}")
             return sealed
@@ -229,13 +340,22 @@ class TPMInterface(HardwareInterface):
         Only succeeds if current PCR values match sealed policy.
         """
         try:
-            # In production: Use TPM2_Unseal
-            # Verify current PCR values match policy
+            backend_result = self._backend_call("unseal_data", sealed_data=sealed_data)
+            if backend_result is not None:
+                self._record_evidence("unseal_data", "unsealed", hardware_backed=True)
+                return backend_result
+
             data = self._decrypt_with_policy(sealed_data)
 
             if data:
+                self._record_evidence(
+                    "unseal_data", "software_emulated", hardware_backed=False
+                )
                 self.logger.info("Successfully unsealed data")
             else:
+                self._record_evidence(
+                    "unseal_data", "policy_mismatch", hardware_backed=False
+                )
                 self.logger.warning("Failed to unseal - PCR values don't match")
 
             return data
@@ -246,7 +366,6 @@ class TPMInterface(HardwareInterface):
 
     def _encrypt_with_srk(self, data: bytes) -> bytes:
         """Encrypt data with Storage Root Key"""
-        # Simplified encryption - in production uses TPM's SRK
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -259,7 +378,6 @@ class TPMInterface(HardwareInterface):
 
     def _decrypt_with_srk(self, encrypted_data: bytes) -> bytes:
         """Decrypt data with Storage Root Key"""
-        # Simplified decryption - in production uses TPM's SRK
         mac = encrypted_data[:32]
         data = encrypted_data[32:]
 
@@ -291,43 +409,88 @@ class TPMInterface(HardwareInterface):
 
     def _decrypt_with_policy(self, sealed_data: bytes) -> Optional[bytes]:
         """Decrypt data if policy matches current state"""
-        sealed_data[:32]
+        policy_digest = sealed_data[:32]
         data = sealed_data[32:]
+        pcr_values = self._sealed_policies.get(policy_digest)
+        if pcr_values is None:
+            return None
 
-        # Verify policy still matches current PCR values
-        # In production, this would be enforced by TPM
+        if not hmac.compare_digest(policy_digest, self._create_policy_digest(pcr_values)):
+            return None
         return data
 
 
 class SecureEnclaveInterface(HardwareInterface):
     """
     Secure Enclave interface (Apple hardware security).
-    Provides isolated execution environment for sensitive operations.
+    Uses a configured enclave backend when present; otherwise uses an explicit
+    software fallback only when allowed by the caller.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        hardware_backend: Optional[Any] = None,
+        allow_software_fallback: bool = True,
+    ):
         self.logger = logging.getLogger(__name__)
+        self.hardware_backend = hardware_backend
+        self.allow_software_fallback = allow_software_fallback
         self._initialized = False
         self._keychain: Dict[str, bytes] = {}
         self._enclave_id = self._generate_enclave_id()
-        # Generate unique salt from enclave ID instead of hard-coding
         self._salt = hashlib.sha256(
             f"SECURE_ENCLAVE_{self._enclave_id}".encode()
         ).digest()
+        self._hardware_backed = False
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
+
+    def _backend_call(self, method_name: str, **kwargs: Any) -> Optional[Any]:
+        method = getattr(self.hardware_backend, method_name, None)
+        if not callable(method):
+            return None
+        return method(**kwargs)
 
     def initialize(self) -> bool:
         """Initialize Secure Enclave"""
         try:
             self.logger.info("Initializing Secure Enclave interface")
 
-            # In production:
-            # 1. Initialize communication with Secure Enclave
-            # 2. Verify enclave attestation
-            # 3. Establish secure channel
+            backend_result = self._backend_call("initialize_secure_enclave")
+            if backend_result is not None:
+                accepted = bool(backend_result)
+                self._initialized = accepted
+                self._hardware_backed = accepted
+                self._record_evidence(
+                    "initialize",
+                    "available" if accepted else "unavailable",
+                    hardware_backed=accepted,
+                )
+                return accepted
+
+            if not self.allow_software_fallback:
+                self._record_evidence(
+                    "initialize",
+                    "unavailable",
+                    reason="secure_enclave_backend_not_configured",
+                )
+                return False
 
             self._initialized = True
-            self.logger.info("Secure Enclave initialized successfully")
+            self._record_evidence(
+                "initialize",
+                "software_emulated",
+                hardware_backed=False,
+                reason="secure_enclave_backend_not_configured",
+            )
+            self.logger.info("Secure Enclave software fallback initialized")
             return True
 
         except Exception as e:
@@ -338,8 +501,24 @@ class SecureEnclaveInterface(HardwareInterface):
         """Store key in Secure Enclave keychain"""
         with self._lock:
             try:
-                # In production: Use Keychain Services with kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+                backend_result = self._backend_call(
+                    "store_key", key_id=key_id, key_data=key_data
+                )
+                if backend_result is not None:
+                    accepted = bool(backend_result)
+                    self._record_evidence(
+                        f"store_key:{key_id}",
+                        "stored" if accepted else "unavailable",
+                        hardware_backed=accepted,
+                    )
+                    return accepted
+
                 self._keychain[key_id] = self._encrypt_for_enclave(key_data)
+                self._record_evidence(
+                    f"store_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 self.logger.info(f"Stored key {key_id} in Secure Enclave")
                 return True
             except Exception as e:
@@ -349,23 +528,64 @@ class SecureEnclaveInterface(HardwareInterface):
     def retrieve_key(self, key_id: str) -> Optional[bytes]:
         """Retrieve key from Secure Enclave"""
         with self._lock:
+            backend_result = self._backend_call("retrieve_key", key_id=key_id)
+            if backend_result is not None:
+                self._record_evidence(
+                    f"retrieve_key:{key_id}",
+                    "retrieved" if backend_result else "missing",
+                    hardware_backed=True,
+                )
+                return backend_result
+
             encrypted_key = self._keychain.get(key_id)
             if encrypted_key:
+                self._record_evidence(
+                    f"retrieve_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 return self._decrypt_from_enclave(encrypted_key)
             return None
 
     def delete_key(self, key_id: str) -> bool:
         """Delete key from Secure Enclave"""
         with self._lock:
+            backend_result = self._backend_call("delete_key", key_id=key_id)
+            if backend_result is not None:
+                accepted = bool(backend_result)
+                self._record_evidence(
+                    f"delete_key:{key_id}",
+                    "deleted" if accepted else "unavailable",
+                    hardware_backed=accepted,
+                )
+                return accepted
+
             if key_id in self._keychain:
                 del self._keychain[key_id]
+                self._record_evidence(
+                    f"delete_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 self.logger.info(f"Deleted key {key_id}")
             return True
 
     def attest_boot(self) -> AttestationStatus:
         """Verify secure boot through enclave attestation"""
-        # In production: Query enclave attestation status
-        self.logger.info("Secure Enclave attestation: VALID")
+        backend_result = self._backend_call("attest_boot")
+        if backend_result is not None:
+            status = (
+                backend_result
+                if isinstance(backend_result, AttestationStatus)
+                else AttestationStatus(str(backend_result))
+            )
+            self._record_evidence("attest_boot", status.value, hardware_backed=True)
+            return status
+
+        self._record_evidence(
+            "attest_boot", "software_emulated", hardware_backed=False
+        )
+        self.logger.info("Secure Enclave fallback attestation: VALID")
         return AttestationStatus.VALID
 
     def get_hardware_id(self) -> str:
@@ -374,14 +594,31 @@ class SecureEnclaveInterface(HardwareInterface):
 
     def _generate_enclave_id(self) -> str:
         """Generate unique enclave identifier"""
+        backend_result = self._backend_call("get_hardware_id")
+        if backend_result is not None:
+            return str(backend_result)
         return hashlib.sha256(secrets.token_bytes(32)).hexdigest()
 
     def seal_data(self, data: bytes, pcr_values: List[int]) -> bytes:
         """Seal data using Secure Enclave"""
+        backend_result = self._backend_call(
+            "seal_data", data=data, pcr_values=pcr_values
+        )
+        if backend_result is not None:
+            self._record_evidence("seal_data", "sealed", hardware_backed=True)
+            return backend_result
+        self._record_evidence("seal_data", "software_emulated", hardware_backed=False)
         return self._encrypt_for_enclave(data)
 
     def unseal_data(self, sealed_data: bytes) -> Optional[bytes]:
         """Unseal data using Secure Enclave"""
+        backend_result = self._backend_call("unseal_data", sealed_data=sealed_data)
+        if backend_result is not None:
+            self._record_evidence("unseal_data", "unsealed", hardware_backed=True)
+            return backend_result
+        self._record_evidence(
+            "unseal_data", "software_emulated", hardware_backed=False
+        )
         return self._decrypt_from_enclave(sealed_data)
 
     def _encrypt_for_enclave(self, data: bytes) -> bytes:
@@ -419,32 +656,74 @@ class SecureEnclaveInterface(HardwareInterface):
 class HSMInterface(HardwareInterface):
     """
     Hardware Security Module (HSM) interface.
-    Enterprise-grade hardware for key management and cryptographic operations.
+    Uses a configured HSM backend when present; otherwise uses an explicit
+    software fallback only when allowed by the caller.
     """
 
-    def __init__(self, hsm_config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        hsm_config: Optional[Dict[str, Any]] = None,
+        hardware_backend: Optional[Any] = None,
+        allow_software_fallback: bool = True,
+    ):
         self.logger = logging.getLogger(__name__)
         self.config = hsm_config or {}
+        self.hardware_backend = hardware_backend
+        self.allow_software_fallback = allow_software_fallback
         self._initialized = False
         self._keys: Dict[str, bytes] = {}
         self._hsm_id = self._generate_hsm_id()
-        # Generate unique salt from HSM ID instead of hard-coding
         self._salt = hashlib.sha256(f"HSM_MASTER_KEY_{self._hsm_id}".encode()).digest()
+        self._hardware_backed = False
+        self.operation_evidence: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
+
+    def _record_evidence(
+        self, operation: str, status: str, **details: Any
+    ) -> Dict[str, Any]:
+        evidence = {"status": status, **details}
+        self.operation_evidence[operation] = evidence
+        return evidence
+
+    def _backend_call(self, method_name: str, **kwargs: Any) -> Optional[Any]:
+        method = getattr(self.hardware_backend, method_name, None)
+        if not callable(method):
+            return None
+        return method(**kwargs)
 
     def initialize(self) -> bool:
         """Initialize HSM connection"""
         try:
             self.logger.info("Initializing HSM interface")
 
-            # In production:
-            # 1. Connect to HSM (PKCS#11, CloudHSM, etc.)
-            # 2. Authenticate with HSM credentials
-            # 3. Initialize secure channel
-            # 4. Verify HSM health and FIPS compliance
+            backend_result = self._backend_call("initialize_hsm", config=self.config)
+            if backend_result is not None:
+                accepted = bool(backend_result)
+                self._initialized = accepted
+                self._hardware_backed = accepted
+                self._record_evidence(
+                    "initialize",
+                    "available" if accepted else "unavailable",
+                    hardware_backed=accepted,
+                )
+                return accepted
+
+            if not self.allow_software_fallback:
+                self._record_evidence(
+                    "initialize",
+                    "unavailable",
+                    reason="hsm_backend_not_configured",
+                )
+                return False
 
             self._initialized = True
-            self.logger.info("HSM interface initialized successfully")
+            self._record_evidence(
+                "initialize",
+                "software_emulated",
+                hardware_backed=False,
+                reason="hsm_backend_not_configured",
+            )
+            self.logger.info("HSM software fallback initialized")
             return True
 
         except Exception as e:
@@ -455,8 +734,24 @@ class HSMInterface(HardwareInterface):
         """Store key in HSM"""
         with self._lock:
             try:
-                # In production: Use PKCS#11 C_CreateObject or CloudHSM SDK
+                backend_result = self._backend_call(
+                    "store_key", key_id=key_id, key_data=key_data
+                )
+                if backend_result is not None:
+                    accepted = bool(backend_result)
+                    self._record_evidence(
+                        f"store_key:{key_id}",
+                        "stored" if accepted else "unavailable",
+                        hardware_backed=accepted,
+                    )
+                    return accepted
+
                 self._keys[key_id] = self._hsm_encrypt(key_data)
+                self._record_evidence(
+                    f"store_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 self.logger.info(f"Stored key {key_id} in HSM")
                 return True
             except Exception as e:
@@ -466,24 +761,64 @@ class HSMInterface(HardwareInterface):
     def retrieve_key(self, key_id: str) -> Optional[bytes]:
         """Retrieve key from HSM"""
         with self._lock:
+            backend_result = self._backend_call("retrieve_key", key_id=key_id)
+            if backend_result is not None:
+                self._record_evidence(
+                    f"retrieve_key:{key_id}",
+                    "retrieved" if backend_result else "missing",
+                    hardware_backed=True,
+                )
+                return backend_result
+
             encrypted_key = self._keys.get(key_id)
             if encrypted_key:
+                self._record_evidence(
+                    f"retrieve_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 return self._hsm_decrypt(encrypted_key)
             return None
 
     def delete_key(self, key_id: str) -> bool:
         """Delete key from HSM"""
         with self._lock:
+            backend_result = self._backend_call("delete_key", key_id=key_id)
+            if backend_result is not None:
+                accepted = bool(backend_result)
+                self._record_evidence(
+                    f"delete_key:{key_id}",
+                    "deleted" if accepted else "unavailable",
+                    hardware_backed=accepted,
+                )
+                return accepted
+
             if key_id in self._keys:
-                # In production: Use PKCS#11 C_DestroyObject
                 del self._keys[key_id]
+                self._record_evidence(
+                    f"delete_key:{key_id}",
+                    "software_emulated",
+                    hardware_backed=False,
+                )
                 self.logger.info(f"Deleted key {key_id}")
             return True
 
     def attest_boot(self) -> AttestationStatus:
         """HSM attestation (HSM validates its own integrity)"""
-        # In production: Query HSM self-test and attestation
-        self.logger.info("HSM attestation: VALID")
+        backend_result = self._backend_call("attest_boot")
+        if backend_result is not None:
+            status = (
+                backend_result
+                if isinstance(backend_result, AttestationStatus)
+                else AttestationStatus(str(backend_result))
+            )
+            self._record_evidence("attest_boot", status.value, hardware_backed=True)
+            return status
+
+        self._record_evidence(
+            "attest_boot", "software_emulated", hardware_backed=False
+        )
+        self.logger.info("HSM fallback attestation: VALID")
         return AttestationStatus.VALID
 
     def get_hardware_id(self) -> str:
@@ -492,14 +827,31 @@ class HSMInterface(HardwareInterface):
 
     def _generate_hsm_id(self) -> str:
         """Generate HSM identifier"""
+        backend_result = self._backend_call("get_hardware_id")
+        if backend_result is not None:
+            return str(backend_result)
         return f"HSM-{hashlib.sha256(secrets.token_bytes(32)).hexdigest()[:16]}"
 
     def seal_data(self, data: bytes, pcr_values: List[int]) -> bytes:
         """Seal data using HSM"""
+        backend_result = self._backend_call(
+            "seal_data", data=data, pcr_values=pcr_values
+        )
+        if backend_result is not None:
+            self._record_evidence("seal_data", "sealed", hardware_backed=True)
+            return backend_result
+        self._record_evidence("seal_data", "software_emulated", hardware_backed=False)
         return self._hsm_encrypt(data)
 
     def unseal_data(self, sealed_data: bytes) -> Optional[bytes]:
         """Unseal data using HSM"""
+        backend_result = self._backend_call("unseal_data", sealed_data=sealed_data)
+        if backend_result is not None:
+            self._record_evidence("unseal_data", "unsealed", hardware_backed=True)
+            return backend_result
+        self._record_evidence(
+            "unseal_data", "software_emulated", hardware_backed=False
+        )
         return self._hsm_decrypt(sealed_data)
 
     def _hsm_encrypt(self, data: bytes) -> bytes:
@@ -537,15 +889,24 @@ class HSMInterface(HardwareInterface):
 class HardwareRootOfTrust:
     """
     Unified Hardware Root-of-Trust manager.
-    Automatically selects best available hardware security module.
+    Selects the best available hardware security module when backend evidence
+    is configured, otherwise falls back only to the explicit software mode.
     """
 
-    def __init__(self, preferred_type: Optional[HardwareType] = None):
+    def __init__(
+        self,
+        preferred_type: Optional[HardwareType] = None,
+        hardware_backends: Optional[Dict[HardwareType, Any]] = None,
+        allow_software_fallback: bool = True,
+    ):
         self.logger = logging.getLogger(__name__)
         self.preferred_type = preferred_type
+        self.hardware_backends = hardware_backends or {}
+        self.allow_software_fallback = allow_software_fallback
         self._interface: Optional[HardwareInterface] = None
         self._active_type: Optional[HardwareType] = None
         self._kill_switch_callback = None
+        self.initialization_evidence: Dict[str, Dict[str, Any]] = {}
 
     def initialize(self) -> bool:
         """Initialize hardware root of trust with best available option"""
@@ -556,13 +917,16 @@ class HardwareRootOfTrust:
             if self._try_initialize_type(self.preferred_type):
                 return True
 
-        # Try in order of security: HSM > TPM > Secure Enclave > Software
-        for hw_type in [
+        ordered_types = [
             HardwareType.HSM,
             HardwareType.TPM,
             HardwareType.SECURE_ENCLAVE,
-            HardwareType.SOFTWARE_FALLBACK,
-        ]:
+        ]
+        if self.allow_software_fallback:
+            ordered_types.append(HardwareType.SOFTWARE_FALLBACK)
+
+        # Try in order of security: HSM > TPM > Secure Enclave > explicit software
+        for hw_type in ordered_types:
             if self._try_initialize_type(hw_type):
                 return True
 
@@ -572,20 +936,42 @@ class HardwareRootOfTrust:
     def _try_initialize_type(self, hw_type: HardwareType) -> bool:
         """Try to initialize specific hardware type"""
         try:
+            backend = self.hardware_backends.get(hw_type)
             if hw_type == HardwareType.TPM:
-                self._interface = TPMInterface()
+                self._interface = TPMInterface(
+                    hardware_backend=backend, allow_software_fallback=False
+                )
             elif hw_type == HardwareType.SECURE_ENCLAVE:
-                self._interface = SecureEnclaveInterface()
+                self._interface = SecureEnclaveInterface(
+                    hardware_backend=backend, allow_software_fallback=False
+                )
             elif hw_type == HardwareType.HSM:
-                self._interface = HSMInterface()
+                self._interface = HSMInterface(
+                    hardware_backend=backend, allow_software_fallback=False
+                )
             elif hw_type == HardwareType.SOFTWARE_FALLBACK:
-                # Use TPM interface as software fallback
-                self._interface = TPMInterface()
+                self._interface = TPMInterface(allow_software_fallback=True)
 
             if self._interface.initialize():
                 self._active_type = hw_type
+                self.initialization_evidence[hw_type.value] = {
+                    "status": "available",
+                    "hardware_backed": getattr(
+                        self._interface, "_hardware_backed", False
+                    ),
+                    "interface_evidence": getattr(
+                        self._interface, "operation_evidence", {}
+                    ).get("initialize", {}),
+                }
                 self.logger.info(f"Initialized {hw_type.value} successfully")
                 return True
+
+            self.initialization_evidence[hw_type.value] = {
+                "status": "unavailable",
+                "interface_evidence": getattr(
+                    self._interface, "operation_evidence", {}
+                ).get("initialize", {}),
+            }
 
         except Exception as e:
             self.logger.warning(f"Failed to initialize {hw_type.value}: {e}")
@@ -651,13 +1037,22 @@ class HardwareRootOfTrust:
     def get_hardware_info(self) -> Dict[str, Any]:
         """Get information about active hardware security module"""
         if not self._interface:
-            return {"active": False, "type": None, "hardware_id": None}
+            return {
+                "active": False,
+                "type": None,
+                "hardware_id": None,
+                "hardware_backed": False,
+                "initialization_evidence": dict(self.initialization_evidence),
+            }
 
         return {
             "active": True,
             "type": self._active_type.value if self._active_type else None,
             "hardware_id": self._interface.get_hardware_id(),
+            "hardware_backed": getattr(self._interface, "_hardware_backed", False),
             "attestation_status": self._interface.attest_boot().value,
+            "operation_evidence": getattr(self._interface, "operation_evidence", {}),
+            "initialization_evidence": dict(self.initialization_evidence),
         }
 
     def wipe_all_keys(self) -> bool:
