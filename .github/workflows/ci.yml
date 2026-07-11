@@ -16,6 +16,7 @@ jobs:
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     permissions:
       contents: read
     strategy:
@@ -41,7 +42,7 @@ jobs:
     
     - name: Run unit tests
       run: |
-        python -m pytest -q
+        python -m pytest -q --timeout=180 --timeout-method=thread --durations=25
     
     - name: Test VPN backend availability
       run: |

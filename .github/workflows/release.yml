@@ -20,6 +20,7 @@ jobs:
   pre-release-tests:
     name: Pre-Release Tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -42,7 +43,7 @@ jobs:
     
     - name: Run tests
       run: |
-        python -m pytest -q
+        python -m pytest -q --timeout=180 --timeout-method=thread --durations=25
 
   # Build packages
   build:
