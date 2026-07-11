@@ -4,6 +4,8 @@ Tests for MicroVM Isolation Module
 
 import unittest
 import time
+import os
+import tempfile
 from unittest.mock import patch, MagicMock
 from thirstys_waterfall.security.microvm_isolation import (
     MicroVMIsolationManager,
@@ -73,13 +75,27 @@ class TestMicroVMInstance(unittest.TestCase):
 
     def setUp(self):
         """Set up test VM instance"""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.kernel_path = os.path.join(self.temp_dir.name, "vmlinux")
+        self.rootfs_path = os.path.join(self.temp_dir.name, "rootfs.ext4")
+        with open(self.kernel_path, "wb") as f:
+            f.write(b"kernel")
+        with open(self.rootfs_path, "wb") as f:
+            f.write(b"rootfs")
+
         self.limits = VMResourceLimits(vcpu_count=1, memory_mb=512)
         self.vm = MicroVMInstance(
             vm_id="test_vm_001",
             backend=VMBackend.QEMU,
             isolation_type=IsolationType.BROWSER_TAB,
             resource_limits=self.limits,
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
         )
+
+    def tearDown(self):
+        """Clean up test VM assets"""
+        self.temp_dir.cleanup()
 
     def test_vm_creation(self):
         """Test VM instance creation"""
@@ -137,6 +153,153 @@ class TestMicroVMInstance(unittest.TestCase):
 
         # Cannot resume when not paused
         self.assertFalse(self.vm.resume())
+
+    def test_missing_boot_assets_fail_closed(self):
+        """Test VM start fails closed when boot assets are missing"""
+        vm = MicroVMInstance(
+            vm_id="missing_assets",
+            backend=VMBackend.QEMU,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            kernel_path=os.path.join(self.temp_dir.name, "missing-kernel"),
+            rootfs_path=os.path.join(self.temp_dir.name, "missing-rootfs"),
+        )
+
+        self.assertFalse(vm.start())
+        self.assertEqual(vm.get_state(), VMState.ERROR)
+        self.assertEqual(
+            vm.operation_evidence["boot_assets"]["status"], "unavailable"
+        )
+
+    def test_non_isolated_network_requires_backend(self):
+        """Test host network setup fails closed without backend evidence"""
+        vm = MicroVMInstance(
+            vm_id="network_required",
+            backend=VMBackend.QEMU,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            network_config=VMNetworkConfig(isolated_network=False),
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+        )
+
+        self.assertFalse(vm._setup_networking())
+        self.assertEqual(
+            vm.operation_evidence["network_setup"]["reason"],
+            "network_backend_not_configured",
+        )
+
+    def test_non_isolated_network_backend_evidence(self):
+        """Test host network setup accepts configured backend evidence"""
+
+        class PlatformBackend:
+            def setup_networking(self, vm, tap_name):
+                return {
+                    "status": "applied",
+                    "tap_device": tap_name,
+                    "backend": "test-net",
+                }
+
+        vm = MicroVMInstance(
+            vm_id="network_backend",
+            backend=VMBackend.QEMU,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            network_config=VMNetworkConfig(isolated_network=False),
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+            platform_backend=PlatformBackend(),
+        )
+
+        self.assertTrue(vm._setup_networking())
+        self.assertEqual(vm.operation_evidence["network_setup"]["backend"], "test-net")
+
+    def test_pause_resume_require_control_backend(self):
+        """Test pause/resume no longer flip state without backend evidence"""
+        self.vm._state = VMState.RUNNING
+
+        self.assertFalse(self.vm.pause())
+        self.assertEqual(self.vm.get_state(), VMState.RUNNING)
+        self.assertEqual(
+            self.vm.operation_evidence["pause"]["reason"],
+            "control_backend_not_configured",
+        )
+
+    def test_pause_resume_backend_evidence(self):
+        """Test pause/resume use configured control backend evidence"""
+
+        class PlatformBackend:
+            def pause(self, vm):
+                return {"status": "paused", "backend": "test-control"}
+
+            def resume(self, vm):
+                return {"status": "running", "backend": "test-control"}
+
+        vm = MicroVMInstance(
+            vm_id="control_backend",
+            backend=VMBackend.QEMU,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+            platform_backend=PlatformBackend(),
+        )
+        vm._state = VMState.RUNNING
+
+        self.assertTrue(vm.pause())
+        self.assertEqual(vm.get_state(), VMState.PAUSED)
+        self.assertEqual(vm.operation_evidence["pause"]["backend"], "test-control")
+        self.assertTrue(vm.resume())
+        self.assertEqual(vm.get_state(), VMState.RUNNING)
+        self.assertEqual(vm.operation_evidence["resume"]["backend"], "test-control")
+
+    def test_health_metrics_liveness_evidence(self):
+        """Test built-in health path reports liveness-only evidence"""
+        mock_process = MagicMock()
+        mock_process.poll.return_value = None
+        self.vm._process = mock_process
+        self.vm._pid = 12345
+        self.vm._start_time = time.time()
+
+        self.vm._update_health_metrics()
+
+        self.assertEqual(self.vm.get_health_metrics().health_status, "healthy")
+        self.assertEqual(
+            self.vm.operation_evidence["health_metrics"]["status"],
+            "process_liveness_only",
+        )
+
+    def test_health_metrics_backend_evidence(self):
+        """Test configured backend can provide concrete health metrics"""
+
+        class PlatformBackend:
+            def collect_metrics(self, vm, pid):
+                return {
+                    "cpu_usage_percent": 12.5,
+                    "memory_usage_mb": 64,
+                    "health_status": "healthy",
+                    "last_health_check": time.time(),
+                }
+
+        vm = MicroVMInstance(
+            vm_id="metrics_backend",
+            backend=VMBackend.QEMU,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+            platform_backend=PlatformBackend(),
+        )
+        vm._process = MagicMock()
+        vm._pid = 12345
+
+        vm._update_health_metrics()
+
+        self.assertEqual(vm.get_health_metrics().cpu_usage_percent, 12.5)
+        self.assertEqual(vm.get_health_metrics().memory_usage_mb, 64)
+        self.assertEqual(
+            vm.operation_evidence["health_metrics"]["status"], "collected"
+        )
 
 
 class TestMicroVMIsolationManager(unittest.TestCase):
@@ -389,8 +552,8 @@ class TestVMStates(unittest.TestCase):
             self.assertTrue(hasattr(VMState, state))
 
 
-class TestProductionGradeFeatures(unittest.TestCase):
-    """Test production-grade features"""
+class TestEvidenceGatedFeatures(unittest.TestCase):
+    """Test evidence-gated features"""
 
     def setUp(self):
         """Set up manager"""
