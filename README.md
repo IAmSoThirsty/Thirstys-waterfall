@@ -946,7 +946,7 @@ Thirstys Waterfall is being built as a comprehensive privacy ecosystem that inte
 
 ### Production Readiness Status
 
-Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, production-mode secret/CORS startup checks, local wheel build, release wheel/source artifacts, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, release workflow Docker smoke, GHCR push, published image pull, published image container smoke, local container log capture, and local Docker rollback smoke. Full target-host Production Deployment Verified status still requires CodeQL evidence, target rollback evidence, production host logs, secrets rotation evidence, host network policy evidence, and platform proof for real VPN/firewall backend execution.
+Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, CodeQL, production-mode secret/CORS startup checks, local wheel build, release wheel/source artifacts, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, release workflow Docker smoke, GHCR push, published image pull, published image container smoke, local container log capture, and local Docker rollback smoke. Full target-host Production Deployment Verified status still requires target rollback evidence, production host logs, secrets rotation evidence, host network policy evidence, and platform proof for real VPN/firewall backend execution.
 
 ### Proof of Implementation
 
