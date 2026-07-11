@@ -105,6 +105,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `flake8 thirstys_waterfall\ai_assistant\local_inference.py tests\test_local_inference.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the local-inference backend-gating change: 0 findings.
 - `python -m pytest -q` passed after the local-inference backend-gating change: 342 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the local-inference backend-gating change and the same sparse-hidden verifier script restore.
+- Replaced `RemoteBrowser` simulated server startup and command success with a fail-closed transport-backend contract.
+- `python -m pytest tests\test_remote_browser.py -q` passed after the remote-browser backend-gating change: 3 tests passed.
+- `flake8 thirstys_waterfall\remote_access\remote_browser.py tests\test_remote_browser.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the remote-browser backend-gating change: 0 findings.
+- `python -m pytest -q` passed after the remote-browser backend-gating change: 345 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the remote-browser backend-gating change and the same sparse-hidden verifier script restore.
 
 ## Known Current Problems
 
@@ -120,6 +125,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Browser status is now evidence-gated, but layout/rendering/navigation/session acceptance remains incomplete.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
+- Remote browser no longer fabricates remote server/session command success without a backend, but no real remote-browser transport backend is bundled or configured.
 - Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
 
 ## Safe Continuation Points
