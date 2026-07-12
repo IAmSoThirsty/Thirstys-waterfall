@@ -82,6 +82,7 @@ class IncognitoBrowser:
         self._navigation_history = self._nav_history  # Alias
         self.web_engine = self._web_engine
         self._rendered_documents = {}
+        self._tab_sessions = {}
 
         self._active = False
         self._extension_whitelist = config.get("extension_whitelist", [])
@@ -123,6 +124,7 @@ class IncognitoBrowser:
         # Clear any ephemeral data
         self._clear_ephemeral_data()
         self._rendered_documents.clear()
+        self._tab_sessions.clear()
 
         # Stop components
         self._sandbox.stop()
@@ -157,12 +159,24 @@ class IncognitoBrowser:
 
         # Apply privacy policies to tab
         self._apply_privacy_policies(tab_id)
+        self._tab_sessions[tab_id] = {
+            "tab_id": tab_id,
+            "current_url": url or "about:blank",
+            "documents_rendered": 0,
+            "last_load_status": "created",
+            "last_error": None,
+            "history_retained": False,
+            "cookies_enabled": False,
+            "storage_enabled": False,
+        }
 
         return tab_id
 
     def close_tab(self, tab_id: str):
         """Close tab and clear its data"""
         self.tab_manager.close_tab(tab_id)
+        self._rendered_documents.pop(tab_id, None)
+        self._tab_sessions.pop(tab_id, None)
 
     def navigate(self, tab_id: str, url: str) -> bool:
         """
@@ -188,6 +202,25 @@ class IncognitoBrowser:
             except FetchBlocked as exc:
                 document = self.web_engine.blocked_document(url, str(exc))
             self._rendered_documents[tab_id] = document
+            session = self._tab_sessions.setdefault(
+                tab_id,
+                {
+                    "tab_id": tab_id,
+                    "history_retained": False,
+                    "cookies_enabled": False,
+                    "storage_enabled": False,
+                    "documents_rendered": 0,
+                },
+            )
+            session.update(
+                {
+                    "current_url": url,
+                    "documents_rendered": session.get("documents_rendered", 0) + 1,
+                    "last_load_status": document.load_status,
+                    "last_error": document.load_error,
+                    "title": document.title,
+                }
+            )
             tab = self.tab_manager.get_tab(tab_id)
             if tab is not None:
                 tab["document"] = document.snapshot()
@@ -200,6 +233,15 @@ class IncognitoBrowser:
         if document is None:
             return None
         return document.snapshot()
+
+    def get_session_snapshot(self, tab_id: str) -> Optional[Dict[str, Any]]:
+        """Return the current ephemeral session snapshot for a tab."""
+        session = self._tab_sessions.get(tab_id)
+        if session is None:
+            return None
+        snapshot = session.copy()
+        snapshot["document_available"] = tab_id in self._rendered_documents
+        return snapshot
 
     def _apply_privacy_policies(self, tab_id: str):
         """Apply privacy policies to tab"""
@@ -322,6 +364,8 @@ class IncognitoBrowser:
             "browser_encryption_accepted": False,
             "native_engine": True,
             "native_engine_accepted": False,
+            "native_layout_snapshots": True,
+            "ephemeral_session_snapshots": True,
             "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
             "download_backend_configured": self.download_backend is not None,
         }

@@ -29,6 +29,28 @@ class TestThirstyWebEngine(unittest.TestCase):
         self.assertEqual(snapshot["links"], ["/next"])
         self.assertEqual(snapshot["script_count"], 0)
         self.assertFalse(snapshot["script_execution_enabled"])
+        self.assertEqual(snapshot["layout"]["tag_name"], "document")
+        self.assertGreater(snapshot["layout"]["height"], 0)
+
+    def test_layout_snapshot_records_visible_boxes_only(self):
+        engine = ThirstyWebEngine()
+
+        document = engine.render_html(
+            """
+            <html>
+              <head><title>Hidden Title</title><script>ignored()</script></head>
+              <body><main><h1>Visible</h1><p>First paragraph</p></main></body>
+            </html>
+            """
+        )
+
+        layout = document.layout_snapshot(viewport_width=320)
+        layout_text = str(layout)
+
+        self.assertIn("Visible", layout_text)
+        self.assertIn("First paragraph", layout_text)
+        self.assertNotIn("Hidden Title", layout_text)
+        self.assertNotIn("ignored", layout_text)
 
     def test_scripts_are_parsed_but_not_executed(self):
         engine = ThirstyWebEngine()
@@ -85,10 +107,16 @@ class TestIncognitoBrowserNativeEngine(unittest.TestCase):
 
         self.assertTrue(allowed)
         snapshot = self.browser.get_document_snapshot(tab_id)
+        session = self.browser.get_session_snapshot(tab_id)
         self.assertIsNotNone(snapshot)
+        self.assertIsNotNone(session)
         self.assertEqual(snapshot["load_status"], "blocked")
         self.assertEqual(snapshot["load_error"], "network loading is disabled by policy")
         self.assertFalse(snapshot["script_execution_enabled"])
+        self.assertEqual(session["last_load_status"], "blocked")
+        self.assertEqual(session["documents_rendered"], 1)
+        self.assertFalse(session["history_retained"])
+        self.assertTrue(session["document_available"])
 
     def test_status_exposes_native_engine(self):
         self.browser.start()
@@ -96,7 +124,19 @@ class TestIncognitoBrowserNativeEngine(unittest.TestCase):
         status = self.browser.get_status()
 
         self.assertTrue(status["native_engine"])
+        self.assertTrue(status["native_layout_snapshots"])
+        self.assertTrue(status["ephemeral_session_snapshots"])
         self.assertFalse(status["engine_network_enabled"])
+
+    def test_session_snapshot_is_removed_when_tab_closes(self):
+        self.browser.start()
+        tab_id = self.browser.create_tab()
+
+        self.assertIsNotNone(self.browser.get_session_snapshot(tab_id))
+        self.browser.close_tab(tab_id)
+
+        self.assertIsNone(self.browser.get_session_snapshot(tab_id))
+        self.assertIsNone(self.browser.get_document_snapshot(tab_id))
 
 
 if __name__ == "__main__":
