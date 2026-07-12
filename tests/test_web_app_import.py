@@ -82,8 +82,58 @@ class TestWebAppImport(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("access_token", payload)
+        self.assertIn("session_policy", payload)
+        self.assertTrue(payload["session_policy"]["token_revocation_enabled"])
+        self.assertFalse(
+            payload["session_policy"]["revocation_store_accepted_for_target"]
+        )
         self.assertEqual(payload["user"]["username"], "operator")
         self.assertEqual(payload["user"]["auth_mode"], "configured")
+
+    def test_logout_revokes_current_access_token(self):
+        app_module = importlib.import_module("web.app")
+        app_module.revoked_token_jtis.clear()
+        client = app_module.app.test_client()
+
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        logout_response = client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        logout_payload = logout_response.get_json()
+        status_response = client.get(
+            "/api/system/status",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        status_payload = status_response.get_json()
+
+        self.assertEqual(logout_response.status_code, 200)
+        self.assertTrue(logout_payload["revoked"])
+        self.assertEqual(status_response.status_code, 401)
+        self.assertEqual(status_payload["error"], "Token has been revoked")
+        app_module.revoked_token_jtis.clear()
+
+    def test_session_policy_endpoint_reports_limited_revocation_scope(self):
+        app_module = importlib.import_module("web.app")
+        client = app_module.app.test_client()
+
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        response = client.get(
+            "/api/auth/session-policy",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["user"], "operator")
+        self.assertEqual(payload["session_policy"]["revocation_store"], "process_memory")
+        self.assertFalse(
+            payload["session_policy"]["revocation_store_accepted_for_target"]
+        )
 
     def test_vpn_connect_does_not_report_success_when_service_fails(self):
         app_module = importlib.import_module("web.app")

@@ -214,6 +214,7 @@ socketio = SocketIO(
     message_queue=Config.SOCKETIO_MESSAGE_QUEUE,
 )
 jwt = JWTManager(app)
+revoked_token_jtis = set()
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -221,6 +222,33 @@ limiter = Limiter(
     strategy=Config.RATELIMIT_STRATEGY,
     default_limits=[Config.DEFAULT_RATE_LIMIT],
 )
+
+
+def get_session_policy() -> Dict[str, Any]:
+    """Return current JWT session policy without exposing secrets."""
+    return {
+        "access_token_expires_seconds": int(
+            Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()
+        ),
+        "refresh_token_expires_seconds": int(
+            Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()
+        ),
+        "token_revocation_enabled": True,
+        "revocation_store": "process_memory",
+        "revocation_store_accepted_for_target": False,
+    }
+
+
+@jwt.token_in_blocklist_loader
+def is_token_revoked(jwt_header: Dict[str, Any], jwt_payload: Dict[str, Any]) -> bool:
+    """Reject JWTs whose JTI has been revoked in this process."""
+    return jwt_payload.get("jti") in revoked_token_jtis
+
+
+@jwt.revoked_token_loader
+def revoked_token_response(jwt_header: Dict[str, Any], jwt_payload: Dict[str, Any]):
+    """Return a clear fail-closed response for revoked JWTs."""
+    return jsonify({"error": "Token has been revoked"}), 401
 
 
 # ============================================================================
@@ -746,6 +774,7 @@ def login():
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                     "user": result,
+                    "session_policy": get_session_policy(),
                 }
             ),
             200,
@@ -754,13 +783,55 @@ def login():
     return jsonify(result), status_code
 
 
+@app.route("/api/auth/logout", methods=["POST"])
+@jwt_required(verify_type=False)
+def logout():
+    """Revoke the current access or refresh token for this process."""
+    token = get_jwt()
+    revoked_token_jtis.add(token["jti"])
+    return (
+        jsonify(
+            {
+                "revoked": True,
+                "token_type": token.get("type"),
+                "session_policy": get_session_policy(),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/api/auth/session-policy", methods=["GET"])
+@jwt_required()
+def session_policy():
+    """Return the active session policy for authenticated operators."""
+    current_user = get_jwt_identity()
+    return (
+        jsonify(
+            {
+                "user": current_user,
+                "session_policy": get_session_policy(),
+            }
+        ),
+        200,
+    )
+
+
 @app.route("/api/auth/refresh", methods=["POST"])
 @jwt_required(refresh=True)
 def refresh():
     """Refresh access token using refresh token."""
     current_user = get_jwt_identity()
     access_token = create_access_token(identity=current_user)
-    return jsonify({"access_token": access_token}), 200
+    return (
+        jsonify(
+            {
+                "access_token": access_token,
+                "session_policy": get_session_policy(),
+            }
+        ),
+        200,
+    )
 
 
 # ============================================================================
