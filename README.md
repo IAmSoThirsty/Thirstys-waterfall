@@ -687,12 +687,13 @@ python -c "from thirstys_waterfall.firewalls.backends import FirewallBackendFact
 - [Security Policy](SECURITY.md) - Security practices and incident response
 - [New Features](docs/NEW_FEATURES.md) - Latest feature additions
 - [Showcase](docs/SHOWCASE.md) - Current evidence and remaining gaps
+- [Platform Capabilities](docs/operations/PLATFORM_CAPABILITIES.md) - OS-specific capability boundaries
 
 ## 🎯 Platform Support
 
 ### Cross-Platform Implementation Status
 
-Thirstys Waterfall contains backend implementations and availability checks for major platforms. Standard v3 acceptance still requires real execution evidence for VPN/firewall apply, rollback, and privilege behavior on each supported OS.
+Thirstys Waterfall contains backend implementations and availability checks for major platforms. `thirstys_waterfall.get_platform_capabilities()` reports the current OS-specific VPN, firewall, service, and privilege boundaries while keeping `production_accepted: false`. Standard v3 acceptance still requires real execution evidence for VPN/firewall apply, rollback, and privilege behavior on each supported OS.
 
 #### VPN Backends
 

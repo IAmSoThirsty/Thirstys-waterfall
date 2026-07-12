@@ -293,11 +293,14 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest tests\test_settings_manager.py tests\test_god_tier_encryption.py tests\test_web_app_import.py tests\test_python_marker_hygiene.py -q` passed after the settings/local-helper encryption evidence change: 22 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after expanding the claim-marker verifier gate to local-helper encryption wording; wheel sha256 was `fbfbcefb0b43f7e47e4fbeec4ee68b6030657954c40f94104ee8f02c9c5d6cfd`, and local web smoke reported `backend=thirsty-lang`.
 - `python -m pytest -q` passed after the settings/local-helper encryption evidence change: 474 tests passed.
+- `python -m pytest -q` passed after adding platform capability reporting: 486 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after adding platform capability reporting; local web smoke reported `backend=thirsty-lang`.
 
 ## Known Current Problems
 
 - README and public deployment/showcase/comparison docs now point to Standard v3 evidence instead of claiming final production readiness; remaining target-state capability language is explicitly gated by the matrix.
 - The deployment verifier now gates claim-marker regressions across current source, tests, examples, selected docs, README, and web/static surfaces; newly added surfaces still need to be added to the gate when they become part of accepted claims.
+- Platform capability differences are now documented through `thirstys_waterfall.get_platform_capabilities()` and `docs/operations/PLATFORM_CAPABILITIES.md`, but the report intentionally returns `production_accepted: false` until real OS-level VPN/firewall apply/rollback, privilege, service, and target-log evidence exists.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
 - Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
@@ -342,5 +345,5 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 
 1. Replace or downgrade remaining simulated implementation paths until the README claim matrix is green.
 2. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
-3. Prove real OS VPN/firewall backend execution on supported platforms or narrow the README claims.
+3. Prove real OS VPN/firewall backend execution, privilege behavior, service setup, and rollback on Linux, Windows, and macOS, or narrow the README claims.
 4. Continue replacing simulated implementation paths or narrow related claims as each path is inspected.
