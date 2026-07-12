@@ -295,6 +295,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest -q` passed after the settings/local-helper encryption evidence change: 474 tests passed.
 - `python -m pytest -q` passed after adding platform capability reporting: 486 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after adding platform capability reporting; local web smoke reported `backend=thirsty-lang`.
+- Encryption data-surface coverage is now mapped through `thirstys_waterfall.get_encryption_evidence_report()` and `docs/operations/ENCRYPTION_EVIDENCE_MAP.md`; full encryption acceptance remains false until all accepted stored-state, browser-data, telemetry, download, transport, target-log, and post-quantum surfaces have end-to-end proof.
 
 ## Known Current Problems
 
@@ -331,6 +332,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Post-quantum encryption no longer uses classical AES/Scrypt as a substitute implementation; no real post-quantum backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, and native layout, local network navigation, plus ephemeral session snapshots are covered by tests; broader rendering and supported-site acceptance evidence remain incomplete.
+- Total-encryption evidence is now mapped by data surface, but telemetry/audit events, download content encryption, target production logs, persisted state inspection, transport coverage, and post-quantum backend proof remain incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
@@ -345,5 +347,5 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 
 1. Replace or downgrade remaining simulated implementation paths until the README claim matrix is green.
 2. Add target rollback, production secrets rotation, target host network policy, and real environment log evidence.
-3. Prove real OS VPN/firewall backend execution, privilege behavior, service setup, and rollback on Linux, Windows, and macOS, or narrow the README claims.
-4. Continue replacing simulated implementation paths or narrow related claims as each path is inspected.
+3. Prove end-to-end encryption for stored state, browser data, telemetry, downloads, transport paths, target logs, and any accepted post-quantum backend.
+4. Prove real OS VPN/firewall backend execution, privilege behavior, service setup, and rollback on Linux, Windows, and macOS, or narrow the README claims.
