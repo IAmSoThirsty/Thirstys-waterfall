@@ -383,7 +383,7 @@ def demo_interface_disabling():
     print("  2. USB interfaces (all USB devices)")
     print("  3. All I/O interfaces (complete isolation)")
 
-    print("\nSimulation would:")
+    print("\nPrivileged backend actions:")
     print("  • Disable all network adapters")
     print("  • Unbind USB devices")
     print("  • Block all external I/O")

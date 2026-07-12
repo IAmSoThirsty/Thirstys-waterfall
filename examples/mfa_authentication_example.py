@@ -67,8 +67,7 @@ def example_totp_enrollment_and_auth(mfa, user_id):
         print(f"  - Period: {enrollment_data['period']} seconds")
         print(f"  - Provisioning URI: {enrollment_data['provisioning_uri'][:60]}...")
 
-        # Simulate authentication
-        # In production, user would provide this from authenticator app
+        # Example authentication: a real user supplies this from an authenticator app.
         totp_provider = mfa.providers[AuthMethod.TOTP]
         config = totp_provider._secrets[user_id]
         counter = int(time.time()) // config.period
@@ -105,7 +104,7 @@ def example_fido2_enrollment(mfa, user_id):
 
     import base64
 
-    # Simulate FIDO2 credential data (in production, this comes from WebAuthn API)
+    # Example FIDO2 credential data. Real deployments receive this from WebAuthn.
     credential_data = {
         "credential_id": base64.b64encode(b"fido2_credential_id_12345").decode(),
         "public_key": base64.b64encode(b"fido2_public_key_data_12345").decode(),
@@ -130,7 +129,7 @@ def example_passkey_enrollment(mfa, user_id):
 
     passkey_data = {
         "device_name": "MacBook Pro",
-        "device_key": b"0" * 32,  # In production, derive from device
+        "device_key": b"0" * 32,  # Example only; real deployments derive from device.
     }
 
     success = mfa.enroll_method(
@@ -152,7 +151,7 @@ def example_biometric_enrollment(mfa, user_id):
     # Enroll fingerprint
     biometric_data = {
         "type": BiometricType.FINGERPRINT.value,
-        "template": "simulated_fingerprint_template_data_unique_to_user",
+        "template": "example_fingerprint_template_data_unique_to_user",
         "quality_score": 0.95,
     }
 
@@ -309,7 +308,7 @@ def example_method_revocation(mfa, user_id):
     print("Example 9: Authentication Method Revocation")
     print("=" * 60)
 
-    # List current methods (simulated)
+    # Example method list for display.
     print(f"  Current methods for {user_id}:")
     print("    - TOTP (enrolled)")
     print("    - FIDO2 (enrolled)")
@@ -343,7 +342,7 @@ def example_multi_factor_flow(mfa, user_id):
     print(f"  - Initial auth level: {context.auth_level.name}")
     print(f"  - Initial risk level: {context.risk_level.name}")
 
-    # Step 1: Password (simulated - not implemented in this module)
+    # Step 1: Password. This example marks it complete; password verification is external.
     print("\n  Step 1: Password authentication")
     context.authenticated_methods.add(AuthMethod.PASSWORD)
     context.auth_level = mfa._calculate_auth_level(context)

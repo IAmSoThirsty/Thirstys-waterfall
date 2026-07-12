@@ -1,8 +1,8 @@
 """
 Privacy Accountability Ledger - Usage Examples
 
-This module demonstrates how to use the production-grade encrypted privacy ledger
-for immutable audit logging with zero-knowledge encryption.
+This module demonstrates how to use the evidence-gated encrypted privacy ledger
+for audit logging with privacy-preserving event storage.
 """
 
 from thirstys_waterfall.security.privacy_ledger import (

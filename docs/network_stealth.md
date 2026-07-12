@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Advanced Network Stealth module provides production-grade network anonymization and censorship circumvention capabilities for the Thirstys Waterfall project. It implements multiple layers of protection including pluggable transports, multi-layer obfuscation, protocol mimicry, and domain fronting.
+The Advanced Network Stealth module defines evidence-gated network anonymization and censorship-circumvention capabilities for the Thirstys Waterfall project. Backend-dependent transports, node providers, protocol mimicry, and domain fronting require configured provider evidence before the capability is accepted.
 
 ## Features
 

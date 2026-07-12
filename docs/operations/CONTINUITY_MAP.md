@@ -262,6 +262,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest -q` passed after the web browser-tabs evidence-contract change: 464 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the web browser-tabs evidence-contract change; wheel sha256 was `f7fadf8561bc09872523f34bccf976e581a979e0a08e85679a13c0c6da05ddaa`, and local web smoke reported `backend=thirsty-lang`.
 - Touched-file marker scan passed after the web browser-tabs evidence-contract change: `rg -n "placeholder|simulated|simplified|production-grade|Would|would" web\app.py tests\test_web_app_import.py` returned no matches.
+- Reworded DOS trap, MFA, network-stealth, privacy-ledger, and example/demo docs from final/production/simulation language to evidence-gated or example-only language.
+- `rg -n "production-grade|simulated|simplified|placeholder|Would|would" docs\DOS_TRAP_MODE.md docs\mfa_authentication.md docs\network_stealth.md docs\SHOWCASE.md examples\privacy_ledger_examples.py examples\dos_trap_demo.py examples\mfa_authentication_example.py` returned no matches after the docs/examples claim-hygiene change.
+- `python -m compileall -q examples` passed after the docs/examples claim-hygiene change.
+- `python -m pytest tests\test_public_claim_hygiene.py -q` passed after the docs/examples claim-hygiene change: 2 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the docs/examples claim-hygiene change; wheel sha256 was `64491b22c320e1b00dd59464f5de06452ef5999ace1b99cd42734a7d082451c4`, and local web smoke reported `backend=thirsty-lang`.
 
 ## Known Current Problems
 

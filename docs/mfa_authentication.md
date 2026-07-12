@@ -8,7 +8,7 @@
 
 ## Overview
 
-The MFA Authentication module provides production-grade multi-factor authentication with support for multiple authentication methods, context-aware security, and dynamic risk-based escalation.
+The MFA Authentication module provides evidence-gated multi-factor authentication support for multiple authentication methods, context-aware security, and dynamic risk-based escalation. Built-in verifier scope and backend-dependent methods are tracked explicitly in the Standard v3 acceptance matrix.
 
 ## Features
 
