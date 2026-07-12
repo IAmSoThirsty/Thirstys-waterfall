@@ -21,7 +21,7 @@ For the active acceptance matrix, see `docs/operations/README_CLAIM_ACCEPTANCE.m
 | Firewalls | Partial | Eight firewall categories represented in code and backend tests; web status no longer reports static active firewalls on backend failure | Real rule apply/rollback evidence per supported OS or narrowed claims for unsupported modes |
 | Native browser engine | Partial | Native document/parser/fetcher layer with compatibility tests | Layout/rendering/navigation/session acceptance tests and a clear definition of native-engine scope |
 | Encryption and private storage | Not accepted | Crypto and encrypted storage helpers exist | End-to-end evidence for stored state, browser data, logs, downloads, and transport paths |
-| Web API production auth | Partial | Default hardcoded login removed; password-hash auth and production fail-closed checks exist | Operator setup docs, session/token policy, and target secret-rotation evidence |
+| Web API production auth | Partial | Default hardcoded login removed; password-hash auth, process-local token revocation, session-policy reporting, and production fail-closed checks exist | Target secret-rotation evidence and shared revocation-store evidence |
 | Docker and release | Partial | Local verifier, release workflow, GHCR image, published-image smoke, and local rollback smoke evidence exist | Target-host deployment, rollback, logs, secret injection, and network policy evidence |
 
 ## Demonstrable Workflows
