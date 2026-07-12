@@ -1,7 +1,7 @@
-"""Encrypted Logging System - All logs encrypted"""
+"""Encrypted logging helpers for package runtime logs."""
 
 import logging
-from typing import Optional
+from typing import List, Optional
 from cryptography.fernet import Fernet
 import time
 import os
@@ -16,7 +16,7 @@ class EncryptedLogger:
     def __init__(self, cipher: Fernet, log_file: Optional[str] = None):
         self._cipher = cipher
         self._log_file = log_file
-        self._encrypted_logs = []
+        self._encrypted_logs: List[bytes] = []
         self._active = False
 
     def start(self):
@@ -59,6 +59,17 @@ class EncryptedLogger:
         """Get encrypted logs"""
         return self._encrypted_logs.copy()
 
+    def create_handler(self) -> "EncryptedLogHandler":
+        """Create a standard logging handler that writes to this encrypted sink."""
+        return EncryptedLogHandler(self._cipher, encrypted_logger=self)
+
+    def _store_encrypted(self, encrypted_msg: bytes) -> None:
+        """Store an already-encrypted log entry in memory and optional file."""
+        self._encrypted_logs.append(encrypted_msg)
+        if self._log_file:
+            with open(self._log_file, "ab") as f:
+                f.write(encrypted_msg + b"\n")
+
     def is_active(self) -> bool:
         """Check whether encrypted logging is active."""
         return self._active
@@ -76,20 +87,30 @@ class EncryptedLogHandler(logging.Handler):
     Custom logging handler that encrypts all log messages.
     """
 
-    def __init__(self, cipher: Fernet):
+    def __init__(
+        self,
+        cipher: Fernet,
+        encrypted_logger: Optional[EncryptedLogger] = None,
+    ):
         super().__init__()
         self._cipher = cipher
-        self._encrypted_logs = []
+        self._encrypted_logger = encrypted_logger
+        self._encrypted_logs: List[bytes] = []
 
     def emit(self, record):
         """Emit encrypted log record"""
         try:
             msg = self.format(record)
             encrypted_msg = self._cipher.encrypt(msg.encode())
-            self._encrypted_logs.append(encrypted_msg)
+            if self._encrypted_logger is not None:
+                self._encrypted_logger._store_encrypted(encrypted_msg)
+            else:
+                self._encrypted_logs.append(encrypted_msg)
         except Exception:
             self.handleError(record)
 
     def get_encrypted_logs(self) -> list:
         """Get all encrypted logs"""
+        if self._encrypted_logger is not None:
+            return self._encrypted_logger.get_encrypted_logs()
         return self._encrypted_logs.copy()
