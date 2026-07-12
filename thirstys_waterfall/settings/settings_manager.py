@@ -1,5 +1,5 @@
 """
-Settings Manager - Comprehensive settings with God tier encryption
+Settings Manager - Comprehensive settings with local encryption helper
 Covers ALL features: standard + additional features
 """
 
@@ -11,7 +11,7 @@ from cryptography.fernet import Fernet
 
 class SettingsManager:
     """
-    Comprehensive Settings Manager with God tier encryption.
+    Comprehensive Settings Manager with local encryption helper.
 
     Settings Categories:
     - General (language, theme, startup)

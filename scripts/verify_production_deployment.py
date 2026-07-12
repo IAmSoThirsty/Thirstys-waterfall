@@ -44,6 +44,10 @@ CLAIM_MARKERS = (
     "placeholder",
     "quantum-resistant",
     "god_tier_encrypted",
+    "God tier",
+    "GOD TIER",
+    "7-layer",
+    "7 layers",
     'encryption_layers": 7',
     "Would",
     "would",
@@ -461,6 +465,7 @@ def main() -> int:
             ROOT / "docs" / "DOS_TRAP_MODE.md",
             ROOT / "docs" / "mfa_authentication.md",
             ROOT / "docs" / "network_stealth.md",
+            ROOT / "docs" / "NEW_FEATURES.md",
             ROOT / "docs" / "SHOWCASE.md",
             ROOT / "docs" / "COMPETITION_COMPARISON.md",
         ]

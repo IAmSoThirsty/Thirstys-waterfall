@@ -1,5 +1,5 @@
 """
-Remote Access - Remote browser and desktop with God tier encryption
+Remote Access - Remote browser and desktop with local encryption helper
 """
 
 from .remote_browser import RemoteBrowser

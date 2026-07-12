@@ -1,5 +1,5 @@
 """
-GOD TIER ENCRYPTION MODULE
+LOCAL LAYERED ENCRYPTION HELPER
 Classical multi-layer encryption helpers with evidence-gated post-quantum support
 """
 
@@ -17,11 +17,11 @@ from typing import Any, Optional
 
 class GodTierEncryption:
     """
-    GOD TIER ENCRYPTION - layered classical encryption helper.
+    Layered classical encryption helper.
 
     Features:
-    - Multiple encryption layers (7 layers deep)
-    - AES-256-GCM (military-grade symmetric encryption)
+    - Multiple local encryption stages
+    - AES-256-GCM symmetric encryption
     - RSA-4096 (classical asymmetric encryption)
     - ChaCha20-Poly1305 (high-speed authenticated encryption)
     - Elliptic Curve Cryptography (ECC-521)
@@ -33,7 +33,7 @@ class GodTierEncryption:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initializing GOD TIER ENCRYPTION")
+        self.logger.info("Initializing local layered encryption helper")
 
         # Layer 1: Fernet (symmetric)
         self._fernet_key = Fernet.generate_key()
@@ -48,26 +48,24 @@ class GodTierEncryption:
         # Layer 4: RSA-4096 (classical asymmetric key material)
         self._rsa_private_key = rsa.generate_private_key(
             public_exponent=65537,
-            key_size=4096,  # GOD TIER: 4096-bit RSA
+            key_size=4096,  # 4096-bit RSA key material
             backend=default_backend(),
         )
         self._rsa_public_key = self._rsa_private_key.public_key()
 
         # Layer 5: Elliptic Curve (ECC-521)
-        self._ecc_private_key = ec.generate_private_key(
-            ec.SECP521R1(), default_backend()  # 521-bit curve - highest security
-        )
+        self._ecc_private_key = ec.generate_private_key(ec.SECP521R1(), default_backend())
         self._ecc_public_key = self._ecc_private_key.public_key()
 
         # Additional security measures
         self._salt = secrets.token_bytes(32)
         self._pepper = secrets.token_bytes(32)
 
-        self.logger.info("GOD TIER ENCRYPTION initialized with 7 layers")
+        self.logger.info("Local layered encryption helper initialized")
 
     def encrypt_god_tier(self, data: bytes) -> bytes:
         """
-        Encrypt data with GOD TIER encryption (7 layers).
+        Encrypt data with the local layered helper.
 
         Encryption flow:
         1. SHA-512 hash verification layer
@@ -82,7 +80,7 @@ class GodTierEncryption:
             data: Raw data to encrypt
 
         Returns:
-            Encrypted data with 7 layers of protection
+            Encrypted data from the local helper
         """
         if not data:
             return b""
@@ -111,13 +109,13 @@ class GodTierEncryption:
         layer7 = self._add_authentication_mac(layer6)
 
         self.logger.debug(
-            f"Encrypted {len(data)} bytes to {len(layer7)} bytes (7 layers)"
+            f"Encrypted {len(data)} bytes to {len(layer7)} bytes with local helper"
         )
         return layer7
 
     def decrypt_god_tier(self, encrypted_data: bytes) -> bytes:
         """
-        Decrypt GOD TIER encrypted data (7 layers in reverse).
+        Decrypt data protected by the local layered helper.
 
         Args:
             encrypted_data: Encrypted data
@@ -159,7 +157,7 @@ class GodTierEncryption:
             return data
 
         except Exception as e:
-            self.logger.error(f"GOD TIER decryption failed: {e}")
+            self.logger.error(f"Local layered decryption failed: {e}")
             raise ValueError("Decryption failed - data may be corrupted or tampered")
 
     def _encrypt_aes_gcm(self, data: bytes) -> bytes:
@@ -236,7 +234,7 @@ class GodTierEncryption:
         return decryptor.update(ciphertext) + decryptor.finalize()
 
     def _rotate_key(self, key: bytes) -> bytes:
-        """Quantum-resistant key rotation using Scrypt"""
+        """Local key rotation using Scrypt"""
         kdf = Scrypt(
             salt=self._salt,
             length=32,
@@ -289,15 +287,16 @@ class GodTierEncryption:
     def get_encryption_strength(self) -> dict:
         """Get information about encryption strength"""
         return {
-            "tier": "GOD TIER",
-            "layers": 7,
+            "tier": "local_layered_helper",
+            "layers": None,
+            "accepted": False,
             "algorithms": [
                 "Fernet (AES-128 + HMAC-SHA256)",
-                "AES-256-GCM (military-grade)",
+                "AES-256-GCM",
                 "ChaCha20-Poly1305",
                 "AES-256-GCM Double Encryption",
                 "RSA-4096 (classical asymmetric key material)",
-                "ECC-521 (highest elliptic curve)",
+                "ECC-521",
                 "HMAC-SHA512 Authentication",
             ],
             "key_sizes": {
