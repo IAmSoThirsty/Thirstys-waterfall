@@ -11,6 +11,7 @@ from thirstys_waterfall.browser import (
     IncognitoBrowser,
     EncryptedSearchEngine,
     EncryptedNavigationHistory,
+    LocalEncryptedHistorySearchBackend,
     TabManager,
     BrowserSandbox,
     ContentBlocker,
@@ -310,6 +311,42 @@ class TestEncryptedNavigationHistory(unittest.TestCase):
             nav_history.search_encrypted_history(b"encrypted-query")
         nav_history.stop()
 
+    def test_local_search_backend_returns_encrypted_matches_without_plaintext(self):
+        """Test local encrypted history search returns encrypted result records."""
+        backend = LocalEncryptedHistorySearchBackend(self.cipher)
+        nav_history = EncryptedNavigationHistory(
+            self.cipher,
+            search_backend=backend,
+        )
+        nav_history.start()
+        nav_history.record_navigation("https://alpha.example/path", "tab-alpha")
+        nav_history.record_navigation("https://beta.example/path", "tab-beta")
+
+        query = self.cipher.encrypt(b"alpha")
+        results = nav_history.search_encrypted_history(query)
+        result_blob = repr(results).encode()
+
+        self.assertEqual(len(results), 1)
+        self.assertTrue(results[0]["match_encrypted"])
+        self.assertNotIn(b"https://alpha.example/path", result_blob)
+        self.assertNotIn(b"tab-alpha", result_blob)
+        self.assertEqual(
+            nav_history.decrypt_url(results[0]["encrypted_url"]),
+            "https://alpha.example/path",
+        )
+        self.assertEqual(
+            nav_history.get_search_backend_status()["backend"],
+            "LocalEncryptedHistorySearchBackend",
+        )
+        nav_history.stop()
+
+    def test_local_search_backend_rejects_unreadable_query(self):
+        """Test local encrypted history search fails loud on unreadable query."""
+        backend = LocalEncryptedHistorySearchBackend(self.cipher)
+
+        with self.assertRaisesRegex(RuntimeError, "query is unreadable"):
+            backend.search_encrypted_history(b"not encrypted", [])
+
 
 class FakeBrowserDownloadBackend:
     def __init__(self):
@@ -533,6 +570,28 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.assertTrue(status["navigation_encrypted"])
         self.assertFalse(status["sandbox_enabled"])
         self.assertFalse(status["download_backend_configured"])
+        self.assertTrue(status["navigation_search_backend_configured"])
+        self.assertEqual(
+            status["navigation_search_backend"],
+            "LocalEncryptedHistorySearchBackend",
+        )
+        self.assertFalse(status["navigation_search_backend_accepted"])
+
+    def test_browser_search_history_uses_local_encrypted_backend(self):
+        """Test browser exposes local encrypted navigation history search."""
+        self.browser.start()
+        tab_id = self.browser.create_tab()
+        self.browser.navigate(tab_id, "https://alpha.example/docs")
+        self.browser.navigate(tab_id, "https://beta.example/docs")
+
+        result = self.browser.search_history("alpha")
+        result_blob = repr(result).encode()
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["backend"], "LocalEncryptedHistorySearchBackend")
+        self.assertEqual(len(result["encrypted_results"]), 1)
+        self.assertNotIn(b"https://alpha.example/docs", result_blob)
+        self.assertNotIn(tab_id.encode(), result_blob)
 
     def test_download_without_backend_returns_unavailable_not_silent_none(self):
         """Test browser downloads fail closed when no backend is configured."""

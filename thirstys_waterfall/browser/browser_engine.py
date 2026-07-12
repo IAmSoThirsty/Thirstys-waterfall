@@ -7,7 +7,10 @@ from .tab_manager import TabManager
 from .sandbox import BrowserSandbox
 from .content_blocker import ContentBlocker
 from .encrypted_search import EncryptedSearchEngine
-from .encrypted_navigation import EncryptedNavigationHistory
+from .encrypted_navigation import (
+    EncryptedNavigationHistory,
+    LocalEncryptedHistorySearchBackend,
+)
 from .engine import FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 
@@ -66,7 +69,13 @@ class IncognitoBrowser:
 
         # Local encrypted helper components.
         self._search_engine = EncryptedSearchEngine(self._cipher)
-        self._nav_history = EncryptedNavigationHistory(self._cipher)
+        self._history_search_backend = LocalEncryptedHistorySearchBackend(
+            self._cipher
+        )
+        self._nav_history = EncryptedNavigationHistory(
+            self._cipher,
+            search_backend=self._history_search_backend,
+        )
         self._web_engine = ThirstyWebEngine(
             FetchPolicy(
                 allow_network=config.get("engine_network_enabled", False),
@@ -342,8 +351,28 @@ class IncognitoBrowser:
         """
         return self.encrypted_search.search(query)
 
+    def search_history(self, query: str) -> Dict[str, Any]:
+        """
+        Search encrypted navigation history through the configured backend.
+
+        The plaintext query is encrypted immediately and is not returned.
+        """
+        if not self._active:
+            raise RuntimeError("Browser not active")
+
+        encrypted_query = self._cipher.encrypt(query.encode())
+        encrypted_results = self.encrypted_navigation.search_encrypted_history(
+            encrypted_query
+        )
+        return {
+            "success": True,
+            "backend": type(self._history_search_backend).__name__,
+            "encrypted_results": encrypted_results,
+        }
+
     def get_status(self) -> Dict[str, Any]:
         """Get browser status"""
+        search_backend_status = self.encrypted_navigation.get_search_backend_status()
         return {
             "active": self._active,
             "incognito_mode": self.incognito_mode,
@@ -368,4 +397,9 @@ class IncognitoBrowser:
             "ephemeral_session_snapshots": True,
             "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
             "download_backend_configured": self.download_backend is not None,
+            "navigation_search_backend_configured": search_backend_status[
+                "configured"
+            ],
+            "navigation_search_backend": search_backend_status["backend"],
+            "navigation_search_backend_accepted": search_backend_status["accepted"],
         }

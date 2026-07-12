@@ -132,3 +132,72 @@ class EncryptedNavigationHistory:
             )
 
         return results
+
+    def get_search_backend_status(self) -> Dict[str, Any]:
+        """Report encrypted navigation search backend availability."""
+        if self._search_backend is None:
+            return {
+                "configured": False,
+                "backend": None,
+                "accepted": False,
+            }
+
+        return {
+            "configured": True,
+            "backend": type(self._search_backend).__name__,
+            "accepted": False,
+        }
+
+
+class LocalEncryptedHistorySearchBackend:
+    """
+    Local encrypted navigation search backend.
+
+    Query and history entries are decrypted only in memory for matching. Returned
+    records keep URL and tab data encrypted, so callers do not receive plaintext
+    history from the backend.
+    """
+
+    def __init__(self, cipher: Fernet):
+        self._cipher = cipher
+
+    def search_encrypted_history(
+        self,
+        encrypted_query: bytes,
+        encrypted_history: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Search encrypted navigation history and return encrypted matches."""
+        try:
+            query = self._cipher.decrypt(encrypted_query).decode().casefold()
+        except Exception as exc:
+            raise RuntimeError("Encrypted navigation search query is unreadable") from exc
+
+        matches: List[Dict[str, Any]] = []
+        for entry in encrypted_history:
+            encrypted_url = entry.get("encrypted_url")
+            if not isinstance(encrypted_url, bytes):
+                continue
+
+            url = self._decrypt_history_url(encrypted_url)
+            if url is None:
+                continue
+
+            if query and query in url.casefold():
+                matches.append(
+                    {
+                        "encrypted_url": encrypted_url,
+                        "encrypted_tab_id": entry.get("encrypted_tab_id"),
+                        "timestamp": entry.get("timestamp"),
+                        "hash": entry.get("hash"),
+                        "match_encrypted": True,
+                    }
+                )
+
+        return matches
+
+    def _decrypt_history_url(self, encrypted_url: bytes) -> Optional[str]:
+        """Decrypt one history URL for in-memory matching."""
+        try:
+            return self._cipher.decrypt(encrypted_url).decode()
+        except Exception:
+            return None
