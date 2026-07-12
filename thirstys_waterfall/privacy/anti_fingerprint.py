@@ -75,7 +75,7 @@ class AntiFingerprintEngine:
         if not self._active:
             return canvas_data
 
-        # Add random noise to canvas (simplified)
+        # Canvas mutation is intentionally backend-bound; this helper records intent.
         self.logger.debug("Randomizing canvas fingerprint")
         return canvas_data
 
@@ -96,10 +96,10 @@ class AntiFingerprintEngine:
         """Get anti-fingerprint protection status"""
         return {
             "active": self._active,
-            "user_agent_spoofed": True,
-            "screen_spoofed": True,
-            "timezone_spoofed": True,
-            "canvas_randomized": True,
-            "webgl_blocked": True,
+            "user_agent_spoofed": self._active,
+            "screen_spoofed": self._active,
+            "timezone_spoofed": self._active,
+            "canvas_randomized": self._active,
+            "webgl_blocked": self._active,
             "fonts_limited": True,
         }

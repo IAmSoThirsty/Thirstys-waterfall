@@ -267,6 +267,14 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m compileall -q examples` passed after the docs/examples claim-hygiene change.
 - `python -m pytest tests\test_public_claim_hygiene.py -q` passed after the docs/examples claim-hygiene change: 2 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the docs/examples claim-hygiene change; wheel sha256 was `64491b22c320e1b00dd59464f5de06452ef5999ace1b99cd42734a7d082451c4`, and local web smoke reported `backend=thirsty-lang`.
+- Fixed integrated-spec unsafe capability exception expiration so `duration` is applied as seconds instead of being ignored.
+- Replaced remaining Python source claim-marker comments/status fields in local AI, anti-fingerprint, anti-phishing, and VPN kill-switch surfaces with evidence-gated wording or status.
+- Local AI responses/status now report local helper encryption and `encryption_accepted: False` instead of accepted-looking God-tier/7-layer claims.
+- Anti-fingerprint status now reports spoofing/canvas/WebGL protections as active only when the engine is active.
+- `rg -n "production-grade|simulated|simplified|placeholder|quantum-resistant|god_tier_encrypted|encryption_layers\": 7|Would|would" . -g "*.py" --glob "!htmlcov/**" --glob "!*.egg-info/**" --glob "!dist/**" --glob "!build/**" --glob "!node_modules/**" --glob "!__pycache__/**"` returned no matches after the Python marker-hygiene change.
+- `python -m pytest tests\test_python_marker_hygiene.py tests\test_vpn_kill_switch.py tests\test_browser.py::TestIncognitoBrowser::test_fingerprint_protection_status -q` passed after the Python marker-hygiene change: 9 tests passed.
+- `python -m pytest -q` passed after the Python marker-hygiene change: 467 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the Python marker-hygiene change; wheel sha256 was `2d5c5a57e42a64a4e9c645f50e6bab8ada1774a8158a04f61333a024ccc04e53`, and local web smoke reported `backend=thirsty-lang`.
 
 ## Known Current Problems
 

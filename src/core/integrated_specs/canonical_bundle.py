@@ -18,7 +18,7 @@ This module contains all 27 canonical artifacts that prove:
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 # ============================================================================
@@ -867,7 +867,7 @@ class UnsafeCapabilityException:
     authorized_for: str
     justification: str
     granted_at: datetime
-    duration: int  # in ticks
+    duration: int  # in seconds
     expires_at: datetime
     revoked: bool = False
 
@@ -896,7 +896,7 @@ class UnsafeCapabilityExceptionRecords:
             justification=justification,
             granted_at=datetime.now(),
             duration=duration,
-            expires_at=datetime.now(),  # Would add duration
+            expires_at=datetime.now() + timedelta(seconds=duration),
         )
         self.exceptions.append(exception)
         return exception.exception_id

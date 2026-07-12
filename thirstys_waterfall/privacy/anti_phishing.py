@@ -34,7 +34,7 @@ class AntiPhishingEngine:
 
     def _load_phishing_database(self):
         """Load known phishing domains and patterns"""
-        # Example phishing domains (would be loaded from database)
+        # Built-in seed domains; external feeds require a configured backend.
         self._phishing_domains = {
             "secure-login-verify.com",
             "account-verify-secure.com",

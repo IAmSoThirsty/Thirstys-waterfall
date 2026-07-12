@@ -1,7 +1,4 @@
-"""
-God Tier AI Assistant Engine
-Advanced AI with 7-layer encryption and complete privacy
-"""
+"""Evidence-gated AI assistant engine with local helper encryption."""
 
 import logging
 from typing import Dict, Any, Optional, List
@@ -11,14 +8,14 @@ import time
 
 class GodTierAI:
     """
-    God Tier AI Assistant
+    Local AI Assistant
 
     Features:
     - On-device inference (no external API calls)
-    - 7-layer God tier encryption
-    - Zero data collection
-    - Complete privacy protection
-    - Advanced reasoning capabilities
+    - Local helper encryption for context hashes
+    - No data collection by this process
+    - Evidence-gated privacy reporting
+    - Pattern-based local assistance
     - Context-aware responses
     """
 
@@ -27,7 +24,7 @@ class GodTierAI:
         self.logger = logging.getLogger(__name__)
         self.god_tier_encryption = god_tier_encryption
 
-        # God tier encryption
+        # Local helper encryption
         self._cipher = Fernet(Fernet.generate_key())
 
         # AI capabilities
@@ -53,16 +50,16 @@ class GodTierAI:
         self._active = False
 
     def start(self):
-        """Start God tier AI assistant"""
-        self.logger.info("Starting God Tier AI Assistant")
-        self.logger.info("On-device inference with 7-layer encryption")
-        self.logger.info("Zero data collection - Complete privacy")
+        """Start AI assistant"""
+        self.logger.info("Starting local AI Assistant")
+        self.logger.info("On-device inference with local helper encryption")
+        self.logger.info("No data collection by this process")
 
         self._active = True
 
     def stop(self):
         """Stop and wipe all data"""
-        self.logger.info("Stopping God Tier AI - Wiping all data")
+        self.logger.info("Stopping AI assistant - wiping local data")
 
         # Wipe everything
         self._context.clear()
@@ -75,7 +72,7 @@ class GodTierAI:
     ) -> Dict[str, Any]:
         """
         Ask the AI assistant a question.
-        All processing done on-device with God tier encryption.
+        Processing is local; accepted encryption claims depend on evidence.
 
         Args:
             query: User query (encrypted before processing)
@@ -87,7 +84,7 @@ class GodTierAI:
         if not self._active:
             return {"error": "AI assistant not active"}
 
-        # Encrypt query with God tier encryption
+        # Encrypt query with the configured local helper.
         encrypted_query = self.god_tier_encryption.encrypt_god_tier(query.encode())
 
         self.logger.info("Processing query on-device (no external API calls)")
@@ -106,7 +103,8 @@ class GodTierAI:
                 "query_hash": encrypted_query[:32].hex(),
                 "response_length": len(response.get("response", "")),
                 "timestamp": time.time(),
-                "god_tier_encrypted": True,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
             }
         )
 
@@ -121,7 +119,7 @@ class GodTierAI:
         """
         query_lower = query.lower()
 
-        # Advanced reasoning (simplified for demonstration)
+        # Local pattern routing; no model-backend claim is made here.
         if "privacy" in query_lower or "security" in query_lower:
             response = self._privacy_analysis(query)
         elif "code" in query_lower or "program" in query_lower:
@@ -135,27 +133,31 @@ class GodTierAI:
             "response": response,
             "processed_on_device": True,
             "no_external_calls": True,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_evidence": {
+                "source": type(self.god_tier_encryption).__name__,
+                "accepted_end_to_end": False,
+            },
             "transparency": {
                 "where": "on-device",
                 "data_sent": "none",
                 "apis_called": "none",
-                "privacy_level": "maximum",
+                "privacy_level": "local_only",
             },
         }
 
     def _privacy_analysis(self, query: str) -> str:
         """Provide privacy analysis"""
         return (
-            "Based on God tier privacy principles:\n\n"
-            "1. All data should be encrypted with 7 layers\n"
+            "Based on evidence-gated privacy principles:\n\n"
+            "1. Accepted encryption claims require end-to-end evidence\n"
             "2. Minimize data collection - only what's strictly needed\n"
             "3. Process on-device whenever possible\n"
             "4. Use VPN with multi-hop routing for network requests\n"
             "5. Enable kill switch for all subsystems\n"
             "6. Regular privacy audits to detect leaks\n\n"
-            "Your current system already implements all these principles with God tier encryption."
+            "Current status should be checked against the Standard v3 acceptance matrix."
         )
 
     def _code_assistance(self, query: str) -> str:
@@ -165,32 +167,31 @@ class GodTierAI:
             "- All code analysis done on-device\n"
             "- No code sent to external services\n"
             "- Suggestions based on security and privacy best practices\n"
-            "- God tier encryption applied to all stored code snippets\n\n"
+            "- Local helper encryption for stored context hashes\n\n"
             "What specific coding help do you need?"
         )
 
     def _encryption_advice(self, query: str) -> str:
         """Provide encryption advice"""
         return (
-            "God Tier Encryption in this system:\n\n"
-            "7 Layers:\n"
+            "Encryption status in this system:\n\n"
+            "Local layered helper:\n"
             "1. SHA-512 integrity hash\n"
             "2. Fernet (AES-128 + HMAC-SHA256)\n"
             "3. AES-256-GCM (military-grade)\n"
             "4. ChaCha20-Poly1305\n"
             "5. Double AES-256-GCM with key rotation\n"
-            "6. Quantum-resistant padding\n"
+            "6. Randomized padding\n"
             "7. HMAC-SHA512 authentication\n\n"
-            "Additional: RSA-4096, ECC-521, Perfect Forward Secrecy\n"
-            "This is quantum-resistant and exceeds military standards."
+            "Post-quantum or end-to-end acceptance requires configured backend evidence."
         )
 
     def _general_assistance(self, query: str) -> str:
         """General assistance"""
         return (
-            "I'm your God tier AI assistant with complete privacy protection.\n\n"
+            "I'm your local AI assistant with evidence-gated privacy reporting.\n\n"
             "All processing happens on your device. No data leaves your system.\n"
-            "Everything is encrypted with 7 layers of God tier encryption.\n\n"
+            "Stored context hashes use the configured local encryption helper.\n\n"
             "I can help with:\n"
             "- Privacy and security analysis\n"
             "- Code assistance and development\n"
@@ -220,8 +221,9 @@ class GodTierAI:
         """Get AI assistant status"""
         return {
             "active": self._active,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "on_device": self.on_device,
             "no_external_calls": self.no_external_calls,
             "capabilities": list(self.capabilities.keys()),
