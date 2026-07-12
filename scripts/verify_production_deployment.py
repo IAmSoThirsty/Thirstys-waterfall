@@ -471,7 +471,7 @@ def main() -> int:
     run(["safety", "check", "-r", "requirements-deploy.lock", "--json"])
     if not args.skip_tests:
         run([sys.executable, "-m", "pytest", "-q"], timeout=240)
-    run([sys.executable, "-m", "pip", "wheel", ".", "--no-deps", "-w", "..\\wheelhouse"], timeout=180)
+    run([sys.executable, "-m", "pip", "wheel", ".", "--no-deps", "--no-build-isolation", "-w", "..\\wheelhouse"], timeout=180)
     smoke_local_web(args.thirsty_lang_path)
 
     if not args.skip_docker:

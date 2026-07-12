@@ -283,6 +283,12 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Added deterministic native-engine layout snapshots and ephemeral tab session snapshots for browser acceptance evidence.
 - `python -m pytest tests\test_native_web_engine.py tests\test_browser.py -q` passed after the native layout/session change: 58 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the native layout/session change; local web smoke reported `backend=thirsty-lang`.
+- Added deterministic local HTTP navigation coverage for the native web engine with network mode enabled.
+- Changed the local deployment verifier wheel build to use the prepared verifier environment without build isolation after isolated `pip wheel` repeatedly timed out while direct setuptools wheel creation passed.
+- Reclassified package metadata from stable to beta and removed stale package setup wording.
+- `python -m pytest tests\test_native_web_engine.py -q` passed after the local network-navigation change: 9 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the local network-navigation and verifier wheel-build change; wheel sha256 was `57d6e4c64295be6589acef06a1a250e9ed97fc521339b20bb42febe4ea5e7274`, and local web smoke reported `backend=thirsty-lang`.
+- `python -m pytest -q` passed after the local network-navigation and verifier wheel-build change: 470 tests passed.
 
 ## Known Current Problems
 
@@ -317,7 +323,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Encrypted-network helper now parses structured JSON payloads and reports payload-only scope instead of claiming unused extra encryption layers or host-wide interception.
 - Post-quantum encryption no longer uses classical AES/Scrypt as a substitute implementation; no real post-quantum backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
-- Browser status is now evidence-gated, and native layout plus ephemeral session snapshots are covered by tests; broader rendering and accepted network-backed navigation evidence remain incomplete.
+- Browser status is now evidence-gated, and native layout, local network navigation, plus ephemeral session snapshots are covered by tests; broader rendering and supported-site acceptance evidence remain incomplete.
 - Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.

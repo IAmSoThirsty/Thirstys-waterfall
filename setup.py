@@ -1,6 +1,6 @@
 """
 Thirstys Waterfall Setup
-Production-grade integrated privacy-first system
+Evidence-gated integrated privacy-first system
 """
 
 from setuptools import setup, find_packages
@@ -19,7 +19,7 @@ setup(
     url="https://github.com/IAmSoThirsty/Thirstys-waterfall",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
         "Topic :: Security",
