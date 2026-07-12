@@ -598,12 +598,17 @@ class TestIncognitoBrowser(unittest.TestCase):
         self.browser.start()
 
         tab_id = self.browser.create_tab()
-        result = self.browser.download_file("https://example.invalid/file.bin", tab_id)
+        url = "https://example.invalid/file.bin"
+        result = self.browser.download_file(url, tab_id)
+        result_blob = repr(result).encode()
 
         self.assertEqual(result["status"], "unavailable")
         self.assertEqual(result["error"], "Browser download backend is not configured")
         self.assertEqual(result["tab_id"], tab_id)
         self.assertTrue(result["download_isolated"])
+        self.assertTrue(result["url_encrypted"])
+        self.assertIsInstance(result["encrypted_url"], bytes)
+        self.assertNotIn(url.encode(), result_blob)
 
     def test_download_delegates_to_configured_backend(self):
         """Test browser downloads use configured backend results."""
