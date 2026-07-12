@@ -255,6 +255,13 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest -q` passed after the DOS trap evidence-contract change: 462 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the DOS trap evidence-contract change. The verifier script had to be restored first with `git checkout --ignore-skip-worktree-bits HEAD -- scripts/verify_production_deployment.py` because sparse checkout hid it locally.
 - Core source marker scan passed across `thirstys_waterfall\firewalls`, `thirstys_waterfall\wifi_network`, `thirstys_waterfall\security`, `thirstys_waterfall\browser`, and `thirstys_waterfall\utils`: `rg -n "Would|would|simulate|simulated|simplified|placeholder|TODO|production|quantum-resistant" thirstys_waterfall\firewalls thirstys_waterfall\wifi_network thirstys_waterfall\security thirstys_waterfall\browser thirstys_waterfall\utils -g "*.py"` returned no matches.
+- Replaced the web browser-tabs API placeholder state path with active browser runtime/tab-manager evidence; inactive or unavailable browser runtime now returns `503` with explicit unavailable evidence.
+- The browser-tabs API now serializes only non-sensitive tab metadata and does not expose tab storage, cookies, or history.
+- `python -m pytest tests\test_web_app_import.py -q` passed after the web browser-tabs evidence-contract change: 12 tests passed.
+- `flake8 web\app.py tests\test_web_app_import.py --count --select=E9,F63,F7,F82 --show-source --statistics` passed after the web browser-tabs evidence-contract change: 0 findings.
+- `python -m pytest -q` passed after the web browser-tabs evidence-contract change: 464 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the web browser-tabs evidence-contract change; wheel sha256 was `f7fadf8561bc09872523f34bccf976e581a979e0a08e85679a13c0c6da05ddaa`, and local web smoke reported `backend=thirsty-lang`.
+- Touched-file marker scan passed after the web browser-tabs evidence-contract change: `rg -n "placeholder|simulated|simplified|production-grade|Would|would" web\app.py tests\test_web_app_import.py` returned no matches.
 
 ## Known Current Problems
 
@@ -265,6 +272,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
 - Release workflow run `29138685612` passed for `v1.0.2` and commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
+- The web browser-tabs API no longer fabricates tabs from local `system_state`, but it still requires an active configured browser runtime for tab listing and creation.
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
 - Global kill switch no longer implies all traffic was blocked without a backend, but no real global traffic blocker backend is bundled or configured.
 - VPN kill switch no longer implies traffic block/restore without a backend, but no real VPN traffic blocker backend is bundled or configured.

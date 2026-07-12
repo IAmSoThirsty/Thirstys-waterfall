@@ -128,6 +128,98 @@ class TestWebAppImport(unittest.TestCase):
         self.assertTrue(payload["firewalls"])
         self.assertTrue(all(not item["active"] for item in payload["firewalls"]))
 
+    def test_browser_tabs_fail_closed_when_runtime_inactive(self):
+        app_module = importlib.import_module("web.app")
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        class FakeBrowser:
+            def get_status(self):
+                return {"active": False}
+
+        class FakeWaterfall:
+            browser = FakeBrowser()
+
+        with mock.patch.object(app_module, "THIRSTYS_AVAILABLE", True), mock.patch.object(
+            app_module.service, "waterfall", FakeWaterfall()
+        ):
+            response = app_module.app.test_client().get(
+                "/api/browser/tabs",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            payload = response.get_json()
+
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(payload["success"])
+        self.assertEqual(payload["reason"], "browser_runtime_inactive")
+        self.assertEqual(payload["tabs"], [])
+
+    def test_browser_tabs_use_active_browser_runtime(self):
+        app_module = importlib.import_module("web.app")
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        class FakeTabManager:
+            def __init__(self):
+                self.tabs = {}
+
+            def list_tabs(self):
+                return dict(self.tabs)
+
+            def get_tab(self, tab_id):
+                return self.tabs[tab_id]
+
+        class FakeBrowser:
+            def __init__(self):
+                self.tab_manager = FakeTabManager()
+
+            def get_status(self):
+                return {"active": True}
+
+            def create_tab(self, url):
+                tab_id = "tab-test-1"
+                self.tab_manager.tabs[tab_id] = {
+                    "id": tab_id,
+                    "url": url,
+                    "title": "New Tab",
+                    "isolated": True,
+                    "storage": {"not": "exposed"},
+                    "cookies": {"not": "exposed"},
+                    "history": [url],
+                }
+                return tab_id
+
+        fake_browser = FakeBrowser()
+
+        class FakeWaterfall:
+            browser = fake_browser
+
+        with mock.patch.object(app_module, "THIRSTYS_AVAILABLE", True), mock.patch.object(
+            app_module.service, "waterfall", FakeWaterfall()
+        ):
+            create_response = app_module.app.test_client().post(
+                "/api/browser/tabs",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"url": "https://example.invalid"},
+            )
+            create_payload = create_response.get_json()
+            list_response = app_module.app.test_client().get(
+                "/api/browser/tabs",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            list_payload = list_response.get_json()
+
+        self.assertEqual(create_response.status_code, 201)
+        self.assertTrue(create_payload["success"])
+        self.assertEqual(create_payload["tab"]["url"], "https://example.invalid")
+        self.assertTrue(create_payload["tab"]["isolated"])
+        self.assertNotIn("storage", create_payload["tab"])
+        self.assertNotIn("cookies", create_payload["tab"])
+        self.assertEqual(list_response.status_code, 200)
+        self.assertTrue(list_payload["success"])
+        self.assertEqual(list_payload["evidence"]["source"], "waterfall.browser.tab_manager")
+        self.assertEqual(len(list_payload["tabs"]), 1)
+
     def test_frontend_does_not_embed_demo_credentials_or_fake_active_claims(self):
         root = Path(__file__).resolve().parents[1]
         app_js = (root / "web" / "static" / "js" / "app.js").read_text(
