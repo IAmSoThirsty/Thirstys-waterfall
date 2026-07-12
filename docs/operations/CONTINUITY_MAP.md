@@ -296,6 +296,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest -q` passed after adding platform capability reporting: 486 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after adding platform capability reporting; local web smoke reported `backend=thirsty-lang`.
 - Encryption data-surface coverage is now mapped through `thirstys_waterfall.get_encryption_evidence_report()` and `docs/operations/ENCRYPTION_EVIDENCE_MAP.md`; full encryption acceptance remains false until all accepted stored-state, browser-data, telemetry, download, transport, target-log, and post-quantum surfaces have end-to-end proof.
+- Target deployment evidence now has a fail-closed manifest validator in `scripts/verify_target_deployment_evidence.py`; full production acceptance still requires executing the target deployment and attaching artifacts for every required evidence type.
 
 ## Known Current Problems
 
@@ -341,7 +342,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Secure tunnel no longer fabricates tunnel establishment without connected VPN evidence and a backend, but no real secure-tunnel backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
 - Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
-- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, but target rollback execution, production secrets rotation, target host network policy, and target environment logs have not been verified.
+- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, and target evidence bundles now have a validator; target rollback execution, production secrets rotation, target host network policy, and target environment logs have still not been captured.
 
 ## Safe Continuation Points
 

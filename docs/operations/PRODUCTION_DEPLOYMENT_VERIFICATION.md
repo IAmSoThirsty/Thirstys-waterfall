@@ -4,6 +4,15 @@ Standard: Thirsty's Standard v3
 
 Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, and published-image local smoke are verified. Full target-host production deployment verification still requires target host, target rollback, secret rotation, host network policy, and operations log evidence.
 
+Target evidence manifests are validated with:
+
+```powershell
+python scripts\verify_target_deployment_evidence.py evidence\target-deployment\target-evidence.json
+```
+
+The manifest format and required artifact types are documented in
+`docs/operations/TARGET_DEPLOYMENT_EVIDENCE.md`.
+
 ## Local Verification Gate
 
 Run the full local gate from the repository root:
