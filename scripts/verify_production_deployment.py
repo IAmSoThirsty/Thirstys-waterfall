@@ -37,6 +37,17 @@ RETIRED_IDENTIFIERS = (
     "backend=legacy",
     "backend: legacy",
 )
+CLAIM_MARKERS = (
+    "production-grade",
+    "simulated",
+    "simplified",
+    "placeholder",
+    "quantum-resistant",
+    "god_tier_encrypted",
+    'encryption_layers": 7',
+    "Would",
+    "would",
+)
 SKIP_DIRS = {
     ".git",
     ".pytest_cache",
@@ -381,6 +392,30 @@ def scan_retired_identifiers(paths: Iterable[Path]) -> None:
     print("retired Thirsty-Lang compatibility identifier scan passed")
 
 
+def scan_claim_markers(paths: Iterable[Path]) -> None:
+    findings: list[str] = []
+    for base in paths:
+        if not base.exists():
+            continue
+        files = [base] if base.is_file() else base.rglob("*")
+        for path in files:
+            if path.is_dir() or any(part in SKIP_DIRS for part in path.parts):
+                continue
+            if path.suffix.lower() not in {".py", ".md", ".js", ".ts", ".tsx", ".html", ".css"}:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            for lineno, line in enumerate(text.splitlines(), start=1):
+                for marker in CLAIM_MARKERS:
+                    if marker in line:
+                        findings.append(f"{path.relative_to(ROOT)}:{lineno}: {marker}")
+    if findings:
+        raise SystemExit("claim-stub markers remain:\n" + "\n".join(findings))
+    print("claim-stub marker scan passed")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -411,6 +446,23 @@ def main() -> int:
             ROOT / "pyproject.toml",
             ROOT / "requirements.txt",
             ROOT / "requirements-deploy.lock",
+        ]
+    )
+    scan_claim_markers(
+        [
+            ROOT / "thirstys_waterfall",
+            ROOT / "src",
+            ROOT / "tests",
+            ROOT / "examples",
+            ROOT / "web" / "app.py",
+            ROOT / "web" / "gunicorn.conf.py",
+            ROOT / "web" / "static" / "js",
+            ROOT / "README.md",
+            ROOT / "docs" / "DOS_TRAP_MODE.md",
+            ROOT / "docs" / "mfa_authentication.md",
+            ROOT / "docs" / "network_stealth.md",
+            ROOT / "docs" / "SHOWCASE.md",
+            ROOT / "docs" / "COMPETITION_COMPARISON.md",
         ]
     )
     run([sys.executable, "-m", "compileall", "-q", "scripts", "thirstys_waterfall", "tests", "web"])

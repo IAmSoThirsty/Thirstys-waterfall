@@ -1,6 +1,6 @@
 """
 Comprehensive tests for Privacy Accountability Ledger
-Tests all production-grade features including encryption, integrity, and thread-safety
+Tests privacy-ledger encryption, integrity, and thread-safety behavior.
 """
 
 import unittest

@@ -1,6 +1,4 @@
-"""
-Q/A System - Questions and Answers with God tier encryption
-"""
+"""Q/A system with local helper encryption."""
 
 import logging
 from typing import Dict, Any, List
@@ -18,8 +16,8 @@ class QASystem:
             {
                 "id": "q1",
                 "category": "privacy",
-                "question": "How does God tier encryption work?",
-                "answer": "God tier encryption uses 7 layers: SHA-512, Fernet, AES-256-GCM, ChaCha20, Double AES-256-GCM, Quantum-resistant padding, HMAC-SHA512",
+                "question": "How does local helper encryption work?",
+                "answer": "Local helper encryption uses layered classical primitives and remains separate from accepted end-to-end or post-quantum claims.",
             },
             {
                 "id": "q2",
@@ -56,7 +54,8 @@ class QASystem:
             "id": f"uq_{len(self.user_questions)}",
             "encrypted_question": encrypted_q,
             "timestamp": time.time(),
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
         self.user_questions.append(submission)
         return {"status": "submitted", "id": submission["id"]}

@@ -1,6 +1,4 @@
-"""
-Secure Tunnel - Encrypted tunnel for all remote access
-"""
+"""Secure tunnel facade with evidence-gated encryption reporting."""
 
 import logging
 import json
@@ -9,7 +7,7 @@ from typing import Dict, Any, Optional
 
 class SecureTunnel:
     """
-    Secure tunnel with God tier encryption for remote access.
+    Secure tunnel with local helper encryption for remote access.
     All traffic goes through VPN with multi-hop routing.
     """
 
@@ -28,15 +26,15 @@ class SecureTunnel:
 
     def establish(self) -> Dict[str, Any]:
         """Establish secure tunnel"""
-        self.logger.info("Establishing secure tunnel with God tier encryption")
+        self.logger.info("Establishing secure tunnel with local helper encryption")
 
         if not self.vpn_manager.is_connected():
             self._tunnel_active = False
             return {
                 "status": "unavailable",
                 "error": "VPN manager is not connected",
-                "god_tier_encrypted": True,
-                "encryption_layers": 7,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
             }
 
         if self.tunnel_backend is None:
@@ -44,8 +42,8 @@ class SecureTunnel:
             return {
                 "status": "unavailable",
                 "error": "Secure tunnel backend is not configured",
-                "god_tier_encrypted": True,
-                "encryption_layers": 7,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
             }
 
         establish_tunnel = getattr(self.tunnel_backend, "establish", None)
@@ -62,8 +60,8 @@ class SecureTunnel:
             raise RuntimeError("Secure tunnel backend returned invalid result")
 
         result.setdefault("status", "unknown")
-        result.setdefault("god_tier_encrypted", True)
-        result.setdefault("encryption_layers", 7)
+        result.setdefault("local_helper_encrypted", True)
+        result.setdefault("encryption_accepted", False)
         result.setdefault("backend", type(self.tunnel_backend).__name__)
         self._tunnel_active = result["status"] == "established"
         return result
@@ -80,7 +78,8 @@ class SecureTunnel:
         """Get tunnel status"""
         return {
             "active": self._tunnel_active,
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
             "backend_configured": self.tunnel_backend is not None,
             "backend": (
                 type(self.tunnel_backend).__name__

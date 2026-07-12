@@ -34,7 +34,8 @@ class FeedbackManager:
             "encrypted_title": encrypted_title,
             "encrypted_description": encrypted_desc,
             "timestamp": time.time(),
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
 
         self.feedback.append(feedback)

@@ -1,6 +1,4 @@
-"""
-Remote Desktop - Full remote desktop access with God tier encryption
-"""
+"""Remote desktop access with evidence-gated encryption reporting."""
 
 import logging
 from typing import Dict, Any, Optional
@@ -10,7 +8,7 @@ from cryptography.fernet import Fernet
 
 class RemoteDesktop:
     """
-    Remote desktop access with God tier encryption.
+    Remote desktop access with local helper encryption.
 
     Features:
     - Full desktop streaming (encrypted)
@@ -18,7 +16,7 @@ class RemoteDesktop:
     - Screen capture (encrypted)
     - File transfer (encrypted)
     - All traffic through VPN
-    - 7-layer God tier encryption
+    - Backend-dependent encrypted transport
     - Zero logging
     """
 
@@ -33,7 +31,7 @@ class RemoteDesktop:
         self.god_tier_encryption = god_tier_encryption
         self.desktop_backend = desktop_backend
 
-        # God tier encryption
+        # Local helper encryption
         self._cipher = Fernet(Fernet.generate_key())
 
         # Remote desktop settings
@@ -50,8 +48,8 @@ class RemoteDesktop:
 
     def start(self):
         """Start remote desktop server"""
-        self.logger.info("Starting Remote Desktop with God tier encryption")
-        self.logger.info("All screen data encrypted with 7 layers")
+        self.logger.info("Starting Remote Desktop with local helper encryption")
+        self.logger.info("Remote desktop transport acceptance requires backend evidence")
         self.logger.info(f"Listening on {self.host}:{self.port}")
 
         if self.desktop_backend is None:
@@ -94,7 +92,8 @@ class RemoteDesktop:
             "encrypted_client": encrypted_client,
             "created_time": time.time(),
             "status": "pending_backend",
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
 
         connect_backend = getattr(self.desktop_backend, "connect", None)
@@ -117,8 +116,8 @@ class RemoteDesktop:
         return {
             "connection_id": conn_id,
             "status": connection["status"],
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
             "backend": type(self.desktop_backend).__name__,
             "transport_connected": backend_result.get("transport_connected", False),
         }
@@ -136,8 +135,9 @@ class RemoteDesktop:
         """Get remote desktop status"""
         return {
             "active": self._active,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "active_connections": len(self._connections),
             "backend_configured": self.desktop_backend is not None,
             "backend": (

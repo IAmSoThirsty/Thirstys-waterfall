@@ -1,7 +1,4 @@
-"""
-Media Downloader Engine with God tier encryption
-Supports audio-only, video-only, and combined downloads
-"""
+"""Media downloader engine with local helper encryption."""
 
 import logging
 from typing import Dict, Any, Optional, List
@@ -12,14 +9,14 @@ from cryptography.fernet import Fernet
 
 class MediaDownloader:
     """
-    Multi-mode media downloader with God tier security.
+    Multi-mode media downloader with evidence-gated security reporting.
 
     Features:
     - Audio-only downloads
     - Video-only downloads
     - Combined audio+video
     - Format conversion
-    - Metadata encryption (7 layers)
+    - Metadata helper encryption
     - Built-in library management
     - Secure streaming
     """
@@ -47,7 +44,7 @@ class MediaDownloader:
         self.audio_formats = ["mp3", "aac", "flac", "opus", "vorbis"]
         self.video_formats = ["mp4", "webm", "mkv", "avi"]
 
-        # God tier encryption for all metadata
+        # Local helper encryption for metadata
         self._cipher = Fernet(Fernet.generate_key())
 
         # Download queue (encrypted)
@@ -61,8 +58,8 @@ class MediaDownloader:
 
     def start(self):
         """Start media downloader"""
-        self.logger.info("Starting Media Downloader with God tier encryption")
-        self.logger.info("All metadata encrypted with 7 layers")
+        self.logger.info("Starting Media Downloader with local helper encryption")
+        self.logger.info("Metadata helper encryption enabled")
 
         # Create download directory if it doesn't exist
         os.makedirs(self._download_directory, exist_ok=True)
@@ -88,7 +85,7 @@ class MediaDownloader:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
-        Download media with God tier encryption.
+        Download media with local helper encryption.
 
         Args:
             url: Media URL (encrypted immediately)
@@ -106,7 +103,7 @@ class MediaDownloader:
         if mode not in self.supported_modes:
             return {"error": f"Invalid mode. Supported: {self.supported_modes}"}
 
-        # Encrypt URL with God tier encryption
+        # Encrypt URL with the configured local helper.
         encrypted_url = self.god_tier_encryption.encrypt_god_tier(url.encode())
 
         # Generate secure filename
@@ -137,7 +134,8 @@ class MediaDownloader:
                 "id": download["id"],
                 "mode": mode,
                 "status": result["status"],
-                "god_tier_encrypted": True,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
             }
         )
 
@@ -158,7 +156,8 @@ class MediaDownloader:
                 "status": "unavailable",
                 "mode": mode,
                 "error": "Media download backend is not configured",
-                "god_tier_encrypted": True,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
                 "metadata_encrypted": download["metadata"] is not None,
             }
 
@@ -178,7 +177,8 @@ class MediaDownloader:
             raise RuntimeError("Media download backend returned invalid result")
 
         result.setdefault("mode", mode)
-        result.setdefault("god_tier_encrypted", True)
+        result.setdefault("local_helper_encrypted", True)
+        result.setdefault("encryption_accepted", False)
         if download["metadata"] is not None:
             result.setdefault("metadata_encrypted", True)
         download["status"] = result.get("status", "unknown")
@@ -192,7 +192,7 @@ class MediaDownloader:
         return result
 
     def _encrypt_metadata(self, metadata: Dict[str, Any]) -> bytes:
-        """Encrypt metadata with God tier encryption"""
+        """Encrypt metadata with the configured local helper."""
         import json
 
         metadata_str = json.dumps(metadata)
@@ -215,8 +215,9 @@ class MediaDownloader:
         """Get downloader status"""
         return {
             "active": self._active,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "supported_modes": self.supported_modes,
             "audio_formats": self.audio_formats,
             "video_formats": self.video_formats,

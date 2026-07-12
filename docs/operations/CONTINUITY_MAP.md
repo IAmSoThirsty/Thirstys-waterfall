@@ -275,11 +275,16 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest tests\test_python_marker_hygiene.py tests\test_vpn_kill_switch.py tests\test_browser.py::TestIncognitoBrowser::test_fingerprint_protection_status -q` passed after the Python marker-hygiene change: 9 tests passed.
 - `python -m pytest -q` passed after the Python marker-hygiene change: 467 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the Python marker-hygiene change; wheel sha256 was `2d5c5a57e42a64a4e9c645f50e6bab8ada1774a8158a04f61333a024ccc04e53`, and local web smoke reported `backend=thirsty-lang`.
+- Added a deployment-verifier claim-marker gate covering current source, tests, examples, selected docs, README, and web/static surfaces.
+- Replaced remaining settings, media downloader, remote-access, consigliere, README, and integrated-spec accepted-looking claim markers caught by that gate with evidence-gated status fields and wording.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after adding the claim-marker verifier gate; local web smoke reported `backend=thirsty-lang`.
+- `python -m pytest tests\test_browser.py::TestEncryptedSearchEngine::test_search_without_backend_returns_encrypted_unavailable_payload tests\test_privacy_ledger.py tests\test_python_marker_hygiene.py -q` passed after the claim-marker verifier gate: 29 tests passed.
+- `python -m pytest tests\test_media_downloader.py tests\test_format_converter.py tests\test_remote_browser.py tests\test_remote_desktop.py tests\test_secure_tunnel.py tests\test_consigliere.py -q` passed after the claim-marker verifier gate: 51 tests passed.
 
 ## Known Current Problems
 
 - README and public deployment/showcase/comparison docs now point to Standard v3 evidence instead of claiming final production readiness; remaining target-state capability language is explicitly gated by the matrix.
-- Core source marker scan is clean across the currently hardened firewall, WiFi, security, browser, and utility Python surfaces; docs, examples, web/static surfaces, and newly added code still need the same scan/cleanup discipline before final acceptance.
+- The deployment verifier now gates claim-marker regressions across current source, tests, examples, selected docs, README, and web/static surfaces; newly added surfaces still need to be added to the gate when they become part of accepted claims.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
 - Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.

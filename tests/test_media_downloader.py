@@ -81,7 +81,8 @@ class TestMediaDownloader(unittest.TestCase):
 
         self.assertEqual(result["status"], "completed")
         self.assertEqual(result["mode"], "video_only")
-        self.assertTrue(result["god_tier_encrypted"])
+        self.assertTrue(result["local_helper_encrypted"])
+        self.assertFalse(result["encryption_accepted"])
         self.assertTrue(result["metadata_encrypted"])
         self.assertIn("encrypted_file_path", result)
         self.assertEqual(len(backend.calls), 1)

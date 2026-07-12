@@ -41,7 +41,8 @@ class FormatConverter:
                 "status": "unavailable",
                 "output_format": output_format,
                 "error": "Media conversion backend is not configured",
-                "god_tier_encrypted": True,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
             }
 
         convert_media = getattr(self.conversion_backend, "convert", None)
@@ -57,7 +58,8 @@ class FormatConverter:
             raise RuntimeError("Media conversion backend returned invalid result")
 
         result.setdefault("output_format", output_format)
-        result.setdefault("god_tier_encrypted", True)
+        result.setdefault("local_helper_encrypted", True)
+        result.setdefault("encryption_accepted", False)
 
         # Encrypt output path
         if "output_file" in result:
