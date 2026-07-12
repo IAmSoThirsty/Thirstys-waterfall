@@ -687,6 +687,7 @@ python -c "from thirstys_waterfall.firewalls.backends import FirewallBackendFact
 - [Security Policy](SECURITY.md) - Security practices and incident response
 - [New Features](docs/NEW_FEATURES.md) - Latest feature additions
 - [Showcase](docs/SHOWCASE.md) - Current evidence and remaining gaps
+- [Encryption Evidence Map](docs/operations/ENCRYPTION_EVIDENCE_MAP.md) - Data-surface encryption evidence and gaps
 - [Platform Capabilities](docs/operations/PLATFORM_CAPABILITIES.md) - OS-specific capability boundaries
 
 ## 🎯 Platform Support
