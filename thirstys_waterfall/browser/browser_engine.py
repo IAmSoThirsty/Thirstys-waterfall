@@ -301,10 +301,12 @@ class IncognitoBrowser:
         self.logger.info("Downloading file through configured browser backend")
 
         if self.download_backend is None:
+            encrypted_url = self._cipher.encrypt(url.encode())
             return {
                 "status": "unavailable",
                 "error": "Browser download backend is not configured",
-                "url": url,
+                "encrypted_url": encrypted_url,
+                "url_encrypted": True,
                 "tab_id": tab_id,
                 "download_isolated": self._download_isolation,
             }
