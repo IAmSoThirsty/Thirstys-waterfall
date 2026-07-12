@@ -21,7 +21,7 @@ A comprehensive privacy-first system that is being completed toward 8 firewall t
 | Encryption and private data handling | Not accepted | Crypto helpers, encrypted storage helpers, and privacy-ledger components exist | End-to-end proof for browser state, logs, downloads, configuration, storage, and transport paths |
 | 8 firewall categories | Partial | Firewall modules and backend tests exist; web status now fails closed when backend status is unavailable | Real rule apply/rollback evidence per supported OS or narrowed platform claims |
 | Built-in VPN direction | Partial | Backend modules and tests exist; command paths are resolved before availability is reported; web connect/disconnect no longer fabricate success | Real OS connection/disconnection evidence, privilege requirements, and rollback behavior |
-| Native browser engine | Partial | Native document/parser/fetcher/layout layer and navigation/session compatibility tests exist | Broader rendering coverage and accepted network-backed navigation evidence |
+| Native browser engine | Partial | Native document/parser/fetcher/layout layer and local network navigation/session compatibility tests exist | Broader rendering coverage and supported-site acceptance evidence |
 | Privacy/security engines | Partial | Modules and focused tests exist for multiple privacy/security subsystems | Add configured backend evidence and end-to-end acceptance evidence |
 | Kill switch | Partial | Kill-switch modules and orchestration paths exist | Prove real network blocking and rollback behavior on supported platforms |
 

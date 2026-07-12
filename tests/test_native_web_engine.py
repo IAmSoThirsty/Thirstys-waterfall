@@ -1,8 +1,40 @@
 """Tests for the native Thirstys web engine."""
 
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 import unittest
 
 from thirstys_waterfall.browser import FetchBlocked, FetchPolicy, IncognitoBrowser, ThirstyWebEngine
+
+
+class _NativeEngineFixtureHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = (
+            b"<html><head><title>Local Network Page</title></head>"
+            b"<body><main><h1>Network Rendered</h1><a href='/next'>Next</a></main></body></html>"
+        )
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):
+        return
+
+
+class _LocalHTTPFixture:
+    def __enter__(self):
+        self.server = HTTPServer(("127.0.0.1", 0), _NativeEngineFixtureHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.daemon = True
+        self.thread.start()
+        return "http://127.0.0.1:{0}/".format(self.server.server_port)
+
+    def __exit__(self, exc_type, exc, tb):
+        self.server.shutdown()
+        self.thread.join(timeout=5)
+        self.server.server_close()
 
 
 class TestThirstyWebEngine(unittest.TestCase):
@@ -78,6 +110,20 @@ class TestThirstyWebEngine(unittest.TestCase):
 
         with self.assertRaises(FetchBlocked):
             engine.navigate("https://example.com")
+
+    def test_network_enabled_navigation_renders_local_http_response(self):
+        engine = ThirstyWebEngine(FetchPolicy(allow_network=True))
+
+        with _LocalHTTPFixture() as url:
+            document = engine.navigate(url)
+
+        snapshot = document.snapshot()
+
+        self.assertEqual(document.status_code, 200)
+        self.assertEqual(snapshot["title"], "Local Network Page")
+        self.assertIn("Network Rendered", snapshot["text"])
+        self.assertEqual(snapshot["links"], ["/next"])
+        self.assertGreater(snapshot["layout"]["height"], 0)
 
 
 class TestIncognitoBrowserNativeEngine(unittest.TestCase):
