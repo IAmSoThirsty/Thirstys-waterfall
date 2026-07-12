@@ -8,7 +8,7 @@
 
 ## Overview
 
-The DOS (Denial-of-Service) Trap Mode is a production-grade security module that provides comprehensive system compromise detection and automated response capabilities. It integrates rootkit detection, kernel anomaly analysis, hardware attestation monitoring, and emergency sanitization procedures.
+The DOS (Denial-of-Service) Trap Mode is an evidence-gated security module for system compromise detection and response workflows. It integrates rootkit detection, kernel anomaly analysis, hardware attestation monitoring, and emergency sanitization procedures, with privileged/kernel-backed operations accepted only when backend evidence is configured and verified.
 
 ## Features
 

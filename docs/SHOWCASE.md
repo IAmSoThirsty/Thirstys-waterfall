@@ -54,7 +54,7 @@ The following areas are still completion work, not accepted production claims:
 - Production secret rotation evidence is missing.
 - Host network policy evidence is missing.
 - Real OS VPN/firewall backend execution evidence is missing.
-- Some modules still contain simulated or simplified paths tracked in the acceptance matrix.
+- Backend-dependent capabilities still require configured provider or target-host evidence tracked in the acceptance matrix.
 
 ## Install and Inspect
 
