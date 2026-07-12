@@ -297,6 +297,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after adding platform capability reporting; local web smoke reported `backend=thirsty-lang`.
 - Encryption data-surface coverage is now mapped through `thirstys_waterfall.get_encryption_evidence_report()` and `docs/operations/ENCRYPTION_EVIDENCE_MAP.md`; full encryption acceptance remains false until all accepted stored-state, browser-data, telemetry, download, transport, target-log, and post-quantum surfaces have end-to-end proof.
 - Target deployment evidence now has a fail-closed manifest validator in `scripts/verify_target_deployment_evidence.py`; full production acceptance still requires executing the target deployment and attaching artifacts for every required evidence type.
+- The main production verifier now accepts `--target-evidence-manifest` and `--require-target-evidence`, so target-host acceptance can fail closed when the required evidence bundle is missing.
 
 ## Known Current Problems
 
