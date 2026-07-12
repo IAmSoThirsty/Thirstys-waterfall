@@ -6,7 +6,6 @@ Runtime status remains gated by the Standard v3 acceptance matrix.
 
 import logging
 from typing import Dict, Any, Optional
-import sys
 from cryptography.fernet import Fernet
 
 from .config import ConfigRegistry, ConfigValidator
@@ -23,7 +22,7 @@ from .privacy import (
 )
 from .storage import PrivacyVault, EphemeralStorage
 from .kill_switch import GlobalKillSwitch
-from .utils.encrypted_logging import EncryptedLogger
+from .utils.encrypted_logging import EncryptedLogHandler, EncryptedLogger
 from .utils.encrypted_network import EncryptedNetworkHandler
 from .utils.god_tier_encryption import GodTierEncryption, QuantumResistantEncryption
 
@@ -44,7 +43,14 @@ class ThirstysWaterfall:
     """
 
     def __init__(self, config_path: Optional[str] = None):
-        # Setup logging
+        # Master encryption key for local helper components.
+        self._master_cipher = Fernet(Fernet.generate_key())
+
+        # Initialize encrypted logger before any package runtime log is emitted.
+        self.encrypted_logger = EncryptedLogger(self._master_cipher)
+        self.encrypted_logger.start()
+
+        # Setup package logging through the encrypted runtime sink.
         self._setup_logging()
 
         self.logger = logging.getLogger(__name__)
@@ -65,13 +71,6 @@ class ThirstysWaterfall:
         self.logger.info(
             f"Perfect Forward Secrecy: {strength['perfect_forward_secrecy']}"
         )
-
-        # Master encryption key for local helper components.
-        self._master_cipher = Fernet(Fernet.generate_key())
-
-        # Initialize encrypted logger.
-        self.encrypted_logger = EncryptedLogger(self._master_cipher)
-        self.encrypted_logger.start()
 
         # Initialize encrypted network handler.
         self.encrypted_network = EncryptedNetworkHandler(self._master_cipher)
@@ -95,11 +94,24 @@ class ThirstysWaterfall:
         self._active = False
 
     def _setup_logging(self):
-        """Setup logging configuration"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
+        """Route package runtime logs into encrypted in-memory/file sinks."""
+        self._encrypted_log_handler = self.encrypted_logger.create_handler()
+        self._encrypted_log_handler.setLevel(logging.INFO)
+        self._encrypted_log_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+
+        package_logger = logging.getLogger("thirstys_waterfall")
+        package_logger.handlers = [self._encrypted_log_handler]
+        package_logger.setLevel(logging.INFO)
+        package_logger.propagate = False
+
+    def _package_logging_encrypted(self) -> bool:
+        """Check whether package logging is routed through encrypted handlers only."""
+        package_logger = logging.getLogger("thirstys_waterfall")
+        return bool(package_logger.handlers) and all(
+            isinstance(handler, EncryptedLogHandler)
+            for handler in package_logger.handlers
         )
 
     def _initialize_subsystems(self):
@@ -279,7 +291,9 @@ class ThirstysWaterfall:
                 "sites_encrypted": False,
                 "traffic_encrypted": traffic_encrypted,
                 "storage_encrypted": vault_active,
-                "logs_encrypted": self.encrypted_logger.is_active(),
+                "logs_encrypted": self._package_logging_encrypted(),
+                "logs_encryption_scope": "local_package_runtime_logs",
+                "logs_encryption_accepted": False,
                 "config_encrypted": True,
                 "algorithms": [
                     "AES-256-GCM",
