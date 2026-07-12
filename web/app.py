@@ -5,7 +5,7 @@ Thirstys-Waterfall Web Interface - Backend API Server
 
 MAXIMUM ALLOWED DESIGN IMPLEMENTATION
 
-This module implements a production-grade REST API server for the Thirstys-Waterfall
+This module implements an evidence-gated REST API server for the Thirstys-Waterfall
 privacy and security system. It provides a comprehensive web interface to all system
 capabilities including VPN control, firewall management, browser privacy, and monitoring.
 
@@ -525,20 +525,124 @@ class ThirstysWebService:
             logger.error(f"Failed to get firewall status: {e}")
             return {"success": False, "error": str(e), "real": True}
 
+    def _browser_runtime_unavailable(self, reason: str) -> Dict[str, Any]:
+        return {
+            "success": False,
+            "error": "Browser runtime is not available",
+            "reason": reason,
+            "tabs": [],
+            "evidence": {
+                "source": "waterfall.browser",
+                "status": "unavailable",
+                "reason": reason,
+            },
+            "real": True,
+        }
+
+    def _get_browser_runtime(self) -> Tuple[Optional[Any], Optional[str]]:
+        if not THIRSTYS_AVAILABLE or self.waterfall is None:
+            return None, "thirstys_waterfall_not_available"
+
+        browser = getattr(self.waterfall, "browser", None)
+        if browser is None:
+            return None, "browser_runtime_not_configured"
+
+        get_status = getattr(browser, "get_status", None)
+        status = get_status() if callable(get_status) else {}
+        if not status.get("active"):
+            return None, "browser_runtime_inactive"
+
+        return browser, None
+
+    def _serialize_browser_tabs(
+        self, raw_tabs: Dict[str, Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        serialized = []
+        for tab_id, tab in raw_tabs.items():
+            serialized.append(
+                {
+                    "id": tab.get("id", tab_id),
+                    "url": tab.get("url", "about:blank"),
+                    "title": tab.get("title", "New Tab"),
+                    "isolated": bool(tab.get("isolated")),
+                    "privacy_mode": "incognito",
+                    "browser_encryption_accepted": False,
+                }
+            )
+        return serialized
+
     def get_browser_tabs(self) -> Dict[str, Any]:
-        """Get browser tabs (placeholder for real implementation)."""
+        """Get browser tabs from the active browser runtime."""
         try:
-            if not THIRSTYS_AVAILABLE or self.waterfall is None:
-                return {"success": False, "demo_mode": True, "tabs": []}
+            browser, reason = self._get_browser_runtime()
+            if browser is None:
+                assert reason is not None
+                return self._browser_runtime_unavailable(reason)
 
-            # Browser tabs tracking would be implemented in browser module
-            # For now return current system state
-            tabs = self.system_state.get("browser", {}).get("tabs", [])
+            tab_manager = getattr(browser, "tab_manager", None)
+            list_tabs = getattr(tab_manager, "list_tabs", None)
+            if not callable(list_tabs):
+                return self._browser_runtime_unavailable("tab_manager_list_unavailable")
 
-            return {"success": True, "tabs": tabs, "real": True}
+            raw_tabs = list_tabs()
+            tabs = self._serialize_browser_tabs(raw_tabs)
+
+            return {
+                "success": True,
+                "tabs": tabs,
+                "evidence": {
+                    "source": "waterfall.browser.tab_manager",
+                    "status": "collected",
+                    "count": len(tabs),
+                },
+                "real": True,
+            }
 
         except Exception as e:
             logger.error(f"Failed to get browser tabs: {e}")
+            return {"success": False, "error": str(e), "real": True}
+
+    def create_browser_tab(self, url: str) -> Dict[str, Any]:
+        """Create a browser tab through the active browser runtime."""
+        try:
+            browser, reason = self._get_browser_runtime()
+            if browser is None:
+                assert reason is not None
+                return self._browser_runtime_unavailable(reason)
+
+            create_tab = getattr(browser, "create_tab", None)
+            if not callable(create_tab):
+                return self._browser_runtime_unavailable("browser_create_tab_unavailable")
+
+            tab_id = create_tab(url)
+            if not tab_id:
+                return {
+                    "success": False,
+                    "error": "Browser tab could not be created",
+                    "reason": "tab_creation_rejected",
+                    "real": True,
+                }
+
+            tab_manager = getattr(browser, "tab_manager", None)
+            get_tab = getattr(tab_manager, "get_tab", None)
+            tab_data = (
+                get_tab(tab_id) if callable(get_tab) else {"id": tab_id, "url": url}
+            ) or {"id": tab_id, "url": url}
+            tab = self._serialize_browser_tabs({tab_id: tab_data})[0]
+
+            return {
+                "success": True,
+                "tab": tab,
+                "evidence": {
+                    "source": "waterfall.browser.create_tab",
+                    "status": "created",
+                    "tab_id": tab_id,
+                },
+                "real": True,
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to create browser tab: {e}")
             return {"success": False, "error": str(e), "real": True}
 
     def _broadcast_state_change(self, event_type: str):
@@ -821,8 +925,9 @@ def toggle_firewall(firewall_id: str):
 @jwt_required()
 def list_browser_tabs():
     """List all active browser tabs."""
-    tabs = service.system_state["browser"].get("tabs", [])
-    return jsonify({"tabs": tabs}), 200
+    result = service.get_browser_tabs()
+    status_code = 200 if result.get("success") else 503
+    return jsonify(result), status_code
 
 
 @app.route("/api/browser/tabs", methods=["POST"])
@@ -842,16 +947,9 @@ def create_browser_tab():
     data = request.get_json() or {}
     url = data.get("url", "about:blank")
 
-    tab = {
-        "id": f"tab_{len(service.system_state['browser']['tabs'])}",
-        "url": url,
-        "encrypted": True,
-        "privacy_mode": "maximum",
-    }
-
-    service.system_state["browser"]["tabs"].append(tab)
-
-    return jsonify(tab), 201
+    result = service.create_browser_tab(url)
+    status_code = 201 if result.get("success") else 503
+    return jsonify(result), status_code
 
 
 # ============================================================================
