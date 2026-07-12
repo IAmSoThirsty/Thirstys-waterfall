@@ -175,7 +175,7 @@ Multi-mode media downloader with encrypted-library direction.
 - Audio-only, video-only, audio+video, best quality modes
 - Built-in encrypted media library
 - Format conversion
-- Metadata encryption (7 layers)
+- Metadata encryption helpers
 - Download encryption support remains part of Standard v3 data-path acceptance work
 
 ### Local AI Assistant
@@ -575,7 +575,7 @@ sudo systemctl status thirstys-waterfall  # Systemd
 
 #### AI & Media Systems Layer
 
-- **AI Assistant**: On-device inference with 7-layer encryption
+- **AI Assistant**: On-device inference with local helper encryption
 - **Media Downloader**: Multi-mode with encrypted library
 - **Remote Access**: Secure browser and desktop streaming
 - **Settings System**: 13 comprehensive categories

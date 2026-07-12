@@ -269,7 +269,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the docs/examples claim-hygiene change; wheel sha256 was `64491b22c320e1b00dd59464f5de06452ef5999ace1b99cd42734a7d082451c4`, and local web smoke reported `backend=thirsty-lang`.
 - Fixed integrated-spec unsafe capability exception expiration so `duration` is applied as seconds instead of being ignored.
 - Replaced remaining Python source claim-marker comments/status fields in local AI, anti-fingerprint, anti-phishing, and VPN kill-switch surfaces with evidence-gated wording or status.
-- Local AI responses/status now report local helper encryption and `encryption_accepted: False` instead of accepted-looking God-tier/7-layer claims.
+- Local AI responses/status now report local helper encryption and `encryption_accepted: False` instead of accepted-looking encryption-tier claims.
 - Anti-fingerprint status now reports spoofing/canvas/WebGL protections as active only when the engine is active.
 - `rg -n "production-grade|simulated|simplified|placeholder|quantum-resistant|god_tier_encrypted|encryption_layers\": 7|Would|would" . -g "*.py" --glob "!htmlcov/**" --glob "!*.egg-info/**" --glob "!dist/**" --glob "!build/**" --glob "!node_modules/**" --glob "!__pycache__/**"` returned no matches after the Python marker-hygiene change.
 - `python -m pytest tests\test_python_marker_hygiene.py tests\test_vpn_kill_switch.py tests\test_browser.py::TestIncognitoBrowser::test_fingerprint_protection_status -q` passed after the Python marker-hygiene change: 9 tests passed.
@@ -289,6 +289,10 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - `python -m pytest tests\test_native_web_engine.py -q` passed after the local network-navigation change: 9 tests passed.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after the local network-navigation and verifier wheel-build change; wheel sha256 was `57d6e4c64295be6589acef06a1a250e9ed97fc521339b20bb42febe4ea5e7274`, and local web smoke reported `backend=thirsty-lang`.
 - `python -m pytest -q` passed after the local network-navigation and verifier wheel-build change: 470 tests passed.
+- Added settings export/import encryption evidence tests and narrowed stale local-helper encryption wording in code and docs.
+- `python -m pytest tests\test_settings_manager.py tests\test_god_tier_encryption.py tests\test_web_app_import.py tests\test_python_marker_hygiene.py -q` passed after the settings/local-helper encryption evidence change: 22 tests passed.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed after expanding the claim-marker verifier gate to local-helper encryption wording; wheel sha256 was `fbfbcefb0b43f7e47e4fbeec4ee68b6030657954c40f94104ee8f02c9c5d6cfd`, and local web smoke reported `backend=thirsty-lang`.
+- `python -m pytest -q` passed after the settings/local-helper encryption evidence change: 474 tests passed.
 
 ## Known Current Problems
 

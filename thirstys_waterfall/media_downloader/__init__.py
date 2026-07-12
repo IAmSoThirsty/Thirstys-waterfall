@@ -1,5 +1,5 @@
 """
-Media Downloader - Multi-mode audio/video with God tier encryption
+Media Downloader - Multi-mode audio/video with local encryption helper
 Built-in library with complete privacy protection
 """
 

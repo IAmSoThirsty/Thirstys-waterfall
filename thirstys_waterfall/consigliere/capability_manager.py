@@ -46,7 +46,7 @@ class CapabilityManager:
                 "risk_level": "high",
             },
             "ai_assistant": {
-                "description": "God tier AI assistant",
+                "description": "Local helper AI assistant",
                 "risk_level": "medium",
             },
         }

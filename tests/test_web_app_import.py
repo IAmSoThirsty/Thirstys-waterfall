@@ -234,7 +234,7 @@ class TestWebAppImport(unittest.TestCase):
             "For demo purposes",
             "Running in demo mode",
             "VPN Active",
-            "7-layer protection",
+            "accepted encryption protection",
             "Trackers Blocked",
         ]
         forbidden_html = [

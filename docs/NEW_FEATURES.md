@@ -27,24 +27,24 @@
 - ✅ Fine-grained permission toggles
 - ✅ On-device processing only
 - ✅ Ephemeral context windows (memory only)
-- ✅ God tier 7-layer encryption
+- Local helper encryption with acceptance gated by evidence
 
-## 📥 Media Downloader - Multi-Mode with God Tier Security
+## 📥 Media Downloader - Multi-Mode with Evidence-Gated Security
 
 ### Features:
 
 - ✅ Audio-only, video-only, audio+video, best quality modes
 - ✅ Built-in encrypted media library
 - ✅ Format conversion
-- ✅ Metadata encryption (7 layers)
-- ✅ God tier encryption on all downloads
+- Metadata encryption helpers
+- Download encryption acceptance remains evidence-gated
 
-## 🤖 God Tier AI Assistant
+## 🤖 Local AI Assistant
 
 ### Features:
 
 - ✅ On-device inference (no external API calls)
-- ✅ 7-layer God tier encryption
+- Local helper encryption with acceptance gated by evidence
 - ✅ Zero data collection
 - ✅ Text generation, code assistance, problem solving
 
@@ -52,7 +52,7 @@
 
 ### Features:
 
-- ✅ Remote browser with 7-layer encryption
+- Remote browser with local helper encryption paths
 - ✅ Remote desktop with full streaming
 - ✅ Secure tunnel through VPN
 - ✅ All traffic through multi-hop VPN
