@@ -420,7 +420,7 @@ def scan_claim_markers(paths: Iterable[Path]) -> None:
     print("claim-stub marker scan passed")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--thirsty-lang-path",
@@ -434,11 +434,37 @@ def main() -> int:
         action="store_true",
         help="Smoke test the supplied Docker image without rebuilding it first.",
     )
+    parser.add_argument(
+        "--target-evidence-manifest",
+        type=Path,
+        help="Validate a Standard v3 target deployment evidence manifest.",
+    )
+    parser.add_argument(
+        "--require-target-evidence",
+        action="store_true",
+        help="Fail closed unless --target-evidence-manifest is provided.",
+    )
     parser.add_argument("--skip-tests", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.thirsty_lang_path and not Path(args.thirsty_lang_path).exists():
         raise SystemExit(f"THIRSTY_LANG_PATH does not exist: {args.thirsty_lang_path}")
+    if args.require_target_evidence and args.target_evidence_manifest is None:
+        raise SystemExit(
+            "target deployment evidence is required; pass --target-evidence-manifest"
+        )
+    if args.target_evidence_manifest is not None:
+        manifest_path = args.target_evidence_manifest
+        if not manifest_path.is_absolute():
+            manifest_path = ROOT / manifest_path
+        run(
+            [
+                sys.executable,
+                "scripts/verify_target_deployment_evidence.py",
+                str(manifest_path),
+            ],
+            timeout=60,
+        )
 
     scan_retired_identifiers(
         [

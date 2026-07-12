@@ -10,6 +10,19 @@ Target evidence manifests are validated with:
 python scripts\verify_target_deployment_evidence.py evidence\target-deployment\target-evidence.json
 ```
 
+The main verifier can also validate the same target evidence bundle:
+
+```powershell
+python scripts\verify_production_deployment.py --target-evidence-manifest evidence\target-deployment\target-evidence.json
+```
+
+For a target-host deployment acceptance run, fail closed when that bundle is
+missing:
+
+```powershell
+python scripts\verify_production_deployment.py --require-target-evidence --target-evidence-manifest evidence\target-deployment\target-evidence.json
+```
+
 The manifest format and required artifact types are documented in
 `docs/operations/TARGET_DEPLOYMENT_EVIDENCE.md`.
 
