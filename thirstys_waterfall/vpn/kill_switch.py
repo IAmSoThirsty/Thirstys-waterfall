@@ -40,7 +40,7 @@ class KillSwitch:
         """Start monitoring VPN connection"""
         if not self._monitoring:
             self._monitoring = True
-            # In production, would monitor connection state
+            # Backend connection monitoring must be supplied by the VPN manager.
 
     def trigger(self, reason: str = "VPN disconnected"):
         """
