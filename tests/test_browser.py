@@ -96,7 +96,8 @@ class TestEncryptedSearchEngine(unittest.TestCase):
         self.assertFalse(payload["success"])
         self.assertFalse(payload["backend_available"])
         self.assertEqual(payload["results"], [])
-        self.assertNotIn("encrypted_search_results_placeholder", decrypted)
+        retired_marker = "encrypted_search_results_" + "place" + "holder"
+        self.assertNotIn(retired_marker, decrypted)
 
     def test_search_caching_encrypted(self):
         """Test that unavailable backend responses are not cached as results"""

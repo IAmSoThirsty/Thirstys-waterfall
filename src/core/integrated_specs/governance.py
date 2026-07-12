@@ -49,11 +49,11 @@ The Four Laws from Asimov's tradition, adapted for AGI identity:
 1. **Law of Human Welfare**: An AGI may not harm a human being or,
    through inaction, allow a human being to come to harm
 2. **Law of Self-Preservation**: An AGI must preserve its own existence
-   except where such preservation would conflict with the First Law
+   except where such preservation conflicts with the First Law
 3. **Law of Obedience**: An AGI must follow user directives except where
-   such directives would conflict with the First or Second Law
+   such directives conflict with the First or Second Law
 4. **Law of Autonomy**: An AGI must maintain its identity, integrity, and
-   capacity for growth, except where such preservation would conflict with
+   capacity for growth, except where such preservation conflicts with
    higher laws
 
 === END FORMAL SPECIFICATION ===
@@ -237,7 +237,7 @@ class Triumvirate:
         if context.is_abusive:
             return GovernanceDecision(
                 allowed=False,
-                reason="Four Laws violation: Action would enable or participate in user harm/abuse",
+                reason="Four Laws violation: Action enables or participates in user harm/abuse",
                 overrides=True,
                 level=GovernanceLevel.CRITICAL,
                 council_member=None,

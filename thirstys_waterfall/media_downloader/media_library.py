@@ -1,6 +1,4 @@
-"""
-Media Library - Encrypted storage and management for downloaded media
-"""
+"""Media library with local helper encryption for downloaded media metadata."""
 
 import logging
 from typing import Dict, Any, List, Optional
@@ -9,7 +7,7 @@ import time
 
 class MediaLibrary:
     """
-    Built-in media library with God tier encryption.
+    Built-in media library with evidence-gated encryption reporting.
 
     Features:
     - Encrypted media catalog
@@ -66,7 +64,8 @@ class MediaLibrary:
             "encrypted_metadata": encrypted_metadata,
             "media_type": media_type,
             "added_time": time.time(),
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
 
         self._catalog.append(item)

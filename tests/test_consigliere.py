@@ -333,15 +333,16 @@ class TestThirstyConsigliere(unittest.TestCase):
         unsafe_response = self.consigliere.assist("Email admin@example.com")
         self.assertIn("privacy_concerns", unsafe_response)
 
-    def test_god_tier_encryption_applied(self):
-        """Test God tier encryption is applied to all data"""
+    def test_local_helper_encryption_is_reported_without_acceptance_claim(self):
+        """Test local helper encryption is reported without final acceptance"""
         self.consigliere.start()
 
         response = self.consigliere.assist("Test query")
 
-        # Response should indicate encryption
         self.assertIn("encrypted", response)
         self.assertTrue(response["encrypted"])
+        self.assertTrue(response["local_helper_encrypted"])
+        self.assertFalse(response["encryption_accepted"])
 
     def test_transparency_in_responses(self):
         """Test responses include transparency about data used"""

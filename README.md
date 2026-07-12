@@ -22,7 +22,7 @@ A comprehensive privacy-first system that is being completed toward 8 firewall t
 | 8 firewall categories | Partial | Firewall modules and backend tests exist; web status now fails closed when backend status is unavailable | Real rule apply/rollback evidence per supported OS or narrowed platform claims |
 | Built-in VPN direction | Partial | Backend modules and tests exist; command paths are resolved before availability is reported; web connect/disconnect no longer fabricate success | Real OS connection/disconnection evidence, privilege requirements, and rollback behavior |
 | Native browser engine | Partial | Native document/parser/fetcher layer and compatibility tests exist | Layout, rendering, navigation, and session acceptance tests |
-| Privacy/security engines | Partial | Modules and focused tests exist for multiple privacy/security subsystems | Replace or reclassify simulated/simplified paths and add end-to-end evidence |
+| Privacy/security engines | Partial | Modules and focused tests exist for multiple privacy/security subsystems | Add configured backend evidence and end-to-end acceptance evidence |
 | Kill switch | Partial | Kill-switch modules and orchestration paths exist | Prove real network blocking and rollback behavior on supported platforms |
 
 ## New and Advanced Feature Areas

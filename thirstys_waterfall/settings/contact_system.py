@@ -32,7 +32,8 @@ class ContactSystem:
             "id": f"msg_{len(self.threads[thread])}",
             "encrypted_content": encrypted_msg,
             "timestamp": time.time(),
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
 
         self.threads[thread].append(msg)

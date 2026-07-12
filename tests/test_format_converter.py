@@ -41,7 +41,8 @@ class TestFormatConverter(unittest.TestCase):
         self.assertEqual(result["status"], "unavailable")
         self.assertEqual(result["error"], "Media conversion backend is not configured")
         self.assertEqual(result["output_format"], "mp3")
-        self.assertTrue(result["god_tier_encrypted"])
+        self.assertTrue(result["local_helper_encrypted"])
+        self.assertFalse(result["encryption_accepted"])
         self.assertNotIn("output_file", result)
         self.assertNotIn("encrypted_output_path", result)
 
@@ -54,7 +55,8 @@ class TestFormatConverter(unittest.TestCase):
         self.assertEqual(result["status"], "completed")
         self.assertEqual(result["output_file"], "sample.flac")
         self.assertEqual(result["output_format"], "flac")
-        self.assertTrue(result["god_tier_encrypted"])
+        self.assertTrue(result["local_helper_encrypted"])
+        self.assertFalse(result["encryption_accepted"])
         self.assertIn("encrypted_output_path", result)
         self.assertEqual(len(backend.calls), 1)
         call = backend.calls[0]

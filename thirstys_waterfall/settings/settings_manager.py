@@ -44,11 +44,11 @@ class SettingsManager:
                 "check_updates": False,  # Privacy-first: no auto-updates
                 "notifications": True,
             },
-            # Privacy Settings (God Tier)
+            # Privacy Settings
             "privacy": {
-                "god_tier_encryption": True,
-                "encryption_layers": 7,
-                "quantum_resistant": True,
+                "local_helper_encryption": True,
+                "encryption_layers": None,
+                "post_quantum_backend_configured": False,
                 "data_minimization": True,
                 "on_device_only": True,
                 "no_telemetry": True,
@@ -140,7 +140,8 @@ class SettingsManager:
             # AI Assistant Settings
             "ai_assistant": {
                 "enabled": True,
-                "god_tier_encrypted": True,
+                "local_helper_encrypted": True,
+                "encryption_accepted": False,
                 "local_inference": True,
                 "no_external_calls": True,
                 "no_data_collection": True,
@@ -275,13 +276,13 @@ class SettingsManager:
         self.logger.warning("ALL SETTINGS RESET TO DEFAULTS")
 
     def export_settings(self) -> bytes:
-        """Export all settings (encrypted with God tier)"""
+        """Export all settings using the configured local helper."""
         settings_json = json.dumps(self.settings, indent=2)
         encrypted_settings = self.god_tier_encryption.encrypt_god_tier(
             settings_json.encode()
         )
 
-        self.logger.info("Settings exported (God tier encrypted)")
+        self.logger.info("Settings exported with local helper encryption")
 
         return encrypted_settings
 
@@ -307,8 +308,8 @@ class SettingsManager:
         issues = []
 
         # Check critical security settings
-        if not self.settings["privacy"]["god_tier_encryption"]:
-            issues.append("God tier encryption is disabled!")
+        if not self.settings["privacy"]["local_helper_encryption"]:
+            issues.append("Local encryption helper is disabled!")
 
         if not self.settings["security"]["kill_switch"]:
             issues.append("Kill switch is disabled!")
@@ -330,8 +331,9 @@ class SettingsManager:
         validation = self.validate_settings()
 
         return {
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "categories": list(self.settings.keys()),
             "total_settings": sum(len(cat) for cat in self.settings.values()),
             "modified": self._modified,

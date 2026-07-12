@@ -1,6 +1,4 @@
-"""
-Remote Browser - Connect to browser remotely with God tier encryption
-"""
+"""Remote browser access with evidence-gated encryption reporting."""
 
 import logging
 from typing import Dict, Any, Optional
@@ -10,10 +8,10 @@ from cryptography.fernet import Fernet
 
 class RemoteBrowser:
     """
-    Remote browser access with God tier encryption.
+    Remote browser access with local helper encryption.
 
     Features:
-    - End-to-end 7-layer encryption
+    - Backend-dependent encrypted transport
     - Secure tunnel through VPN
     - All traffic encrypted
     - Session isolation
@@ -31,7 +29,7 @@ class RemoteBrowser:
         self.god_tier_encryption = god_tier_encryption
         self.transport_backend = transport_backend
 
-        # God tier encryption for all remote traffic
+        # Local helper encryption for remote metadata
         self._cipher = Fernet(Fernet.generate_key())
 
         # Remote connection settings
@@ -45,8 +43,8 @@ class RemoteBrowser:
 
     def start(self):
         """Start remote browser server"""
-        self.logger.info("Starting Remote Browser with God tier encryption")
-        self.logger.info("All remote connections encrypted with 7 layers")
+        self.logger.info("Starting Remote Browser with local helper encryption")
+        self.logger.info("Remote transport acceptance requires backend evidence")
         self.logger.info(f"Listening on {self.host}:{self.port}")
 
         if self.transport_backend is None:
@@ -99,8 +97,8 @@ class RemoteBrowser:
             "encrypted_client_id": encrypted_client_id,
             "created_time": time.time(),
             "status": "pending_backend",
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
         }
 
         create_backend_session = getattr(
@@ -126,8 +124,8 @@ class RemoteBrowser:
         return {
             "session_id": session_id,
             "status": session["status"],
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
             "backend": type(self.transport_backend).__name__,
             "transport_connected": backend_result.get("transport_connected", False),
         }
@@ -164,7 +162,8 @@ class RemoteBrowser:
         return {
             **result,
             "session_id": session_id,
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
             "backend": type(self.transport_backend).__name__,
         }
 
@@ -182,8 +181,9 @@ class RemoteBrowser:
         """Get remote browser status"""
         return {
             "active": self._active,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "host": self.host,
             "port": self.port,
             "active_sessions": len(self._sessions),

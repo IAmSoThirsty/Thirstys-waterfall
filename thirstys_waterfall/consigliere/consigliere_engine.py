@@ -23,7 +23,7 @@ class ThirstyConsigliere:
     4. No "accept all" - everything locked down by default
     5. Full transparency and auditability
 
-    Role: A confidential, cautious strategist who would rather say
+    Role: A confidential, cautious strategist that prefers saying
     "I need less information" than over-collect.
     """
 
@@ -35,7 +35,7 @@ class ThirstyConsigliere:
         - All components initialized before start() is called
         - Ephemeral context is ALWAYS memory-only (never persisted to disk)
         - All capabilities start in locked-down state (zero accept all)
-        - God tier encryption active on all data at rest and in transit
+        - Local helper encryption available for stored context hashes
 
         Failure Modes:
         - Component initialization failure: Gracefully fallback to locked state
@@ -53,9 +53,9 @@ class ThirstyConsigliere:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-        # God tier encryption (MANDATORY - abort if missing)
+        # Local helper encryption (mandatory - abort if missing)
         if god_tier_encryption is None:
-            raise ValueError("God tier encryption is mandatory for Consigliere")
+            raise ValueError("Local helper encryption is mandatory for Consigliere")
         self.god_tier_encryption = god_tier_encryption
 
         # Core principles (Code of Omertà)
@@ -65,7 +65,7 @@ class ThirstyConsigliere:
         self.default_locked = True  # Everything starts locked down
         self.zero_accept_all = True  # No "accept all" - explicit only
 
-        # Initialize components with God tier encryption
+        # Initialize components with local helper encryption
         self._cipher = Fernet(Fernet.generate_key())
         self.capability_manager = CapabilityManager(self._cipher)
         self.action_ledger = ActionLedger(self._cipher, max_entries=100)
@@ -94,7 +94,7 @@ class ThirstyConsigliere:
         """Start the Consigliere"""
         self.logger.info("Starting Thirsty Consigliere - Your Privacy-First Assistant")
         self.logger.info("Code of Omertà: Privacy as a first-class contract")
-        self.logger.info("God Tier Encryption: 7 layers active")
+        self.logger.info("Local helper encryption active")
 
         # Initialize with minimal permissions
         self._initialize_locked_down_state()
@@ -170,14 +170,14 @@ class ThirstyConsigliere:
     ) -> Dict[str, Any]:
         """
         Process user query with privacy-first approach.
-        All data encrypted with God tier encryption.
+        Sensitive context hashes are encrypted with the configured local helper.
 
         MAXIMUM ALLOWED DESIGN - Privacy Audit & Response Format:
         =========================================================
 
         Invariants:
         - Privacy audit ALWAYS runs before processing
-        - Query ALWAYS encrypted before storage (God tier)
+        - Query ALWAYS encrypted before storage with the local helper
         - Unsafe queries return privacy_concerns dict (NOT list)
         - Safe queries return complete response with transparency
 
@@ -192,8 +192,8 @@ class ThirstyConsigliere:
         - response: str - Assistant's response
         - processed_locally: bool - Always True
         - data_sent_off_device: bool - Always False
-        - god_tier_encrypted: bool - Always True
-        - encrypted: bool - Alias for god_tier_encrypted
+        - local_helper_encrypted: bool - True when local helper was used
+        - encryption_accepted: bool - False until end-to-end evidence exists
         - on_device: bool - Alias for processed_locally
         - capabilities_used: List[str] - Active capabilities during processing
         - data_used: List[str] - Context keys actually used
@@ -222,7 +222,7 @@ class ThirstyConsigliere:
         if not self._active:
             return {"error": "Consigliere not active"}
 
-        # Encrypt query with God tier encryption
+        # Encrypt query with the configured local helper.
         encrypted_query = self.god_tier_encryption.encrypt_god_tier(query.encode())
 
         # Run privacy audit first
@@ -331,16 +331,16 @@ class ThirstyConsigliere:
         Invariants:
         - processed_locally: ALWAYS True (never changes)
         - data_sent_off_device: ALWAYS False (never changes)
-        - god_tier_encrypted: ALWAYS True (all data encrypted)
-        - encrypted: ALWAYS True (alias for god_tier_encrypted)
+        - local_helper_encrypted: True when the local helper was used
+        - encryption_accepted: False until end-to-end evidence exists
         - on_device: ALWAYS True (alias for processed_locally)
 
         Response Keys (Complete Specification):
         - response: str - Human-readable response text
         - processed_locally: bool - True if on-device processing
         - data_sent_off_device: bool - False (never send data off-device)
-        - god_tier_encrypted: bool - True (7-layer encryption active)
-        - encrypted: bool - Alias for god_tier_encrypted (backward compatibility)
+        - local_helper_encrypted: bool - True when the local helper was used
+        - encrypted: bool - Backward-compatible local-helper alias
         - on_device: bool - Alias for processed_locally (backward compatibility)
         - capabilities_used: List[str] - List of active capabilities during processing
         - data_used: List[str] - List of context keys actually used (data minimization)
@@ -373,19 +373,20 @@ class ThirstyConsigliere:
             "response": response_text,
             "processed_locally": True,
             "data_sent_off_device": False,
-            "god_tier_encrypted": True,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
             "capabilities_used": [k for k, v in self._active_capabilities.items() if v],
             # MAXIMUM ALLOWED DESIGN: Backward compatibility aliases
-            "encrypted": True,  # Alias for god_tier_encrypted
+            "encrypted": True,  # Backward-compatible local-helper alias
             "on_device": True,  # Alias for processed_locally
             "data_used": context_keys_used,  # Explicit list of context keys used
             # Transparency information
             "transparency": {
                 "where": "on-device",
-                "what": "query processed locally with God tier encryption",
+                "what": "query processed locally with helper encryption",
                 "why": "privacy-first processing",
                 "context_keys": context_keys_used,  # Additional detail
-                "encryption_layers": 7,  # God tier = 7 layers
+                "encryption_layers": None,
             },
         }
 
@@ -397,28 +398,28 @@ class ThirstyConsigliere:
             "video" in query_lower or "audio" in query_lower
         ):
             return (
-                "I can help you download media with our God tier encrypted downloader. "
-                "All metadata is encrypted with 7 layers. Would you like to proceed? "
+                "I can help you download media with the evidence-gated downloader. "
+                "Metadata uses local helper encryption. Confirm before proceeding. "
                 "(Requires 'media_download' capability)"
             )
 
         if "remote" in query_lower or "desktop" in query_lower:
             return (
-                "I can help you connect remotely with full God tier encryption. "
-                "All remote sessions are encrypted end-to-end with 7 layers. "
-                "Would you like to proceed? (Requires 'remote_desktop' capability)"
+                "I can help you connect remotely through the backend-gated remote access path. "
+                "Remote-session encryption acceptance requires backend evidence. "
+                "Confirm before proceeding. (Requires 'remote_desktop' capability)"
             )
 
         if "ai" in query_lower or "assistant" in query_lower:
             return (
-                "I can activate the God tier AI assistant with complete privacy protection. "
+                "I can activate the local AI assistant with evidence-gated privacy reporting. "
                 "All processing is done on-device with no data sent externally. "
-                "Would you like to proceed? (Requires 'ai_assistant' capability)"
+                "Confirm before proceeding. (Requires 'ai_assistant' capability)"
             )
 
         # Default response
         return (
-            "I'm your confidential strategist. I work on-device with God tier encryption "
+            "I'm your confidential strategist. I work on-device with local helper encryption "
             "and never send your data anywhere. How can I help you while maintaining maximum privacy?"
         )
 
@@ -431,15 +432,15 @@ class ThirstyConsigliere:
 
         Invariants:
         - active: Reflects current _active state
-        - god_tier_encrypted: ALWAYS True (never disabled)
-        - encryption_layers: ALWAYS 7 (God tier = 7 layers)
+        - local_helper_encrypted: True when helper encryption is configured
+        - encryption_accepted: False until end-to-end evidence exists
         - on_device_only: Reflects config (default: True)
         - data_minimization: ALWAYS True (core principle)
 
         Status Keys (Complete Specification):
         - active: bool - Whether Consigliere is currently running
-        - god_tier_encrypted: bool - God tier encryption status (always True)
-        - encryption_layers: int - Number of encryption layers (always 7)
+        - local_helper_encrypted: bool - Local helper encryption status
+        - encryption_layers: None until accepted end-to-end evidence exists
         - on_device_only: bool - On-device inference only flag
         - data_minimization: bool - Data minimization active (always True)
         - active_capabilities: List[str] - Currently enabled capabilities
@@ -450,7 +451,7 @@ class ThirstyConsigliere:
             - privacy_first: bool - Privacy-first processing (always True)
             - no_training: bool - No training on user data (always True)
             - default_locked: bool - Default locked-down state (always True)
-            - god_tier_encryption: bool - God tier encryption active (always True)
+            - local_helper_encryption: bool - Local helper encryption available
         - code_of_omerta: Dict - Top-level Code of Omertà status (backward compatibility)
             - enabled: bool - Code of Omertà enabled (always True)
             - no_training: bool - No training on user data (always True)
@@ -469,8 +470,9 @@ class ThirstyConsigliere:
         return {
             # Core status
             "active": self._active,
-            "god_tier_encrypted": True,
-            "encryption_layers": 7,
+            "local_helper_encrypted": True,
+            "encryption_accepted": False,
+            "encryption_layers": None,
             "on_device_only": self.on_device_only,
             "data_minimization": self.data_minimization,
             # Active state
@@ -485,7 +487,7 @@ class ThirstyConsigliere:
                 "privacy_first": True,
                 "no_training": self.no_training,
                 "default_locked": self.default_locked,
-                "god_tier_encryption": True,
+                "local_helper_encryption": True,
             },
             # MAXIMUM ALLOWED DESIGN: Top-level code_of_omerta for backward compatibility
             # Tests expect this at top level, not just in principles
