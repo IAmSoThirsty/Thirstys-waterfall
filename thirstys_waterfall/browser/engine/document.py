@@ -104,4 +104,10 @@ class BrowserDocument:
             "links": list(self.links),
             "script_count": self.script_count,
             "script_execution_enabled": self.script_execution_enabled,
+            "layout": self.layout_snapshot(),
         }
+
+    def layout_snapshot(self, viewport_width: int = 800) -> Dict[str, object]:
+        from .layout import layout_document
+
+        return layout_document(self, viewport_width=viewport_width).snapshot()
