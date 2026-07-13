@@ -43,7 +43,8 @@ def test_download_logs_and_network_surfaces_retain_remaining_work():
     assert downloads.coverage_status == "partial"
     assert logs.coverage_status == "partial"
     assert network.coverage_status == "partial"
-    assert any("downloaded content" in item for item in downloads.remaining_work)
+    assert any("target lifecycle wipe" in item for item in downloads.remaining_work)
+    assert any("Fernet ciphertext" in item for item in downloads.evidence)
     assert any("target production logs" in item for item in logs.remaining_work)
     assert any("accepted transport paths" in item for item in network.remaining_work)
 

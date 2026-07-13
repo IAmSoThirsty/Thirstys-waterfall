@@ -75,10 +75,11 @@ def get_encryption_evidence_report() -> EncryptionEvidenceReport:
             evidence=[
                 "unavailable download results redact plaintext URLs",
                 "download backend contract reports isolation state",
+                "configured local browser download backend stores downloaded bytes as Fernet ciphertext",
             ],
             remaining_work=[
-                "prove downloaded content encryption at rest",
-                "prove configured download backend storage and cleanup behavior",
+                "prove configured download storage and cleanup behavior on target hosts",
+                "prove target lifecycle wipe behavior for encrypted download artifacts",
             ],
         ),
         DataSurfaceEvidence(

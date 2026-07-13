@@ -9,6 +9,7 @@ from .encrypted_navigation import (
     EncryptedNavigationHistory,
     LocalEncryptedHistorySearchBackend,
 )
+from .downloads import EncryptedDownloadBackend
 from .engine import BrowserDocument, FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "EncryptedSearchEngine",
     "EncryptedNavigationHistory",
     "LocalEncryptedHistorySearchBackend",
+    "EncryptedDownloadBackend",
     "BrowserDocument",
     "FetchBlocked",
     "FetchPolicy",

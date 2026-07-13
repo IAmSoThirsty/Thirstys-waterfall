@@ -298,6 +298,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Encryption data-surface coverage is now mapped through `thirstys_waterfall.get_encryption_evidence_report()` and `docs/operations/ENCRYPTION_EVIDENCE_MAP.md`; full encryption acceptance remains false until all accepted stored-state, browser-data, telemetry, download, transport, target-log, and post-quantum surfaces have end-to-end proof.
 - Target deployment evidence now has a fail-closed manifest validator in `scripts/verify_target_deployment_evidence.py`; full production acceptance still requires executing the target deployment and attaching artifacts for every required evidence type.
 - The main production verifier now accepts `--target-evidence-manifest` and `--require-target-evidence`, so target-host acceptance can fail closed when the required evidence bundle is missing.
+- Added a configured local browser download backend that stores downloaded bytes as Fernet ciphertext while keeping network downloads disabled by default unless explicitly enabled.
 
 ## Known Current Problems
 
@@ -334,8 +335,8 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Post-quantum encryption no longer uses classical AES/Scrypt as a substitute implementation; no real post-quantum backend is bundled or configured.
 - Orchestrator status is now evidence-gated, but downstream docs and examples may still need continued narrowing as simulated modules are replaced.
 - Browser status is now evidence-gated, and native layout, local network navigation, plus ephemeral session snapshots are covered by tests; broader rendering and supported-site acceptance evidence remain incomplete.
-- Total-encryption evidence is now mapped by data surface, but telemetry/audit events, download content encryption, target production logs, persisted state inspection, transport coverage, and post-quantum backend proof remain incomplete.
-- Browser downloads no longer silently return no result without a backend, but no real browser download backend is bundled or configured.
+- Total-encryption evidence is now mapped by data surface, but telemetry/audit events, target download lifecycle behavior, target production logs, persisted state inspection, transport coverage, and post-quantum backend proof remain incomplete.
+- Browser downloads now have a configured local encrypted backend when `download_storage_path` is supplied, but target-host storage lifecycle, cleanup, and retention evidence remain incomplete.
 - Encrypted search no longer fabricates placeholder results, but a real encrypted search backend is still not implemented.
 - Local inference no longer fabricates AI responses without a backend, but no real local inference backend is bundled or configured.
 - Remote browser no longer fabricates remote server/session command success without a backend, but no real remote-browser transport backend is bundled or configured.
