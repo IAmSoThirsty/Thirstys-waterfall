@@ -1,5 +1,7 @@
 """Native web engine entry point."""
 
+from typing import Dict, Optional
+
 from .document import BrowserDocument, ElementNode
 from .fetcher import FetchBlocked, FetchPolicy, URLFetcher
 from .html_parser import parse_html
@@ -13,7 +15,7 @@ class ThirstyWebEngine:
     fail-closed script handling. It intentionally does not execute JavaScript.
     """
 
-    def __init__(self, fetch_policy: FetchPolicy = None):
+    def __init__(self, fetch_policy: Optional[FetchPolicy] = None):
         self.fetch_policy = fetch_policy or FetchPolicy()
         self.fetcher = URLFetcher(self.fetch_policy)
 
@@ -33,7 +35,7 @@ class ThirstyWebEngine:
         source: str,
         url: str = "about:blank",
         content_type: str = "text/html",
-        status_code: int = 200,
+        status_code: Optional[int] = 200,
     ) -> BrowserDocument:
         return parse_html(source, url=url, content_type=content_type, status_code=status_code)
 
@@ -48,5 +50,5 @@ class ThirstyWebEngine:
             load_error=reason,
         )
 
-    def snapshot(self, document: BrowserDocument) -> dict:
+    def snapshot(self, document: BrowserDocument) -> Dict[str, object]:
         return document.snapshot()

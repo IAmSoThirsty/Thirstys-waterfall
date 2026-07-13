@@ -31,7 +31,7 @@ class FetchResult:
 class URLFetcher:
     """Policy-gated URL fetcher."""
 
-    def __init__(self, policy: FetchPolicy = None):
+    def __init__(self, policy: Optional[FetchPolicy] = None):
         self.policy = policy or FetchPolicy()
 
     def fetch(self, url: str) -> FetchResult:

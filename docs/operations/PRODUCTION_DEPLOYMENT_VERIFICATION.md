@@ -258,6 +258,8 @@ Rotation checklist:
 - Service manager/orchestrator hardening evidence for the chosen external target. Current local Docker service-hardening evidence exists.
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
-- Whole-runtime type-check adoption. The current hard mypy gate covers the
-  production deployment and target-evidence scripts only.
+- Whole-runtime type-check adoption. The current hard mypy gate covers the 13
+  production deployment and target-evidence scripts plus nine explicitly
+  enrolled core runtime files for platform capabilities, enhanced
+  Thirsty-Lang binding, native browser-engine behavior, and configuration.
 - External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.

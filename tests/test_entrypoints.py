@@ -18,7 +18,7 @@ class TestSovereignBinding(unittest.TestCase):
         self.assertIn(status.available, {True, False})
         self.assertIsInstance(status.module, str)
         self.assertIn(status.backend, {"none", "thirsty-lang"})
-        self.assertIn("available", status.as_dict())
+        self.assertIs(status.as_dict()["available"], status.available)
 
     def test_missing_binding_does_not_crash_entrypoints(self):
         result = execute_sovereign_protocol({}, "TEST_PROTOCOL")

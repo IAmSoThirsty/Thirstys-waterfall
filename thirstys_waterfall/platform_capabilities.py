@@ -2,7 +2,7 @@
 
 from dataclasses import asdict, dataclass
 import platform as runtime_platform
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 
 
 STANDARD_V3_ACCEPTANCE_GAPS = [
@@ -31,7 +31,14 @@ class PlatformCapabilityReport:
         return asdict(self)
 
 
-PLATFORM_CAPABILITIES = {
+class PlatformCapabilityDefinition(TypedDict):
+    vpn_backends: List[str]
+    firewall_backends: List[str]
+    service_model: str
+    privileged_operations: List[str]
+
+
+PLATFORM_CAPABILITIES: Dict[str, PlatformCapabilityDefinition] = {
     "Linux": {
         "vpn_backends": ["wireguard", "openvpn", "ikev2_strongswan"],
         "firewall_backends": ["nftables"],

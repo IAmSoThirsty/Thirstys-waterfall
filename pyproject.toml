@@ -118,9 +118,20 @@ target-version = ['py310', 'py311']
 
 [tool.mypy]
 python_version = "3.10"
-files = ["scripts"]
+files = [
+    "scripts",
+    "thirstys_waterfall/platform_capabilities.py",
+    "thirstys_waterfall/sovereign_binding.py",
+    "thirstys_waterfall/browser/engine/__init__.py",
+    "thirstys_waterfall/browser/engine/document.py",
+    "thirstys_waterfall/browser/engine/engine.py",
+    "thirstys_waterfall/browser/engine/fetcher.py",
+    "thirstys_waterfall/browser/engine/html_parser.py",
+    "thirstys_waterfall/browser/engine/layout.py",
+    "thirstys_waterfall/config/registry.py",
+]
 check_untyped_defs = true
-follow_imports = "silent"
+follow_imports = "skip"
 ignore_missing_imports = true
 warn_unused_configs = true
 

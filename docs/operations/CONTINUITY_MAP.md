@@ -430,3 +430,39 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 
 Yes. The current work is reversible and does not alter external deployment
 state or production credentials.
+
+## 2026-07-13 Core Runtime Type-Check Foundation
+
+### Current State
+
+- The hard mypy gate now checks 22 explicitly enrolled files: all 13
+  deployment/evidence scripts plus nine core runtime files covering platform
+  capability reporting, enhanced Thirsty-Lang binding, the native browser
+  engine, and the configuration registry.
+- The enrolled runtime contracts now type optional fetch policies, HTTP status
+  values, HTML attributes, and encryption salts accurately.
+- Imported runtime modules are not implicitly accepted. `follow_imports =
+  "skip"` keeps the gate scoped to the explicit file manifest under both mypy
+  1.19 and 2.1; remaining modules must be enrolled in later increments.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 22 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 22 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_native_web_engine.py tests\test_platform_capabilities.py tests\test_entrypoints.py -q`: 19 passed.
+- Touched-file Flake8 and `git diff --check`: passed.
+
+### Known Failures And Risks
+
+- A first pinned-mypy run with implicit package-import traversal exposed 32
+  errors across 20 unenrolled VPN, firewall, privacy, and browser modules. Those
+  modules are not represented as type-accepted and remain current follow-up
+  work.
+- Full external/public target evidence and real OS VPN/firewall apply/rollback
+  evidence remain missing.
+
+### Safe To Continue
+
+Yes. Continue by enrolling and fixing another explicit runtime slice, starting
+with the VPN/firewall backend contracts exposed by the pinned analyzer.

@@ -25,7 +25,7 @@ class SovereignBindingStatus:
     reason: Optional[str] = None
     source_path: Optional[str] = None
 
-    def as_dict(self) -> Dict[str, Optional[str]]:
+    def as_dict(self) -> Dict[str, object]:
         return {
             "available": self.available,
             "module": self.module,
