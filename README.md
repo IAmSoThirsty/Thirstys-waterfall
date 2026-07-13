@@ -219,9 +219,9 @@ Ad and tracker blocking module.
 13 setting categories covering all aspects of the system:
 
 1. General, 2. Privacy, 3. Security, 4. Browser
-1. Ad Blocker, 6. Consigliere, 7. Media Downloader
-1. AI Assistant, 9. Remote Access, 10. Network
-1. Firewalls, 12. Support, 13. Advanced
+5. Ad Blocker, 6. Consigliere, 7. Media Downloader
+8. AI Assistant, 9. Remote Access, 10. Network
+11. Firewalls, 12. Support, 13. Advanced
 
 ### 💬 Support System
 
