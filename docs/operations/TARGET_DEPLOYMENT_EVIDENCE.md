@@ -89,6 +89,27 @@ The collector captures `target_identity` directly from the host. Any evidence
 type not supplied as an artifact is written with `status: pending`, which keeps
 the verifier fail-closed until the real artifact is attached.
 
+## Evidence Package/Audit
+
+After the target manifest validates, package the bundle for retention or review:
+
+```powershell
+python scripts\package_target_deployment_evidence.py `
+  evidence\target-deployment\target-evidence.json `
+  --output-dir evidence\packages `
+  --package-name prod-host-1-20260713 `
+  --zip
+```
+
+The packager runs the same fail-closed target evidence validator before copying
+anything. It copies `target-evidence.json`, every manifest-declared artifact,
+writes `package-manifest.json` with artifact hashes and sizes, and can create a
+zip archive. It exits non-zero if the manifest is incomplete, an artifact is
+outside the evidence folder, a recorded SHA-256 digest does not match, the
+package name is not a single directory name, or the output already exists. Use
+`--overwrite` only when intentionally replacing an existing local evidence
+package.
+
 ## Published Image Pull/Run Probe
 
 Run the published-image probe on the target host to prove the exact published

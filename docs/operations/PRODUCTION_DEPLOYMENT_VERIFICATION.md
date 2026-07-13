@@ -112,6 +112,24 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 
 Current local config evidence: `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile` passed with 15/15 checks. This proves the repository's production proxy configuration shape. It does not prove that a public host has been deployed, that ACME issued a certificate, or that target proxy logs and live TLS evidence have been captured.
 
+## Evidence Package Retention
+
+Target evidence should be packaged after validation so the manifest and
+artifacts can be retained together with a second package-level manifest:
+
+```powershell
+python scripts\package_target_deployment_evidence.py `
+  evidence\target-deployment\target-evidence.json `
+  --output-dir evidence\packages `
+  --package-name prod-host-1-20260713 `
+  --zip
+```
+
+Current local package evidence: `python scripts\package_target_deployment_evidence.py evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --output-dir evidence\packages --package-name local-docker-v1.0.3-20260713T070000Z --zip --overwrite` passed and copied all 9 required evidence artifacts. Generated `evidence\packages\...` outputs remain local and ignored by git unless deliberately retained elsewhere.
+
+Package replacement is fail-closed by default. If a package directory or archive
+already exists, the command exits non-zero unless `--overwrite` is provided.
+
 ## Deployment Inputs
 
 Required production environment values:
@@ -234,3 +252,4 @@ Rotation checklist:
 - Service manager/orchestrator hardening evidence for the chosen external target. Current local Docker service-hardening evidence exists.
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
+- External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.
