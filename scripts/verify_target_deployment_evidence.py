@@ -21,6 +21,7 @@ REQUIRED_EVIDENCE_TYPES = (
     "secret_rotation",
     "shared_revocation_store",
     "host_network_policy",
+    "service_orchestrator_hardening",
     "platform_backend_execution",
 )
 
