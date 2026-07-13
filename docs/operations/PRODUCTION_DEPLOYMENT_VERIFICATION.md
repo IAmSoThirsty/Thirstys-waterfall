@@ -2,7 +2,7 @@
 
 Standard: Thirsty's Standard v3
 
-Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, and published-image local smoke are verified. Full target-host production deployment verification still requires target host, target rollback, secret rotation, host network policy, and operations log evidence.
+Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, and a local Docker target evidence manifest are verified. External/public production deployment verification still requires non-local target/proxy logs, TLS boundary evidence, service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
 Target evidence manifests are validated with:
 
@@ -84,7 +84,14 @@ This mode is used by the release workflow so the Docker smoke covers the actual 
 - GHCR digest: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`
 - Published image pull: `docker pull ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3` succeeded.
 - Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed.
-- Target evidence fail-closed check: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` fails with `target deployment evidence is required; pass --target-evidence-manifest`.
+- Target evidence fail-closed check without a manifest: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` fails with `target deployment evidence is required; pass --target-evidence-manifest`.
+
+## Local Docker Target Evidence
+
+- Local manifest: `evidence\target-deployment\local-docker-v1.0.3-20260713T061844Z\target-evidence.json`
+- Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T061844Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed on commit `329b3db83170b44a803f706a71060ec17bff967f`.
+- Evidence types present: `target_identity`, `published_image_pull_run`, `target_health_auth_logs`, `target_rollback`, `secret_rotation`, `shared_revocation_store`, `host_network_policy`, and `platform_backend_execution`.
+- Scope caveat: this bundle proves a local Docker target with explicit local HTTP boundary and a narrowed platform-backend claim. It does not prove an external/public target, TLS/proxy boundary, service manager/orchestrator hardening, or real OS VPN/firewall backend execution.
 
 ## Deployment Inputs
 
@@ -202,8 +209,9 @@ Rotation checklist:
 - GitHub Actions run for the exact commit being deployed. Current release evidence: run `29226584539` for commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
 - CodeQL/security workflow evidence for the exact commit being deployed. Current main evidence: CodeQL run `29226577880` passed for commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
 - Published image digest from the target registry. Current release evidence: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`.
-- Pull-and-run evidence using the published image, not only a local image. Current local published-image evidence exists; target-host pull/run evidence is still missing.
-- Rollback execution evidence on the target host or orchestrator, not only local Docker rollback smoke.
-- Production log capture from startup, health check, login smoke, and shutdown/rollback on the target host, not only local container log capture.
-- Real platform evidence for claimed VPN/firewall backends, or README claim narrowing.
+- External/public pull-and-run evidence using the published image. Current local Docker target pull/run evidence exists.
+- External target/proxy logs for startup, health check, login smoke, shutdown, and rollback. Current local container log evidence exists.
+- TLS/proxy boundary evidence for any public deployment. The current local Docker target evidence explicitly allows local HTTP.
+- Service manager/orchestrator hardening evidence for the chosen external target.
+- Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
