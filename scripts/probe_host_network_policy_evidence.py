@@ -179,6 +179,7 @@ def capture_tls(
 ) -> dict[str, Any]:
     """Capture verified TLS certificate and cipher evidence."""
     context = ssl.create_default_context()
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     with socket.create_connection((host, port), timeout=timeout) as raw_socket:
         with context.wrap_socket(
             raw_socket, server_hostname=host
