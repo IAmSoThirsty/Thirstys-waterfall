@@ -17,19 +17,30 @@ class QASystem:
                 "id": "q1",
                 "category": "privacy",
                 "question": "How does local helper encryption work?",
-                "answer": "Local helper encryption uses layered classical primitives and remains separate from accepted end-to-end or post-quantum claims.",
+                "answer": (
+                    "Local helper encryption uses layered classical primitives and "
+                    "remains separate from accepted end-to-end or post-quantum claims."
+                ),
             },
             {
                 "id": "q2",
                 "category": "security",
                 "question": "What is the kill switch?",
-                "answer": "Kill switch stops all network traffic if VPN connection drops. 100% guaranteed protection.",
+                "answer": (
+                    "A configured kill-switch backend can attempt to block traffic "
+                    "when the VPN connection drops; acceptance requires backend "
+                    "execution evidence."
+                ),
             },
             {
                 "id": "q3",
                 "category": "ads",
                 "question": "How aggressive is ad blocking?",
-                "answer": "HOLY WAR mode - eliminates ALL ads, trackers, pop-ups, redirects, autoplay videos. Zero mercy. Complete annihilation of intrusive advertising.",
+                "answer": (
+                    "HOLY WAR mode applies the configured blocking rules to ads, "
+                    "trackers, pop-ups, redirects, and autoplay media. Results depend "
+                    "on the active backend and rule coverage."
+                ),
             },
         ]
 

@@ -44,7 +44,6 @@ Dependencies:
 
 import os
 import sys
-import json
 import logging
 import sqlite3
 import threading
@@ -52,12 +51,11 @@ import traceback
 from contextlib import closing
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
-from functools import wraps
 
 # Web framework and extensions
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,

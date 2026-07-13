@@ -86,12 +86,12 @@ def redact_text(value: str) -> str:
     for name in SENSITIVE_NAMES:
         redacted = re.sub(
             rf"({re.escape(name)}=)[^\s\"']+",
-            rf"\1<redacted>",
+            r"\1<redacted>",
             redacted,
         )
         redacted = re.sub(
             rf'("{re.escape(name)}"\s*:\s*")[^"]*(")',
-            rf'\1<redacted>\2',
+            r'\1<redacted>\2',
             redacted,
         )
     return redacted
@@ -149,11 +149,21 @@ def run_command(
             stderr=completed.stderr,
         )
     except subprocess.TimeoutExpired as exc:
+        stdout = (
+            exc.stdout.decode("utf-8", errors="replace")
+            if isinstance(exc.stdout, bytes)
+            else exc.stdout or ""
+        )
+        stderr = (
+            exc.stderr.decode("utf-8", errors="replace")
+            if isinstance(exc.stderr, bytes)
+            else exc.stderr or ""
+        )
         return CommandResult(
             args=args,
             returncode=124,
-            stdout=exc.stdout or "",
-            stderr=(exc.stderr or "") + "\ncommand timed out",
+            stdout=stdout,
+            stderr=stderr + "\ncommand timed out",
         )
     except OSError as exc:
         return CommandResult(args=args, returncode=1, stdout="", stderr=str(exc))
@@ -294,19 +304,25 @@ def run_probe(
         )
     )
 
-    service = service if isinstance(service, dict) else {}
-    env = service_environment(service)
-    volumes = service_volumes(service)
+    service_config: dict[str, Any] = service if isinstance(service, dict) else {}
+    env = service_environment(service_config)
+    volumes = service_volumes(service_config)
     targets = volume_targets(volumes)
-    security_opt = service.get("security_opt") or []
-    cap_add = service.get("cap_add") or []
-    deploy = service.get("deploy") if isinstance(service.get("deploy"), dict) else {}
-    resources = deploy.get("resources") if isinstance(deploy.get("resources"), dict) else {}
-    limits = resources.get("limits") if isinstance(resources.get("limits"), dict) else {}
+    security_opt = service_config.get("security_opt") or []
+    cap_add = service_config.get("cap_add") or []
+    deploy_value = service_config.get("deploy")
+    deploy: dict[str, Any] = deploy_value if isinstance(deploy_value, dict) else {}
+    resources_value = deploy.get("resources")
+    resources: dict[str, Any] = (
+        resources_value if isinstance(resources_value, dict) else {}
+    )
+    limits_value = resources.get("limits")
+    limits: dict[str, Any] = (
+        limits_value if isinstance(limits_value, dict) else {}
+    )
+    reservations_value = resources.get("reservations")
     reservations = (
-        resources.get("reservations")
-        if isinstance(resources.get("reservations"), dict)
-        else {}
+        reservations_value if isinstance(reservations_value, dict) else {}
     )
     user = dockerfile_user(dockerfile_text)
 
@@ -346,9 +362,9 @@ def run_probe(
             ),
             CheckResult(
                 "not_privileged",
-                service.get("privileged") is not True,
+                service_config.get("privileged") is not True,
                 "service is not configured as privileged",
-                {"privileged": service.get("privileged", False)},
+                {"privileged": service_config.get("privileged", False)},
             ),
             CheckResult(
                 "capabilities_are_explicit",
@@ -358,15 +374,16 @@ def run_probe(
             ),
             CheckResult(
                 "healthcheck_defined",
-                isinstance(service.get("healthcheck"), dict)
-                or isinstance(service.get("health_check"), dict),
+                isinstance(service_config.get("healthcheck"), dict)
+                or isinstance(service_config.get("health_check"), dict),
                 "service has an orchestrator healthcheck",
             ),
             CheckResult(
                 "restart_policy_defined",
-                service.get("restart") in {"unless-stopped", "always", "on-failure"},
+                service_config.get("restart")
+                in {"unless-stopped", "always", "on-failure"},
                 "service has a restart policy",
-                {"restart": service.get("restart")},
+                {"restart": service_config.get("restart")},
             ),
             CheckResult(
                 "resource_limits_defined",
@@ -411,7 +428,7 @@ def run_probe(
             "checks_total": len(checks),
         },
         "checks": [check.as_dict() for check in checks],
-        "normalized_service_config": redact_value(service),
+        "normalized_service_config": redact_value(service_config),
     }
 
 

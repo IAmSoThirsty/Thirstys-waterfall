@@ -120,3 +120,54 @@ def test_require_target_evidence_fails_without_manifest(monkeypatch):
         assert "target deployment evidence is required" in str(exc)
     else:
         raise AssertionError("missing target evidence did not fail closed")
+
+
+def test_main_uses_configured_full_suite_timeout(monkeypatch):
+    calls = []
+    _stub_expensive_verifier_steps(monkeypatch, calls)
+    monkeypatch.setattr(
+        production_verifier,
+        "run",
+        lambda cmd, **kwargs: calls.append((cmd, kwargs)) or "",
+    )
+
+    exit_code = production_verifier.main(
+        ["--skip-docker", "--test-timeout", "481"]
+    )
+
+    pytest_call = next(
+        (cmd, kwargs)
+        for cmd, kwargs in calls
+        if cmd == [sys.executable, "-m", "pytest", "-q"]
+    )
+    assert exit_code == 0
+    assert pytest_call[1]["timeout"] == 481
+
+
+def test_main_rejects_nonpositive_full_suite_timeout(monkeypatch):
+    monkeypatch.setattr(
+        production_verifier,
+        "run",
+        lambda cmd, **kwargs: (_ for _ in ()).throw(
+            AssertionError("run should not be called")
+        ),
+    )
+
+    try:
+        production_verifier.main(["--test-timeout", "0"])
+    except SystemExit as exc:
+        assert "--test-timeout must be a positive integer" in str(exc)
+    else:
+        raise AssertionError("nonpositive test timeout did not fail closed")
+
+
+def test_run_replaces_undecodable_subprocess_output():
+    output = production_verifier.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; sys.stdout.buffer.write(bytes([0x81]))",
+        ]
+    )
+
+    assert "\ufffd" in output

@@ -520,7 +520,7 @@ class WiFiController:
                 )  # nosec B603
 
             if result.returncode == 0:
-                    networks.extend(self._parse_scan_results_linux(result.stdout, band))
+                networks.extend(self._parse_scan_results_linux(result.stdout, band))
 
         except Exception as e:
             self.logger.error(f"Linux network scan error: {e}")
@@ -781,7 +781,7 @@ class WiFiController:
             if band_filter is not None and band != band_filter:
                 continue
 
-            security_text = " ".join(parts[bssid_index + 5 :])
+            security_text = " ".join(parts[bssid_index + 5:])
             networks.append(
                 WiFiNetwork(
                     ssid=ssid,

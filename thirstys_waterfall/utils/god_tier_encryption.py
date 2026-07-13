@@ -258,7 +258,7 @@ class GodTierEncryption:
     def _remove_randomized_padding(self, data: bytes) -> bytes:
         """Remove randomized padding."""
         padding_size = int.from_bytes(data[:4], "big")
-        return data[4 + padding_size :]
+        return data[4 + padding_size:]
 
     def _add_authentication_mac(self, data: bytes) -> bytes:
         """Add HMAC-SHA512 authentication"""
