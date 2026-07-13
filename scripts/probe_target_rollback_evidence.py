@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable
 from urllib.error import HTTPError, URLError
@@ -50,6 +51,23 @@ def request_health(base_url: str, timeout: float) -> tuple[int | None, Any]:
         return None, str(exc)
 
 
+def wait_for_health(
+    base_url: str,
+    timeout: float,
+    *,
+    health_client: Callable[[str, float], tuple[int | None, Any]],
+) -> tuple[int | None, Any]:
+    """Wait briefly for a restarted target to become healthy."""
+    deadline = time.monotonic() + max(timeout, 1.0) * 6
+    last_result: tuple[int | None, Any] = (None, "health check not attempted")
+    while time.monotonic() <= deadline:
+        last_result = health_client(base_url, timeout)
+        if last_result[0] == 200:
+            return last_result
+        time.sleep(1)
+    return last_result
+
+
 def run_probe(
     *,
     rollback_commands: list[list[str]],
@@ -78,7 +96,9 @@ def run_probe(
     ]
 
     if base_url:
-        post_health = health_client(base_url, timeout)
+        post_health = wait_for_health(
+            base_url, timeout, health_client=health_client
+        )
 
     checks.append(
         CheckResult(

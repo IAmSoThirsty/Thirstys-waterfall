@@ -10,11 +10,13 @@ import secrets
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
-from urllib.error import HTTPError
+from http.client import HTTPException
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 DEFAULT_PORT = 18082
@@ -191,6 +193,8 @@ def request_json(
     except HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         return exc.code, parse_body(body)
+    except (HTTPException, OSError, URLError) as exc:
+        return 0, {"error": str(exc)}
 
 
 def parse_body(body: str) -> Any:
@@ -279,9 +283,16 @@ def check_http_smoke(
 ) -> list[CheckResult]:
     """Run health and auth smoke checks against the container."""
     checks: list[CheckResult] = []
-    health_status, health_body = http_client(
-        f"{base_url}/health", timeout=timeout
-    )
+    health_status = 0
+    health_body = None
+    deadline = time.monotonic() + max(timeout, 1.0) * 6
+    while time.monotonic() <= deadline:
+        health_status, health_body = http_client(
+            f"{base_url}/health", timeout=timeout
+        )
+        if health_status == 200 and isinstance(health_body, dict):
+            break
+        time.sleep(1)
     checks.append(
         CheckResult(
             "health",

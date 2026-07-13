@@ -111,6 +111,7 @@ def run_probe(
     old_password: str,
     new_password: str,
     rotation_commands: list[list[str]],
+    require_pre_rotation_old_login: bool,
     timeout: float,
     captured_at_utc: str,
     command_runner: Callable[[list[str], int], CommandResult] = run_command,
@@ -118,6 +119,22 @@ def run_probe(
 ) -> dict[str, Any]:
     """Capture secret rotation evidence."""
     checks: list[CheckResult] = []
+    if require_pre_rotation_old_login:
+        pre_status, pre_body = login_client(
+            base_url=base_url,
+            username=username,
+            password=old_password,
+            timeout=timeout,
+        )
+        checks.append(
+            CheckResult(
+                "old_credentials_accepted_before_rotation",
+                login_accepted(pre_status, pre_body),
+                f"old credentials before rotation returned {pre_status}",
+                redact_body(pre_body),
+            )
+        )
+
     rotation_results = [
         command_runner(command, 300) for command in rotation_commands
     ]
@@ -200,6 +217,14 @@ def main(argv: list[str] | None = None) -> int:
         type=parse_json_command,
         help="Secret rotation command as JSON array.",
     )
+    parser.add_argument(
+        "--require-pre-rotation-old-login",
+        action="store_true",
+        help=(
+            "Require the old credential to authenticate before rotation "
+            "commands run."
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--timeout", type=float, default=DEFAULT_TIMEOUT_SECONDS
@@ -224,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
         old_password=args.old_password,
         new_password=args.new_password,
         rotation_commands=args.rotation_command,
+        require_pre_rotation_old_login=args.require_pre_rotation_old_login,
         timeout=args.timeout,
         captured_at_utc=args.captured_at_utc,
     )
