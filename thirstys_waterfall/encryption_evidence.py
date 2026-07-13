@@ -120,11 +120,15 @@ def get_encryption_evidence_report() -> EncryptionEvidenceReport:
         ),
         DataSurfaceEvidence(
             name="telemetry_and_audit_events",
-            coverage_status="not_covered",
-            evidence=[],
+            coverage_status="partial",
+            evidence=[
+                "privacy auditor stores local audit events as encrypted records",
+                "public audit access decrypts records on demand without retaining a plaintext event log",
+            ],
             remaining_work=[
                 "prove telemetry encryption or disable telemetry by accepted policy",
-                "prove audit/event log encryption for every emitted event path",
+                "prove audit/event log encryption for every emitted event path outside the privacy auditor",
+                "prove target retention and export behavior for encrypted audit records",
             ],
         ),
         DataSurfaceEvidence(

@@ -22,7 +22,7 @@ accepted data path has end-to-end proof.
 
 | Surface | Current evidence | Required acceptance work |
 | --- | --- | --- |
-| Telemetry and audit events | No end-to-end proof for every emitted event path | Prove telemetry encryption or disable telemetry by accepted policy; prove audit/event log encryption for every emitted event path |
+| Telemetry and audit events | Privacy auditor stores local audit events as encrypted records and decrypts them only for caller access | Prove telemetry encryption or disable telemetry by accepted policy; prove audit/event log encryption for every emitted event path outside the privacy auditor; prove target retention and export behavior for encrypted audit records |
 | Post-quantum backend | Facade fails closed without a configured backend | Configure and prove an accepted post-quantum backend |
 
 ## Acceptance Rule

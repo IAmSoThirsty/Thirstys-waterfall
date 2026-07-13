@@ -1,8 +1,10 @@
 """Privacy Auditor - Real-time privacy monitoring"""
 
 import logging
+import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from cryptography.fernet import Fernet
 
 
 class PrivacyAuditor:
@@ -17,9 +19,10 @@ class PrivacyAuditor:
         self.leak_audit_backend = config.get("leak_audit_backend")
         self.logger = logging.getLogger(__name__)
         self._active = False
+        self._cipher = config.get("audit_cipher") or Fernet(Fernet.generate_key())
 
-        self._audit_log: List[Dict[str, Any]] = []
-        self._privacy_violations: List[Dict[str, Any]] = []
+        self._encrypted_audit_log: List[bytes] = []
+        self._violation_indexes: List[int] = []
         self._leak_tests = []
         self._last_leak_results: Dict[str, Optional[Dict[str, Any]]] = {
             "dns": None,
@@ -53,11 +56,14 @@ class PrivacyAuditor:
             "details": details,
         }
 
-        self._audit_log.append(event)
+        encrypted_event = self._cipher.encrypt(
+            json.dumps(event, sort_keys=True).encode("utf-8")
+        )
+        self._encrypted_audit_log.append(encrypted_event)
 
         # Check for privacy violations
         if self._is_privacy_violation(event_type, details):
-            self._privacy_violations.append(event)
+            self._violation_indexes.append(len(self._encrypted_audit_log) - 1)
             self.logger.warning(f"Privacy violation detected: {event_type}")
 
     def _is_privacy_violation(self, event_type: str, details: Dict[str, Any]) -> bool:
@@ -123,8 +129,9 @@ class PrivacyAuditor:
             "dns_leak": self.audit_dns_leak(),
             "ipv6_leak": self.audit_ipv6_leak(),
             "webrtc_leak": self.audit_webrtc_leak(),
-            "violations": len(self._privacy_violations),
-            "events_logged": len(self._audit_log),
+            "violations": len(self._violation_indexes),
+            "events_logged": len(self._encrypted_audit_log),
+            "audit_events_encrypted": True,
             "leak_audit_backend_configured": self.leak_audit_backend is not None,
             "leak_results": self._last_leak_results.copy(),
         }
@@ -133,17 +140,26 @@ class PrivacyAuditor:
         return results
 
     def get_audit_log(self) -> List[Dict[str, Any]]:
-        """Get full audit log"""
-        return self._audit_log.copy()
+        """Get full audit log as a decrypted caller view."""
+        return [self._decrypt_event(entry) for entry in self._encrypted_audit_log]
+
+    def get_encrypted_audit_log(self) -> List[bytes]:
+        """Get encrypted audit log records."""
+        return self._encrypted_audit_log.copy()
 
     def get_violations(self) -> List[Dict[str, Any]]:
         """Get privacy violations"""
-        return self._privacy_violations.copy()
+        events = self.get_audit_log()
+        return [events[index] for index in self._violation_indexes]
 
     def clear_logs(self):
         """Clear audit logs"""
-        self._audit_log.clear()
-        self._privacy_violations.clear()
+        self._encrypted_audit_log.clear()
+        self._violation_indexes.clear()
+
+    def _decrypt_event(self, encrypted_event: bytes) -> Dict[str, Any]:
+        """Decrypt one audit event."""
+        return json.loads(self._cipher.decrypt(encrypted_event).decode("utf-8"))
 
     def _run_leak_check(self, leak_type: str, backend_method: str) -> Dict[str, Any]:
         """Run a leak audit through a configured backend."""

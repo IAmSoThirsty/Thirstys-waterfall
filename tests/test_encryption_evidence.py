@@ -55,7 +55,9 @@ def test_uncovered_surfaces_are_explicit():
     telemetry = _surface(report, "telemetry_and_audit_events")
     post_quantum = _surface(report, "post_quantum_backend")
 
-    assert telemetry.coverage_status == "not_covered"
+    assert telemetry.coverage_status == "partial"
+    assert any("privacy auditor" in item for item in telemetry.evidence)
+    assert any("outside the privacy auditor" in item for item in telemetry.remaining_work)
     assert post_quantum.coverage_status == "not_covered"
     assert post_quantum.evidence == [
         "post-quantum facade fails closed without a configured backend"

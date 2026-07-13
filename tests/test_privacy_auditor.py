@@ -35,6 +35,31 @@ class InvalidLeakAuditBackend:
 
 
 class TestPrivacyAuditorLeakEvidence(unittest.TestCase):
+    def test_audit_events_are_stored_encrypted(self):
+        auditor = PrivacyAuditor({"session_auditing": True, "leak_auditing": False})
+        auditor.start()
+        probe_value = "privacy-audit-secret"
+
+        auditor.log_event("data_access", {"probe": probe_value})
+
+        encrypted_blob = b"\n".join(auditor.get_encrypted_audit_log())
+        audit_log = auditor.get_audit_log()
+
+        self.assertNotIn(probe_value.encode(), encrypted_blob)
+        self.assertTrue(any(entry["details"].get("probe") == probe_value for entry in audit_log))
+        self.assertEqual(auditor.run_full_audit()["audit_events_encrypted"], True)
+
+    def test_privacy_violations_are_returned_from_encrypted_events(self):
+        auditor = PrivacyAuditor({"session_auditing": True, "leak_auditing": False})
+        auditor.start()
+
+        auditor.log_event("cookie_stored", {"domain": "example.test"})
+
+        violations = auditor.get_violations()
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0]["type"], "cookie_stored")
+        self.assertEqual(violations[0]["details"]["domain"], "example.test")
+
     def test_leak_audits_without_backend_fail_closed(self):
         auditor = PrivacyAuditor({"session_auditing": True, "leak_auditing": True})
         auditor.start()
