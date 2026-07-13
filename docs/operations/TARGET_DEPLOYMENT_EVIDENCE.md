@@ -132,6 +132,19 @@ certificate evidence for HTTPS targets, and a non-wildcard CORS preflight match
 for the expected origin. Supply the resulting artifact to the bundle collector
 as `host_network_policy`.
 
+For the repository's Caddy production proxy configuration, first validate the
+deployable proxy shape locally:
+
+```powershell
+python scripts\verify_production_proxy_config.py `
+  --compose-file docker-compose.production.yml `
+  --caddyfile deploy\caddy\Caddyfile
+```
+
+That command does not replace target TLS evidence. After deploying
+`docker-compose.production.yml` with a real public host, capture the live
+boundary with `probe_host_network_policy_evidence.py` against the HTTPS URL.
+
 ## Service/Orchestrator Hardening Probe
 
 Run the service/orchestrator hardening probe against the deployment

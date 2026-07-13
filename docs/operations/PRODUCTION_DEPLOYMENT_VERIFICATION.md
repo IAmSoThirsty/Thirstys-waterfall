@@ -2,7 +2,7 @@
 
 Standard: Thirsty's Standard v3
 
-Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, TLS boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
+Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, production TLS reverse-proxy config validation, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, live TLS certificate/boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
 Target evidence manifests are validated with:
 
@@ -92,6 +92,25 @@ This mode is used by the release workflow so the Docker smoke covers the actual 
 - Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed on branch `harden/service-orchestrator-evidence`.
 - Evidence types present: `target_identity`, `published_image_pull_run`, `target_health_auth_logs`, `target_rollback`, `secret_rotation`, `shared_revocation_store`, `host_network_policy`, `service_orchestrator_hardening`, and `platform_backend_execution`.
 - Scope caveat: this bundle proves a local Docker target with explicit local HTTP boundary, local Docker service-hardening evidence, and a narrowed platform-backend claim. It does not prove an external/public target, TLS/proxy boundary, external service manager/orchestrator hardening, or real OS VPN/firewall backend execution.
+
+## Production TLS Proxy Configuration
+
+The production deployment configuration places the web service behind Caddy,
+publishes only ports `80` and `443` from the proxy, keeps the application
+container on a private Compose network, scopes CORS to
+`https://${THIRSTYS_PUBLIC_HOST}`, mounts the Caddyfile read-only, and stores
+ACME data in persistent volumes.
+
+```powershell
+Copy-Item .env.production.example .env.production
+# edit .env.production with real secrets, THIRSTYS_PUBLIC_HOST, and CADDY_ACME_EMAIL
+python scripts\verify_production_proxy_config.py `
+  --compose-file docker-compose.production.yml `
+  --caddyfile deploy\caddy\Caddyfile
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+```
+
+Current local config evidence: `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile` passed with 15/15 checks. This proves the repository's production proxy configuration shape. It does not prove that a public host has been deployed, that ACME issued a certificate, or that target proxy logs and live TLS evidence have been captured.
 
 ## Deployment Inputs
 
@@ -211,7 +230,7 @@ Rotation checklist:
 - Published image digest from the target registry. Current release evidence: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`.
 - External/public pull-and-run evidence using the published image. Current local Docker target pull/run evidence exists.
 - External target/proxy logs for startup, health check, login smoke, shutdown, and rollback. Current local container log evidence exists.
-- TLS/proxy boundary evidence for any public deployment. The current local Docker target evidence explicitly allows local HTTP.
+- Live TLS/proxy boundary evidence for any public deployment. The current local Docker target evidence explicitly allows local HTTP, and the production proxy config verifier only proves deployable config shape.
 - Service manager/orchestrator hardening evidence for the chosen external target. Current local Docker service-hardening evidence exists.
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
