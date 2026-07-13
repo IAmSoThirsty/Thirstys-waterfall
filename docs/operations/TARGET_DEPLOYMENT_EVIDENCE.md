@@ -109,6 +109,25 @@ with production auth configuration, pass health/auth/default-login rejection
 checks, and capture container logs. Supply the resulting artifact to the bundle
 collector as `published_image_pull_run`.
 
+## Host Network Policy Probe
+
+Run the host network policy probe on the target host or proxy host to prove the
+exposed port, host firewall policy, CORS origin, and TLS boundary:
+
+```powershell
+python scripts\probe_host_network_policy_evidence.py `
+  --base-url https://prod-host-1.example `
+  --expected-origin https://operator-console.example `
+  --expected-public-port 443 `
+  --output artifacts\host-network-policy.json
+```
+
+The probe writes a bounded JSON artifact and exits non-zero unless it captures
+listening-port output, host firewall policy command output, verified TLS
+certificate evidence for HTTPS targets, and a non-wildcard CORS preflight match
+for the expected origin. Supply the resulting artifact to the bundle collector
+as `host_network_policy`.
+
 ## Live Auth Probe
 
 Use the live probe against the deployed target to create the
