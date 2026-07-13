@@ -47,6 +47,8 @@ the evidence folder and include the artifact SHA-256 digest.
   rejection, logout, and revoked-token rejection evidence.
 - `target_rollback`: rollback executed on the target host or orchestrator.
 - `secret_rotation`: secrets rotated on target and old credentials rejected.
+- `shared_revocation_store`: every API worker/container uses the same JWT
+  revocation store and revoked-token rejection works across workers.
 - `host_network_policy`: host firewall, exposed ports, CORS/origin, TLS/proxy,
   and network boundary evidence.
 - `platform_backend_execution`: real OS VPN/firewall backend apply/rollback or
@@ -73,6 +75,7 @@ python scripts\collect_target_deployment_evidence.py `
   --evidence target_health_auth_logs=artifacts\target-health-auth-logs.log `
   --evidence target_rollback=artifacts\target-rollback.log `
   --evidence secret_rotation=artifacts\secret-rotation.log `
+  --evidence shared_revocation_store=artifacts\shared-revocation-store.log `
   --evidence host_network_policy=artifacts\host-network-policy.log `
   --evidence platform_backend_execution=artifacts\platform-backend-execution.log `
   --require-complete

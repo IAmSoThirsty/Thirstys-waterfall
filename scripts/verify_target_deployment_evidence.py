@@ -19,6 +19,7 @@ REQUIRED_EVIDENCE_TYPES = (
     "target_health_auth_logs",
     "target_rollback",
     "secret_rotation",
+    "shared_revocation_store",
     "host_network_policy",
     "platform_backend_execution",
 )
