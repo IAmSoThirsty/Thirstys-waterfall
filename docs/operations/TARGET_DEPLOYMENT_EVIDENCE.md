@@ -22,7 +22,7 @@ the evidence folder and include the artifact SHA-256 digest.
   "deployment": {
     "environment": "production",
     "target_host": "prod-host-1",
-    "image": "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2",
+    "image": "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3",
     "image_digest": "sha256:<published digest>",
     "captured_at_utc": "2026-07-12T17:30:00Z"
   },
@@ -69,7 +69,7 @@ artifact files in one folder:
 python scripts\collect_target_deployment_evidence.py `
   --output-dir evidence\target-deployment `
   --target-host prod-host-1 `
-  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 `
   --image-digest sha256:<published digest> `
   --evidence published_image_pull_run=artifacts\published-image-pull-run.log `
   --evidence target_health_auth_logs=artifacts\target-health-auth-logs.log `
@@ -98,7 +98,7 @@ $env:THIRSTYS_TARGET_ADMIN_PASSWORD_HASH = "<werkzeug password hash>"
 $env:SECRET_KEY = "<target secret key>"
 $env:JWT_SECRET_KEY = "<target jwt secret key>"
 python scripts\probe_target_image_evidence.py `
-  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 `
   --image-digest sha256:<published digest> `
   --output artifacts\published-image-pull-run.json
 ```
@@ -218,7 +218,7 @@ the peer checks pass:
 python scripts\collect_target_deployment_evidence.py `
   --output-dir evidence\target-deployment `
   --target-host prod-host-1 `
-  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 `
   --image-digest sha256:<published digest> `
   --evidence target_health_auth_logs=artifacts\target-health-auth-logs.json `
   --evidence shared_revocation_store=artifacts\target-health-auth-logs.json `
