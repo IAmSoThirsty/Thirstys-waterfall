@@ -84,3 +84,35 @@ python scripts\collect_target_deployment_evidence.py `
 The collector captures `target_identity` directly from the host. Any evidence
 type not supplied as an artifact is written with `status: pending`, which keeps
 the verifier fail-closed until the real artifact is attached.
+
+## Live Auth Probe
+
+Use the live probe against the deployed target to create the
+`target_health_auth_logs` artifact. Prefer environment variables for the target
+password so it is not recorded in shell history:
+
+```powershell
+$env:THIRSTYS_TARGET_USERNAME = "operator"
+$env:THIRSTYS_TARGET_PASSWORD = "<target password>"
+python scripts\probe_target_auth_evidence.py `
+  --base-url https://prod-host-1.example `
+  --peer-base-url https://prod-host-1-worker-2.example `
+  --output artifacts\target-health-auth-logs.json
+```
+
+The probe writes a redacted JSON artifact and exits non-zero unless the target
+proves health, configured login, default-login rejection, logout, revoked-token
+rejection, and, when peer URLs are supplied, cross-worker revoked-token
+rejection. The same artifact may be supplied for `shared_revocation_store` when
+the peer checks pass:
+
+```powershell
+python scripts\collect_target_deployment_evidence.py `
+  --output-dir evidence\target-deployment `
+  --target-host prod-host-1 `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image-digest sha256:<published digest> `
+  --evidence target_health_auth_logs=artifacts\target-health-auth-logs.json `
+  --evidence shared_revocation_store=artifacts\target-health-auth-logs.json `
+  --require-complete
+```
