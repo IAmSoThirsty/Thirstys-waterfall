@@ -94,6 +94,56 @@ def test_published_image_probe_writes_redacted_passing_artifact(tmp_path):
     assert "THIRSTYS_ADMIN_PASSWORD_HASH=<redacted>" in artifact_text
 
 
+def test_published_image_probe_retries_until_health_is_ready(monkeypatch):
+    responses = iter(
+        [
+            (0, {"error": "not ready"}),
+            (0, {"error": "still not ready"}),
+            (200, {"status": "healthy"}),
+        ]
+    )
+
+    def delayed_http_client(
+        url, method="GET", payload=None, bearer_token=None, timeout=10
+    ):
+        if url.endswith("/health"):
+            return next(responses)
+        return _http_client(
+            url,
+            method=method,
+            payload=payload,
+            bearer_token=bearer_token,
+            timeout=timeout,
+        )
+
+    monkeypatch.setattr(probe.time, "sleep", lambda _seconds: None)
+
+    artifact = probe.run_probe(
+        engine="docker",
+        image="ghcr.io/test/app:1.2.3",
+        image_digest="sha256:" + ("a" * 64),
+        container_name="tw-evidence",
+        port=18082,
+        admin_username="operator",
+        admin_password="correct-password",
+        admin_password_hash="hash-secret",
+        cors_origins="http://127.0.0.1:18082",
+        secret_key="secret-key",
+        jwt_secret_key="jwt-secret-key",
+        thirsty_lang_path=None,
+        timeout=1,
+        captured_at_utc="2026-07-13T03:00:00Z",
+        command_runner=_command_runner,
+        http_client=delayed_http_client,
+    )
+    health_check = next(
+        check for check in artifact["checks"] if check["name"] == "health"
+    )
+
+    assert artifact["summary"]["passed"] is True
+    assert health_check["passed"] is True
+
+
 def test_published_image_probe_fails_when_digest_is_absent():
     def command_runner(args, timeout):
         if args[:2] == ["docker", "--version"]:
