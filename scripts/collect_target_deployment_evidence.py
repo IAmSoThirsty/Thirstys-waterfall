@@ -25,6 +25,7 @@ REQUIRED_EVIDENCE_TYPES = (
     "secret_rotation",
     "shared_revocation_store",
     "host_network_policy",
+    "service_orchestrator_hardening",
     "platform_backend_execution",
 )
 
@@ -36,6 +37,7 @@ REQUIRED_PROOF = {
     "secret_rotation": "target secrets rotated and old credentials rejected",
     "shared_revocation_store": "every API worker/container uses the same JWT revocation store",
     "host_network_policy": "host firewall, exposed ports, CORS/origin, TLS/proxy, and boundary evidence",
+    "service_orchestrator_hardening": "service manager or orchestrator restart, health, resource, privilege, and persistence hardening",
     "platform_backend_execution": "real OS VPN/firewall backend apply/rollback or narrowed production claim",
 }
 

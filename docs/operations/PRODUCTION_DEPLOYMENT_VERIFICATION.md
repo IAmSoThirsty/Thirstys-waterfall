@@ -2,7 +2,7 @@
 
 Standard: Thirsty's Standard v3
 
-Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, and a local Docker target evidence manifest are verified. External/public production deployment verification still requires non-local target/proxy logs, TLS boundary evidence, service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
+Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, TLS boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
 Target evidence manifests are validated with:
 
@@ -88,10 +88,10 @@ This mode is used by the release workflow so the Docker smoke covers the actual 
 
 ## Local Docker Target Evidence
 
-- Local manifest: `evidence\target-deployment\local-docker-v1.0.3-20260713T061844Z\target-evidence.json`
-- Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T061844Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed on commit `329b3db83170b44a803f706a71060ec17bff967f`.
-- Evidence types present: `target_identity`, `published_image_pull_run`, `target_health_auth_logs`, `target_rollback`, `secret_rotation`, `shared_revocation_store`, `host_network_policy`, and `platform_backend_execution`.
-- Scope caveat: this bundle proves a local Docker target with explicit local HTTP boundary and a narrowed platform-backend claim. It does not prove an external/public target, TLS/proxy boundary, service manager/orchestrator hardening, or real OS VPN/firewall backend execution.
+- Local manifest: `evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json`
+- Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed on branch `harden/service-orchestrator-evidence`.
+- Evidence types present: `target_identity`, `published_image_pull_run`, `target_health_auth_logs`, `target_rollback`, `secret_rotation`, `shared_revocation_store`, `host_network_policy`, `service_orchestrator_hardening`, and `platform_backend_execution`.
+- Scope caveat: this bundle proves a local Docker target with explicit local HTTP boundary, local Docker service-hardening evidence, and a narrowed platform-backend claim. It does not prove an external/public target, TLS/proxy boundary, external service manager/orchestrator hardening, or real OS VPN/firewall backend execution.
 
 ## Deployment Inputs
 
@@ -212,6 +212,6 @@ Rotation checklist:
 - External/public pull-and-run evidence using the published image. Current local Docker target pull/run evidence exists.
 - External target/proxy logs for startup, health check, login smoke, shutdown, and rollback. Current local container log evidence exists.
 - TLS/proxy boundary evidence for any public deployment. The current local Docker target evidence explicitly allows local HTTP.
-- Service manager/orchestrator hardening evidence for the chosen external target.
+- Service manager/orchestrator hardening evidence for the chosen external target. Current local Docker service-hardening evidence exists.
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.

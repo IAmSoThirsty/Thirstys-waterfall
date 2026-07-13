@@ -23,7 +23,7 @@ For the active acceptance matrix, see `docs/operations/README_CLAIM_ACCEPTANCE.m
 | Native browser engine | Partial | Native document/parser/fetcher layer with compatibility tests | Layout/rendering/navigation/session acceptance tests and a clear definition of native-engine scope |
 | Encryption and private storage | Not accepted | Crypto and encrypted storage helpers exist | End-to-end evidence for stored state, browser data, logs, downloads, and transport paths |
 | Web API production auth | Partial | Default hardcoded login removed; password-hash auth, process-local token revocation, session-policy reporting, and production fail-closed checks exist | Target secret-rotation evidence and shared revocation-store evidence |
-| Docker and release | Partial | Local verifier, release workflow, GHCR image, published-image smoke, local rollback smoke, and local Docker target manifest evidence exist | External target host/proxy, TLS, service/orchestrator hardening, and real OS backend evidence |
+| Docker and release | Partial | Local verifier, release workflow, GHCR image, published-image smoke, local rollback smoke, and local Docker target manifest evidence with service hardening exist | External target host/proxy, TLS, external service/orchestrator hardening, and real OS backend evidence |
 
 ## Demonstrable Workflows
 
@@ -52,7 +52,7 @@ The following areas are still completion work, not accepted production claims:
 
 - External/public target production host deployment has not been verified.
 - External target host/proxy logs and TLS boundary evidence are missing.
-- Local Docker target rollback, secret-rotation, shared-revocation, and host-network evidence exists; non-local orchestrator/service evidence is still missing.
+- Local Docker target rollback, secret-rotation, shared-revocation, host-network, and service-hardening evidence exists; non-local orchestrator/service evidence is still missing.
 - Real OS VPN/firewall backend execution evidence is missing.
 - Backend-dependent capabilities still require configured provider or target-host evidence tracked in the acceptance matrix.
 
