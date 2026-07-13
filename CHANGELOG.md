@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Prepared a current release image path for the `22d1102` deployment-evidence
+- Published the current release image path for the `a83c9dc` deployment-evidence
   tooling state.
 - Kept final Production Deployment Verified status gated on a real target
   evidence manifest.

@@ -309,9 +309,9 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - The deployment verifier now gates claim-marker regressions across current source, tests, examples, selected docs, README, and web/static surfaces; newly added surfaces still need to be added to the gate when they become part of accepted claims.
 - Platform capability differences are now documented through `thirstys_waterfall.get_platform_capabilities()` and `docs/operations/PLATFORM_CAPABILITIES.md`, but the report intentionally returns `production_accepted: false` until real OS-level VPN/firewall apply/rollback, privilege, service, and target-log evidence exists.
 - CI integration jobs still announce platform integration without installing all real OS-level VPN/firewall dependencies.
-- Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29138681694` passed on main for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
+- Full-repo Bandit is clean locally and in hosted CI; CodeQL run `29226577880` passed on main for commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
 - The deploy lock checks clean locally, but transitive dependency locking is limited to the current deployment requirements surface rather than a generated hash-locked lockfile.
-- Release workflow run `29138685612` passed for `v1.0.2` and commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
+- Release workflow run `29226584539` passed for `v1.0.3` and commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
 - The web UI no longer auto-logs in with `admin/admin`, increments fake privacy counters, or displays fake active VPN/encryption claims for rendered tabs; full native rendering remains incomplete.
 - The web browser-tabs API no longer fabricates tabs from local `system_state`, but it still requires an active configured browser runtime for tab listing and creation.
 - `VPNManager` no longer reports synthetic protocol endpoints as connected, but real VPN backend execution on supported operating systems still needs target evidence.
@@ -347,7 +347,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Secure tunnel no longer fabricates tunnel establishment without connected VPN evidence and a backend, but no real secure-tunnel backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
 - Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
-- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, and target evidence bundles now have a collector and validator; target rollback execution, production secrets rotation, target shared revocation-store proof, target host network policy, and target environment logs have still not been captured.
+- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass for `v1.0.3`, and target evidence bundles now have a collector and validator; target rollback execution, production secrets rotation, target shared revocation-store proof, target host network policy, and target environment logs have still not been captured.
 
 ## Safe Continuation Points
 
