@@ -1,6 +1,6 @@
 """Cloud Firewall implementation"""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 from .base import FirewallBase
 
 
@@ -14,8 +14,8 @@ class CloudFirewall(FirewallBase):
         super().__init__(config)
         self.distributed = config.get("distributed", True)
         self.cloud_backend = config.get("cloud_backend")
-        self._cloud_nodes = []
-        self._geo_rules = {}
+        self._cloud_nodes: List[Any] = []
+        self._geo_rules: Dict[str, Dict[str, Any]] = {}
         self._backend_status: Dict[str, Any] = {
             "status": "unavailable",
             "error": "Cloud firewall backend is not configured",

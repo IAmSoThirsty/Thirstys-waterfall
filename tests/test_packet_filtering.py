@@ -33,6 +33,9 @@ class TestPacketFilteringIpMatching(unittest.TestCase):
     def test_invalid_packet_ip_fails_closed(self):
         self.assertFalse(self.firewall._match_ip("not-an-ip", "10.0.0.0/8"))
 
+    def test_missing_packet_ip_fails_closed(self):
+        self.assertFalse(self.firewall._match_ip(None, "10.0.0.0/8"))
+
     def test_invalid_rule_ip_is_ignored(self):
         self.assertFalse(self.firewall._match_ip("10.1.2.3", "not-a-network"))
 

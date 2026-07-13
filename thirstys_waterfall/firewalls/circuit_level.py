@@ -14,7 +14,7 @@ class CircuitLevelGateway(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.proxy_timeout = config.get("proxy_timeout", 30)
-        self._sessions = {}
+        self._sessions: Dict[str, Dict[str, Any]] = {}
 
     def start(self):
         """Start circuit-level gateway"""

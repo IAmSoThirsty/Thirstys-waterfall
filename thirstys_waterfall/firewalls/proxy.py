@@ -13,8 +13,8 @@ class ProxyFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.cache_enabled = config.get("cache_enabled", False)
-        self._proxy_cache = {}
-        self._proxy_connections = {}
+        self._proxy_cache: Dict[str, Any] = {}
+        self._proxy_connections: Dict[str, Any] = {}
 
     def start(self):
         """Start proxy firewall"""

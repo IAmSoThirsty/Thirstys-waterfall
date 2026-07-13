@@ -1,6 +1,6 @@
 """Hardware Firewall implementation"""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 from .base import FirewallBase
 
 
@@ -14,7 +14,7 @@ class HardwareFirewall(FirewallBase):
         super().__init__(config)
         self.bypass_mode = config.get("bypass_mode", False)
         self.hardware_backend = config.get("hardware_backend")
-        self._hardware_rules = []
+        self._hardware_rules: List[Dict[str, Any]] = []
         self._backend_status: Dict[str, Any] = {
             "status": "unavailable",
             "error": "Hardware firewall backend is not configured",
