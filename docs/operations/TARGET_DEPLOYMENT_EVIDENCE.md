@@ -128,6 +128,71 @@ certificate evidence for HTTPS targets, and a non-wildcard CORS preflight match
 for the expected origin. Supply the resulting artifact to the bundle collector
 as `host_network_policy`.
 
+## Rollback Probe
+
+Run the rollback probe on the target host or deployment orchestrator after
+installing a known rollback candidate. Commands are JSON arrays and run with
+shell execution disabled:
+
+```powershell
+python scripts\probe_target_rollback_evidence.py `
+  --rollback-command '["docker","compose","up","-d","previous"]' `
+  --validation-command '["docker","compose","ps"]' `
+  --base-url https://prod-host-1.example `
+  --output artifacts\target-rollback.json
+```
+
+The probe exits non-zero unless rollback commands pass and either a validation
+command passes or the target health endpoint returns `200`. Supply the artifact
+as `target_rollback`.
+
+## Secret Rotation Probe
+
+Run the secret rotation probe after rotating the target administrator secret.
+Prefer environment variables for credential values:
+
+```powershell
+$env:THIRSTYS_TARGET_USERNAME = "operator"
+$env:THIRSTYS_TARGET_OLD_PASSWORD = "<old password>"
+$env:THIRSTYS_TARGET_NEW_PASSWORD = "<new password>"
+python scripts\probe_secret_rotation_evidence.py `
+  --base-url https://prod-host-1.example `
+  --rotation-command '["deployctl","rotate-secrets"]' `
+  --output artifacts\secret-rotation.json
+```
+
+The probe exits non-zero unless the old credentials are rejected and the new
+credentials receive an access token. Token-bearing response fields are redacted
+from the artifact. Supply the artifact as `secret_rotation`.
+
+## Platform Backend Probe
+
+Run the platform backend probe for production VPN/firewall claims that require
+real OS backend execution:
+
+```powershell
+python scripts\probe_platform_backend_evidence.py `
+  --backend windows-firewall `
+  --apply-command '["netsh","advfirewall","set","allprofiles","state","on"]' `
+  --verify-command '["netsh","advfirewall","show","allprofiles"]' `
+  --rollback-command '["netsh","advfirewall","reset"]' `
+  --output artifacts\platform-backend-execution.json
+```
+
+If a backend claim is intentionally narrowed out of production scope, attach the
+claim document instead:
+
+```powershell
+python scripts\probe_platform_backend_evidence.py `
+  --backend vpn `
+  --narrowed-claim-file docs\operations\PLATFORM_CAPABILITIES.md `
+  --output artifacts\platform-backend-execution.json
+```
+
+The probe exits non-zero unless apply and rollback commands pass, or a non-empty
+narrowed production claim file is attached. Supply the artifact as
+`platform_backend_execution`.
+
 ## Live Auth Probe
 
 Use the live probe against the deployed target to create the
