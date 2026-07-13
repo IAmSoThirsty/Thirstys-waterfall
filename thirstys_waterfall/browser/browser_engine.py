@@ -11,6 +11,7 @@ from .encrypted_navigation import (
     EncryptedNavigationHistory,
     LocalEncryptedHistorySearchBackend,
 )
+from .downloads import EncryptedDownloadBackend
 from .engine import FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 
@@ -25,7 +26,7 @@ class IncognitoBrowser:
     def __init__(self, config: Dict[str, Any], download_backend: Optional[Any] = None):
         self.config = config
         self.logger = logging.getLogger(__name__)
-        self.download_backend = download_backend
+        self.download_backend = None
 
         # Privacy settings
         self.incognito_mode = config.get("incognito_mode", True)
@@ -40,6 +41,16 @@ class IncognitoBrowser:
 
         # ENCRYPTION: Generate encryption key for all browser data
         self._cipher = Fernet(Fernet.generate_key())
+        if download_backend is not None:
+            self.download_backend = download_backend
+        elif config.get("download_storage_path"):
+            self.download_backend = EncryptedDownloadBackend(
+                config["download_storage_path"],
+                self._cipher,
+                allow_network=config.get("download_network_enabled", False),
+                timeout_seconds=config.get("download_timeout_seconds", 10.0),
+                max_bytes=config.get("download_max_bytes", 1024 * 1024),
+            )
 
         # Components
         self._tab_manager = TabManager(
@@ -399,6 +410,9 @@ class IncognitoBrowser:
             "ephemeral_session_snapshots": True,
             "engine_network_enabled": self.web_engine.fetch_policy.allow_network,
             "download_backend_configured": self.download_backend is not None,
+            "download_backend": (
+                type(self.download_backend).__name__ if self.download_backend else None
+            ),
             "navigation_search_backend_configured": search_backend_status[
                 "configured"
             ],
