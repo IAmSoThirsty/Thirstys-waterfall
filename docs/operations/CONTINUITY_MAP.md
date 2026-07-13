@@ -347,11 +347,11 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Secure tunnel no longer fabricates tunnel establishment without connected VPN evidence and a backend, but no real secure-tunnel backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
 - Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
-- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass for `v1.0.3`; a local Docker target manifest now validates published image pull/run, health/auth/logs, target rollback, secret rotation, shared revocation store, host network policy, and narrowed platform-backend evidence. External/public target logs, TLS/proxy boundary, service/orchestrator hardening, and real OS VPN/firewall backend execution still have not been captured.
+- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass for `v1.0.3`; a local Docker target manifest now validates published image pull/run, health/auth/logs, target rollback, secret rotation, shared revocation store, host network policy, service/orchestrator hardening, and narrowed platform-backend evidence. External/public target logs, TLS/proxy boundary, external service/orchestrator hardening, and real OS VPN/firewall backend execution still have not been captured.
 
 ## Safe Continuation Points
 
 1. Replace or downgrade remaining simulated implementation paths until the README claim matrix is green.
-2. Add external/public target logs, TLS/proxy boundary evidence, service/orchestrator hardening, and real OS backend evidence or narrowed production claims.
+2. Add external/public target logs, TLS/proxy boundary evidence, external service/orchestrator hardening, and real OS backend evidence or narrowed production claims.
 3. Prove end-to-end encryption for stored state, browser data, telemetry, downloads, transport paths, target logs, and any accepted post-quantum backend.
 4. Prove real OS VPN/firewall backend execution, privilege behavior, service setup, and rollback on Linux, Windows, and macOS, or narrow the README claims.

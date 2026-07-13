@@ -24,6 +24,7 @@ def _load_script(name: str):
 rollback = _load_script("probe_target_rollback_evidence")
 rotation = _load_script("probe_secret_rotation_evidence")
 platform_backend = _load_script("probe_platform_backend_evidence")
+service_hardening = _load_script("probe_service_orchestrator_evidence")
 common = _load_script("target_evidence_common")
 
 
@@ -211,3 +212,84 @@ def test_platform_backend_probe_accepts_narrowed_claim_file(tmp_path):
     )
 
     assert artifact["summary"]["passed"] is True
+
+
+def test_service_orchestrator_probe_accepts_hardened_compose_config(tmp_path):
+    compose_file = tmp_path / "docker-compose.yml"
+    dockerfile = tmp_path / "Dockerfile"
+    compose_file.write_text(
+        "\n".join(
+            [
+                "services:",
+                "  thirstys-waterfall:",
+                "    environment:",
+                "      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}",
+                "      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}",
+                "      - THIRSTYS_ADMIN_PASSWORD_HASH=${THIRSTYS_ADMIN_PASSWORD_HASH:?hash required}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    dockerfile.write_text("FROM python:3.11-slim\nUSER thirsty\n", encoding="utf-8")
+
+    artifact = service_hardening.run_probe(
+        compose_file=compose_file,
+        dockerfile=dockerfile,
+        service_name="thirstys-waterfall",
+        captured_at_utc="2026-07-13T04:00:00Z",
+        compose_config={
+            "services": {
+                "thirstys-waterfall": {
+                    "environment": {
+                        "THIRSTYS_ENV": "production",
+                        "DEBUG": "false",
+                        "THIRSTYS_ALLOW_DEMO_LOGIN": "false",
+                        "JWT_REVOCATION_DB_PATH": "/home/thirsty/.thirstys_waterfall/revoked_tokens.sqlite3",
+                    },
+                    "security_opt": ["no-new-privileges:true"],
+                    "cap_add": ["NET_ADMIN", "NET_RAW"],
+                    "healthcheck": {"test": ["CMD", "true"]},
+                    "restart": "unless-stopped",
+                    "deploy": {
+                        "resources": {
+                            "limits": {"cpus": "2.0", "memory": "2G"},
+                            "reservations": {"cpus": "0.5", "memory": "512M"},
+                        }
+                    },
+                    "volumes": [
+                        {
+                            "source": "thirstys_data",
+                            "target": "/home/thirsty/.thirstys_waterfall",
+                            "type": "volume",
+                        },
+                        {
+                            "source": "./config",
+                            "target": "/app/config",
+                            "type": "bind",
+                            "read_only": True,
+                        },
+                    ],
+                }
+            }
+        },
+    )
+
+    assert artifact["evidence_type"] == "service_orchestrator_hardening"
+    assert artifact["summary"]["passed"] is True
+
+
+def test_service_orchestrator_probe_fails_without_hardening(tmp_path):
+    compose_file = tmp_path / "docker-compose.yml"
+    dockerfile = tmp_path / "Dockerfile"
+    compose_file.write_text("services: {}\n", encoding="utf-8")
+    dockerfile.write_text("FROM python:3.11-slim\nUSER root\n", encoding="utf-8")
+
+    artifact = service_hardening.run_probe(
+        compose_file=compose_file,
+        dockerfile=dockerfile,
+        service_name="thirstys-waterfall",
+        captured_at_utc="2026-07-13T04:00:00Z",
+        compose_config={"services": {"thirstys-waterfall": {}}},
+    )
+
+    assert artifact["summary"]["passed"] is False

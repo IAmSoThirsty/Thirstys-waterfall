@@ -494,8 +494,8 @@ sudo systemctl status thirstys-waterfall  # Systemd
 - ✅ **Local Docker image build verified**: Container starts and passes health/auth smoke
 - ✅ **GitHub Release verified**: `v1.0.3` published with wheel and source artifacts
 - ✅ **GHCR image verified**: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3` published with digest `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`
-- ✅ **Local Docker target manifest verified**: published-image pull/run, health/auth/logs, shared revocation store, rollback, secret rotation, host network policy, and narrowed platform-backend evidence pass the strict manifest gate
-- ⚠️ **External/public target deployment not yet accepted**: public target host/proxy logs, TLS boundary evidence, service/orchestrator hardening, and real OS VPN/firewall backend evidence are still required before broader production claims
+- ✅ **Local Docker target manifest verified**: published-image pull/run, health/auth/logs, shared revocation store, rollback, secret rotation, host network policy, service/orchestrator hardening, and narrowed platform-backend evidence pass the strict manifest gate
+- ⚠️ **External/public target deployment not yet accepted**: public target host/proxy logs, TLS boundary evidence, external service/orchestrator hardening, and real OS VPN/firewall backend evidence are still required before broader production claims
 - ⚠️ **Platform backend support not yet accepted**: real VPN/firewall execution evidence is still required beyond availability tests
 
 📖 **[Deployment Verification Guide →](docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md)**
@@ -885,7 +885,7 @@ Feature-count and encryption-strength comparisons are not accepted Standard v3 e
 
 ### Production Readiness Status
 
-Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, CodeQL, production-mode secret/CORS startup checks, local wheel build, release wheel/source artifacts, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, release workflow Docker smoke, GHCR push, published image pull, published image container smoke, local container log capture, local Docker rollback smoke, and a local Docker target evidence manifest that passes the strict target-evidence gate. External/public Production Deployment Verified status still requires non-local target host/proxy logs, TLS boundary evidence, service/orchestrator hardening evidence, and platform proof for real VPN/firewall backend execution or explicitly narrowed claims.
+Current accepted evidence includes local tests, hosted Linux/Windows/macOS CI, CodeQL, production-mode secret/CORS startup checks, local wheel build, release wheel/source artifacts, full-repo Bandit, locked dependency vulnerability check, local web smoke, Docker Compose config validation, Docker image build, release workflow Docker smoke, GHCR push, published image pull, published image container smoke, local container log capture, local Docker rollback smoke, and a local Docker target evidence manifest that passes the strict target-evidence gate with service/orchestrator hardening evidence. External/public Production Deployment Verified status still requires non-local target host/proxy logs, TLS boundary evidence, external service/orchestrator hardening evidence, and platform proof for real VPN/firewall backend execution or explicitly narrowed claims.
 
 ### Proof of Implementation
 

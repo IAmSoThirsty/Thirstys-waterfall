@@ -51,6 +51,9 @@ the evidence folder and include the artifact SHA-256 digest.
   revocation store and revoked-token rejection works across workers.
 - `host_network_policy`: host firewall, exposed ports, CORS/origin, TLS/proxy,
   and network boundary evidence.
+- `service_orchestrator_hardening`: service manager or orchestrator restart,
+  health, resource, privilege, persistence, and read-only configuration
+  hardening evidence.
 - `platform_backend_execution`: real OS VPN/firewall backend apply/rollback or
   an explicit narrowed production claim that removes the unsupported backend.
 
@@ -77,6 +80,7 @@ python scripts\collect_target_deployment_evidence.py `
   --evidence secret_rotation=artifacts\secret-rotation.log `
   --evidence shared_revocation_store=artifacts\shared-revocation-store.log `
   --evidence host_network_policy=artifacts\host-network-policy.log `
+  --evidence service_orchestrator_hardening=artifacts\service-orchestrator-hardening.log `
   --evidence platform_backend_execution=artifacts\platform-backend-execution.log `
   --require-complete
 ```
@@ -127,6 +131,29 @@ listening-port output, host firewall policy command output, verified TLS
 certificate evidence for HTTPS targets, and a non-wildcard CORS preflight match
 for the expected origin. Supply the resulting artifact to the bundle collector
 as `host_network_policy`.
+
+## Service/Orchestrator Hardening Probe
+
+Run the service/orchestrator hardening probe against the deployment
+configuration used by the target. For Docker Compose deployments, the probe
+uses Docker Compose's normalized JSON config output and supplies only redacted
+placeholder values for required secret interpolation:
+
+```powershell
+python scripts\probe_service_orchestrator_evidence.py `
+  --compose-file docker-compose.yml `
+  --dockerfile Dockerfile `
+  --service thirstys-waterfall `
+  --output artifacts\service-orchestrator-hardening.json
+```
+
+The probe exits non-zero unless it captures a defined service, production-mode
+environment, required secret interpolation, non-root Dockerfile user,
+`no-new-privileges`, non-privileged container mode, explicit Linux
+capabilities, an orchestrator healthcheck, restart policy, resource limits and
+reservations, persistent JWT revocation storage, and a read-only configuration
+mount. Supply the resulting artifact to the bundle collector as
+`service_orchestrator_hardening`.
 
 ## Rollback Probe
 
