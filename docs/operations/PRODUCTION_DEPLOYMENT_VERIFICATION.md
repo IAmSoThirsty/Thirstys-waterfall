@@ -69,21 +69,22 @@ To smoke-test a release image that was already built by CI instead of rebuilding
 python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:<version>
 ```
 
-This mode is used by the release workflow so the Docker smoke covers the actual loaded release image tag. It was also run locally against the pulled release image `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2`.
+This mode is used by the release workflow so the Docker smoke covers the actual loaded release image tag. It was also run locally against the pulled release image `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3`.
 
 ## Release Evidence
 
-- Release workflow run: `29138685612`
-- Main CodeQL run: `29138681694`
-- Main CI run: `29138681714`
-- Commit: `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`
-- GitHub release: `v1.0.2`
-- Wheel asset: `thirstys_waterfall-1.0.2-py3-none-any.whl`, digest `sha256:9e2a06a2c3f4a33bc78edd389a47d6e720aac07fafbdda2e44bb6737e3724119`
-- Source asset: `thirstys_waterfall-1.0.2.tar.gz`, digest `sha256:689213e6cd8c339cfb349852ef972ce867c77b2254eae8846519884cc1e243e6`
-- GHCR image: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2`
-- GHCR digest: `sha256:4095d4d28f4d39aa9859783d2a9f170be919aba0435061f3d6ee9b3af95db059`
-- Published image pull: `docker pull ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2` succeeded.
-- Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed.
+- Release workflow run: `29226584539`
+- Main CodeQL run: `29226577880`
+- Main CI run: `29226577874`
+- Commit: `a83c9dc940d40409a5c9531864b07521d735b13b`
+- GitHub release: `v1.0.3`
+- Wheel asset: `thirstys_waterfall-1.0.3-py3-none-any.whl`, digest `sha256:b6dbcb244542f8c5ec3baa22b575c44a6cc8e2a4473a34bcce39a06dcc52ac66`
+- Source asset: `thirstys_waterfall-1.0.3.tar.gz`, digest `sha256:feda347d202f78dc3442a2329075228d77a272fad7b249040dedecb34b5c586d`
+- GHCR image: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3`
+- GHCR digest: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`
+- Published image pull: `docker pull ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3` succeeded.
+- Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed.
+- Target evidence fail-closed check: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` fails with `target deployment evidence is required; pass --target-evidence-manifest`.
 
 ## Deployment Inputs
 
@@ -198,9 +199,9 @@ Rotation checklist:
 
 ## Evidence Still Required For Full Production Deployment Verified
 
-- GitHub Actions run for the exact commit being deployed. Current release evidence: run `29138685612` for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
-- CodeQL/security workflow evidence for the exact commit being deployed. Current main evidence: CodeQL run `29138681694` passed for commit `8261b212e1c2d8ecb3ca8adccbb535f2ce30710a`.
-- Published image digest from the target registry. Current release evidence: `sha256:4095d4d28f4d39aa9859783d2a9f170be919aba0435061f3d6ee9b3af95db059`.
+- GitHub Actions run for the exact commit being deployed. Current release evidence: run `29226584539` for commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
+- CodeQL/security workflow evidence for the exact commit being deployed. Current main evidence: CodeQL run `29226577880` passed for commit `a83c9dc940d40409a5c9531864b07521d735b13b`.
+- Published image digest from the target registry. Current release evidence: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`.
 - Pull-and-run evidence using the published image, not only a local image. Current local published-image evidence exists; target-host pull/run evidence is still missing.
 - Rollback execution evidence on the target host or orchestrator, not only local Docker rollback smoke.
 - Production log capture from startup, health check, login smoke, and shutdown/rollback on the target host, not only local container log capture.

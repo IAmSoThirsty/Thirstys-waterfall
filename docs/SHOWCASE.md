@@ -9,7 +9,7 @@ For the active acceptance matrix, see `docs/operations/README_CLAIM_ACCEPTANCE.m
 - Local Standard v3 verifier passes with the enhanced Thirsty-Lang path.
 - Hosted CI passes on Linux, Windows, and macOS for Python 3.10 and 3.11.
 - CodeQL, Bandit, and locked dependency vulnerability checks pass in the recorded evidence.
-- Release workflow has published GitHub release and GHCR image evidence for `v1.0.2`.
+- Release workflow has published GitHub release and GHCR image evidence for `v1.0.3`.
 - Local published-image pull, health/auth smoke, log capture, and rollback smoke evidence exist.
 - The web UI no longer auto-logs in with demo credentials or displays fake active VPN/encryption state for rendered tabs.
 
