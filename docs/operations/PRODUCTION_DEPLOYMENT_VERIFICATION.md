@@ -101,6 +101,7 @@ Recommended production environment values:
 - `THIRSTY_WATERFALL_INIT_POLICY` if the default `INIT_PROTOCOL`-only policy is not sufficient.
 - `REDIS_URL` if rate limit state must persist across web workers or containers.
 - `ACCESS_LOG` and `ERROR_LOG` destinations if stdout/stderr collection is not handled by the runtime.
+- `JWT_REVOCATION_DB_PATH` set to a writable SQLite path shared by every API worker/container when more than one worker or host serves API traffic.
 
 Generate the admin password hash:
 
@@ -132,6 +133,7 @@ docker run --rm -p 18082:8080 `
   -e THIRSTYS_ADMIN_USERNAME=operator `
   -e THIRSTYS_ADMIN_PASSWORD_HASH="<generated-hash>" `
   -e THIRSTYS_ALLOW_DEMO_LOGIN=false `
+  -e JWT_REVOCATION_DB_PATH=/home/thirsty/.thirstys_waterfall/revoked_tokens.sqlite3 `
   -v "T:\00-Active\thirsty_lang_exploration_0754:/opt/thirsty-lang:ro" `
   thirstys-waterfall:codex-verify
 ```

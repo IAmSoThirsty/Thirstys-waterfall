@@ -46,7 +46,10 @@ import os
 import sys
 import json
 import logging
+import sqlite3
+import threading
 import traceback
+from contextlib import closing
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from functools import wraps
@@ -126,6 +129,7 @@ class Config:
     }
     DEMO_USERNAME = os.getenv("THIRSTYS_DEMO_USERNAME", "admin")
     DEMO_PASSWORD = os.getenv("THIRSTYS_DEMO_PASSWORD", "admin")
+    JWT_REVOCATION_DB_PATH = os.getenv("JWT_REVOCATION_DB_PATH")
 
     # Rate Limiting Configuration
     RATELIMIT_STORAGE_URL = os.getenv("REDIS_URL", "memory://")
@@ -224,6 +228,98 @@ limiter = Limiter(
 )
 
 
+class MemoryRevocationStore:
+    """Process-local JWT revocation store."""
+
+    name = "process_memory"
+    shared = False
+
+    def __init__(self, backing_set):
+        self._backing_set = backing_set
+
+    def revoke(self, jti: str, expires_at: Optional[int] = None) -> None:
+        self._backing_set.add(jti)
+
+    def is_revoked(self, jti: Optional[str]) -> bool:
+        return bool(jti and jti in self._backing_set)
+
+    def clear(self) -> None:
+        self._backing_set.clear()
+
+
+class SQLiteRevocationStore:
+    """SQLite-backed JWT revocation store for shared worker deployments."""
+
+    name = "sqlite"
+    shared = True
+
+    def __init__(self, db_path: str):
+        self.db_path = db_path
+        self._lock = threading.Lock()
+        db_parent = os.path.dirname(os.path.abspath(db_path))
+        if db_parent:
+            os.makedirs(db_parent, exist_ok=True)
+        self._initialize()
+
+    def _connect(self):
+        return sqlite3.connect(self.db_path, timeout=5)
+
+    def _initialize(self) -> None:
+        with self._lock, closing(self._connect()) as connection:
+            with connection:
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS revoked_tokens (
+                        jti TEXT PRIMARY KEY,
+                        revoked_at INTEGER NOT NULL,
+                        expires_at INTEGER
+                    )
+                    """
+                )
+
+    def revoke(self, jti: str, expires_at: Optional[int] = None) -> None:
+        with self._lock, closing(self._connect()) as connection:
+            with connection:
+                connection.execute(
+                    """
+                    INSERT OR REPLACE INTO revoked_tokens (jti, revoked_at, expires_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (jti, int(datetime.now().timestamp()), expires_at),
+                )
+
+    def is_revoked(self, jti: Optional[str]) -> bool:
+        if not jti:
+            return False
+        now = int(datetime.now().timestamp())
+        with self._lock, closing(self._connect()) as connection:
+            with connection:
+                connection.execute(
+                    "DELETE FROM revoked_tokens WHERE expires_at IS NOT NULL AND expires_at < ?",
+                    (now,),
+                )
+                cursor = connection.execute(
+                    "SELECT 1 FROM revoked_tokens WHERE jti = ? LIMIT 1",
+                    (jti,),
+                )
+                return cursor.fetchone() is not None
+
+    def clear(self) -> None:
+        with self._lock, closing(self._connect()) as connection:
+            with connection:
+                connection.execute("DELETE FROM revoked_tokens")
+
+
+def create_revocation_store():
+    """Create the configured JWT revocation store."""
+    if Config.JWT_REVOCATION_DB_PATH:
+        return SQLiteRevocationStore(Config.JWT_REVOCATION_DB_PATH)
+    return MemoryRevocationStore(revoked_token_jtis)
+
+
+revocation_store = create_revocation_store()
+
+
 def get_session_policy() -> Dict[str, Any]:
     """Return current JWT session policy without exposing secrets."""
     return {
@@ -234,15 +330,17 @@ def get_session_policy() -> Dict[str, Any]:
             Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()
         ),
         "token_revocation_enabled": True,
-        "revocation_store": "process_memory",
+        "revocation_store": revocation_store.name,
+        "revocation_store_shared": revocation_store.shared,
         "revocation_store_accepted_for_target": False,
+        "revocation_store_acceptance_requires_target_evidence": True,
     }
 
 
 @jwt.token_in_blocklist_loader
 def is_token_revoked(jwt_header: Dict[str, Any], jwt_payload: Dict[str, Any]) -> bool:
-    """Reject JWTs whose JTI has been revoked in this process."""
-    return jwt_payload.get("jti") in revoked_token_jtis
+    """Reject JWTs whose JTI has been revoked."""
+    return revocation_store.is_revoked(jwt_payload.get("jti"))
 
 
 @jwt.revoked_token_loader
@@ -786,9 +884,9 @@ def login():
 @app.route("/api/auth/logout", methods=["POST"])
 @jwt_required(verify_type=False)
 def logout():
-    """Revoke the current access or refresh token for this process."""
+    """Revoke the current access or refresh token."""
     token = get_jwt()
-    revoked_token_jtis.add(token["jti"])
+    revocation_store.revoke(token["jti"], token.get("exp"))
     return (
         jsonify(
             {

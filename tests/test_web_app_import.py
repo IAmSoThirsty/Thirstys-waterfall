@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -115,6 +116,67 @@ class TestWebAppImport(unittest.TestCase):
         self.assertEqual(status_payload["error"], "Token has been revoked")
         app_module.revoked_token_jtis.clear()
 
+    def test_sqlite_revocation_store_is_shared_between_instances(self):
+        app_module = importlib.import_module("web.app")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path = str(Path(temp_dir) / "revoked.sqlite3")
+            first_store = app_module.SQLiteRevocationStore(db_path)
+            second_store = app_module.SQLiteRevocationStore(db_path)
+
+            first_store.revoke("shared-jti", 4102444800)
+
+            self.assertTrue(second_store.is_revoked("shared-jti"))
+            self.assertTrue(first_store.shared)
+            self.assertEqual(first_store.name, "sqlite")
+
+    def test_session_policy_reports_configured_shared_revocation_store(self):
+        app_module = importlib.import_module("web.app")
+        original_store = app_module.revocation_store
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                app_module.revocation_store = app_module.SQLiteRevocationStore(
+                    str(Path(temp_dir) / "revoked.sqlite3")
+                )
+                client = app_module.app.test_client()
+
+                with app_module.app.app_context():
+                    token = app_module.create_access_token(identity="operator")
+
+                response = client.get(
+                    "/api/auth/session-policy",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                payload = response.get_json()
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(payload["session_policy"]["revocation_store"], "sqlite")
+                self.assertTrue(payload["session_policy"]["revocation_store_shared"])
+                self.assertFalse(
+                    payload["session_policy"]["revocation_store_accepted_for_target"]
+                )
+                self.assertTrue(
+                    payload["session_policy"][
+                        "revocation_store_acceptance_requires_target_evidence"
+                    ]
+                )
+                logout_response = client.post(
+                    "/api/auth/logout",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                status_response = client.get(
+                    "/api/system/status",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+                self.assertEqual(logout_response.status_code, 200)
+                self.assertTrue(logout_response.get_json()["revoked"])
+                self.assertEqual(status_response.status_code, 401)
+                self.assertEqual(
+                    status_response.get_json()["error"], "Token has been revoked"
+                )
+            finally:
+                app_module.revocation_store = original_store
+
     def test_session_policy_endpoint_reports_limited_revocation_scope(self):
         app_module = importlib.import_module("web.app")
         client = app_module.app.test_client()
@@ -131,6 +193,7 @@ class TestWebAppImport(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["user"], "operator")
         self.assertEqual(payload["session_policy"]["revocation_store"], "process_memory")
+        self.assertFalse(payload["session_policy"]["revocation_store_shared"])
         self.assertFalse(
             payload["session_policy"]["revocation_store_accepted_for_target"]
         )
