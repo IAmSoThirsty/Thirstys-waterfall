@@ -97,6 +97,12 @@ class TestVPNManagerBackendConnections(unittest.TestCase):
         self.assertFalse(status["connected"])
         self.assertFalse(status["backend_available"])
 
+    def test_current_ip_fails_closed_for_non_string_endpoint(self):
+        manager = self.make_manager()
+        manager._current_route = [{"endpoint": 1234}]
+
+        self.assertIsNone(manager.get_current_ip())
+
 
 if __name__ == "__main__":
     unittest.main()
