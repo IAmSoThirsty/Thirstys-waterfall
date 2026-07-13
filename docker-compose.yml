@@ -26,6 +26,7 @@ services:
       - THIRSTYS_ADMIN_USERNAME=${THIRSTYS_ADMIN_USERNAME:?THIRSTYS_ADMIN_USERNAME is required}
       - THIRSTYS_ADMIN_PASSWORD_HASH=${THIRSTYS_ADMIN_PASSWORD_HASH:?THIRSTYS_ADMIN_PASSWORD_HASH is required}
       - THIRSTYS_ALLOW_DEMO_LOGIN=false
+      - JWT_REVOCATION_DB_PATH=/home/thirsty/.thirstys_waterfall/revoked_tokens.sqlite3
       - CORS_ORIGINS=${CORS_ORIGINS:?CORS_ORIGINS is required}
 
     # Environment file for secrets

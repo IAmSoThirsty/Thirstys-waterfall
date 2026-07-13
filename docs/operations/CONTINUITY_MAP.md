@@ -300,6 +300,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - The main production verifier now accepts `--target-evidence-manifest` and `--require-target-evidence`, so target-host acceptance can fail closed when the required evidence bundle is missing.
 - Added a configured local browser download backend that stores downloaded bytes as Fernet ciphertext while keeping network downloads disabled by default unless explicitly enabled.
 - Privacy auditor local event storage now keeps encrypted audit records internally and decrypts them only for caller access.
+- Web API token revocation now supports a configured SQLite revocation store through `JWT_REVOCATION_DB_PATH`, while target acceptance still requires evidence that every worker/container uses the same store.
 
 ## Known Current Problems
 
@@ -345,7 +346,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Secure tunnel no longer fabricates tunnel establishment without connected VPN evidence and a backend, but no real secure-tunnel backend is bundled or configured.
 - Media downloader no longer fabricates completed downloads without a backend, but no real media download backend is bundled or configured.
 - Format converter no longer fabricates completed conversions without a backend, but no real media conversion backend is bundled or configured.
-- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, and target evidence bundles now have a validator; target rollback execution, production secrets rotation, target host network policy, and target environment logs have still not been captured.
+- Docker build, container health/auth/log smoke, local rollback smoke, production-mode secret/CORS startup checks, GHCR push, published image pull, and published-image local rollback smoke now pass, and target evidence bundles now have a validator; target rollback execution, production secrets rotation, target shared revocation-store proof, target host network policy, and target environment logs have still not been captured.
 
 ## Safe Continuation Points
 
