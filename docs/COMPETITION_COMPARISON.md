@@ -21,7 +21,7 @@ The acceptance source of truth is `docs/operations/README_CLAIM_ACCEPTANCE.md`.
 | Firewall orchestration | Partial | Eight categories represented in code and backend tests; fail-closed web status behavior | Real rule apply/rollback evidence per supported platform |
 | Encryption and storage | Not accepted | Crypto helpers and encrypted storage components | End-to-end data-path evidence for storage, browser state, logs, downloads, and transport |
 | Web API production auth | Partial | Default demo login removed; configured password-hash auth and production startup guards exist | Operator setup, token/session policy, and target secret-rotation evidence |
-| Release and image pipeline | Partial | Release `v1.0.3`, GHCR image digest, hosted CI, security scans, local published-image smoke | Target deployment, target logs, rollback, and network policy evidence |
+| Release and image pipeline | Partial | Release `v1.0.3`, GHCR image digest, hosted CI, security scans, local published-image smoke, local Docker target manifest | External target/proxy logs, TLS boundary, service hardening, and real OS backend evidence |
 
 ## Category Comparison
 
@@ -36,7 +36,7 @@ The acceptance source of truth is `docs/operations/README_CLAIM_ACCEPTANCE.md`.
 
 ## What Is Already Stronger Than Before
 
-- Public release and image evidence now exist for `v1.0.3`.
+- Public release, image, and local Docker target manifest evidence now exist for `v1.0.3`.
 - The release pipeline runs hard checks instead of silently swallowing security or syntax failures.
 - The web API no longer returns fabricated VPN success responses when the service reports failure.
 - The web UI no longer embeds the default `admin/admin` login flow.
@@ -47,7 +47,7 @@ The acceptance source of truth is `docs/operations/README_CLAIM_ACCEPTANCE.md`.
 Until the acceptance matrix is green, the repository should not claim:
 
 - Full production readiness.
-- Target-host deployment verification.
+- External/public target-host deployment verification.
 - Real OS VPN/firewall execution across supported platforms.
 - Total encryption of all browser, network, log, download, and storage data paths.
 - Complete native browser rendering acceptance.
