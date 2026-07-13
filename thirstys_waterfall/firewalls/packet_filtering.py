@@ -1,7 +1,7 @@
 """Packet-Filtering Firewall implementation"""
 
 import ipaddress
-from typing import Dict, Any
+from typing import Any, Dict, List, Optional
 from .base import FirewallBase
 
 
@@ -14,7 +14,7 @@ class PacketFilteringFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.default_policy = config.get("default_policy", "deny")
-        self._packet_rules = []
+        self._packet_rules: List[Dict[str, Any]] = []
 
     def start(self):
         """Start packet filtering"""
@@ -116,8 +116,11 @@ class PacketFilteringFirewall(FirewallBase):
 
         return True
 
-    def _match_ip(self, ip: str, rule_ips) -> bool:
+    def _match_ip(self, ip: Optional[str], rule_ips: Any) -> bool:
         """Match IP address against rule"""
+        if not isinstance(ip, str):
+            return False
+
         if isinstance(rule_ips, str):
             rule_ips = [rule_ips]
 

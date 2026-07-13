@@ -13,7 +13,7 @@ class SoftwareFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.user_space = config.get("user_space", True)
-        self._process_rules = {}
+        self._process_rules: Dict[str, Dict[str, Any]] = {}
 
     def start(self):
         """Start software firewall"""

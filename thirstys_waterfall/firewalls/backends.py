@@ -9,13 +9,20 @@ import subprocess  # nosec B404
 import platform
 import logging
 import shutil
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from abc import ABC, abstractmethod
 
 
 def _command_path(command: str) -> Optional[str]:
     """Resolve an executable path without invoking a shell."""
     return shutil.which(command)
+
+
+def _decode_subprocess_output(output: Optional[Union[bytes, str]]) -> str:
+    """Normalize subprocess diagnostics for logging on every platform."""
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output or ""
 
 
 class FirewallBackend(ABC):
@@ -26,7 +33,7 @@ class FirewallBackend(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.active = False
         self.platform = platform.system()
-        self.rules = []
+        self.rules: List[Dict[str, Any]] = []
 
     @abstractmethod
     def initialize(self) -> bool:
@@ -95,7 +102,10 @@ class NftablesBackend(FirewallBackend):
             result = subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             if result.returncode not in [0, 1]:  # 1 = already exists
-                self.logger.error(f"Failed to create nftables table: {result.stderr}")
+                self.logger.error(
+                    "Failed to create nftables table: %s",
+                    _decode_subprocess_output(result.stderr),
+                )
                 return False
 
             # Create chain
@@ -120,7 +130,10 @@ class NftablesBackend(FirewallBackend):
             result = subprocess.run(cmd, capture_output=True, timeout=10)  # nosec B603
 
             if result.returncode not in [0, 1]:
-                self.logger.error(f"Failed to create nftables chain: {result.stderr}")
+                self.logger.error(
+                    "Failed to create nftables chain: %s",
+                    _decode_subprocess_output(result.stderr),
+                )
                 return False
 
             self.logger.info("nftables initialized successfully")
@@ -584,7 +597,10 @@ class PFBackend(FirewallBackend):
                 self.logger.info(f"PF rule added: {rule_id}")
                 return True
             else:
-                self.logger.error(f"Failed to add PF rule: {result.stderr}")
+                self.logger.error(
+                    "Failed to add PF rule: %s",
+                    _decode_subprocess_output(result.stderr),
+                )
                 self.rules = [r for r in self.rules if r["id"] != rule_id]
                 return False
 
@@ -655,7 +671,9 @@ class FirewallBackendFactory:
     """Factory for creating platform-specific firewall backends"""
 
     @staticmethod
-    def create_backend(config: Dict[str, Any] = None) -> Optional[FirewallBackend]:
+    def create_backend(
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Optional[FirewallBackend]:
         """
         Create appropriate firewall backend for current platform
 
@@ -671,27 +689,27 @@ class FirewallBackendFactory:
         system = platform.system()
 
         if system == "Linux":
-            backend = NftablesBackend(config)
-            if backend.check_availability():
-                return backend
+            nft_backend = NftablesBackend(config)
+            if nft_backend.check_availability():
+                return nft_backend
             # Could fallback to iptables here
 
         elif system == "Windows":
-            backend = WindowsFirewallBackend(config)
-            if backend.check_availability():
-                return backend
+            windows_backend = WindowsFirewallBackend(config)
+            if windows_backend.check_availability():
+                return windows_backend
 
         elif system == "Darwin":
-            backend = PFBackend(config)
-            if backend.check_availability():
-                return backend
+            pf_backend = PFBackend(config)
+            if pf_backend.check_availability():
+                return pf_backend
 
         return None
 
     @staticmethod
     def get_available_backends() -> List[str]:
         """Get list of available firewall backends on this system"""
-        available = []
+        available: List[str] = []
         system = platform.system()
 
         if system == "Linux":

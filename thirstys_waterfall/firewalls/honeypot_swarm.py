@@ -118,7 +118,7 @@ class ThirstysHoneypotSwarmDefense:
 
         # Collective intelligence
         self.network_threat_score = 0.0
-        self.global_decoy_effectiveness = {}
+        self.global_decoy_effectiveness: Dict[str, float] = {}
 
         # Initialize base decoys
         self._deploy_base_decoys()

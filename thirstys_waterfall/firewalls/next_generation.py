@@ -1,6 +1,6 @@
 """Next-Generation Firewall with AI-based threat detection"""
 
-from typing import Dict, Any
+from typing import Any, Dict, Set
 import hashlib
 from .base import FirewallBase
 
@@ -14,8 +14,8 @@ class NextGenerationFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.ai_detection = config.get("ai_detection", True)
-        self._threat_signatures = set()
-        self._anomaly_baseline = {}
+        self._threat_signatures: Set[str] = set()
+        self._anomaly_baseline: Dict[Any, Dict[str, Any]] = {}
         self._load_threat_signatures()
 
     def start(self):

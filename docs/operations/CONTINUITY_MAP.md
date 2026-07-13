@@ -496,3 +496,38 @@ with the VPN/firewall backend contracts exposed by the pinned analyzer.
 ### Safe To Continue
 
 Yes. Continue with the firewall package as the next explicit type-check slice.
+
+## 2026-07-13 Firewall Runtime Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 41 explicit files, adding all 13 firewall
+  package modules to the 28-file production-tooling, core-runtime, and VPN
+  foundation.
+- Firewall rule, session, cache, backend, and evidence collections now have
+  concrete contracts.
+- Byte-oriented nftables and PF subprocess diagnostics are decoded as UTF-8
+  with replacement before logging.
+- Packet filtering now explicitly fails closed when a packet IP is absent or
+  not a string.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 41 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 41 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_firewall_backends.py tests\test_firewall_hardware_cloud_evidence.py tests\test_packet_filtering.py -q`: 51 passed.
+- Full-repository Flake8: passed with zero findings.
+
+### Known Failures And Risks
+
+- Type acceptance does not prove privileged OS firewall execution. Real apply,
+  enforcement, service, privilege, and rollback evidence is still required on
+  each claimed platform.
+- The remaining browser, privacy, storage, security, web, and orchestration
+  runtime modules are not yet fully enrolled in the hard mypy gate.
+
+### Safe To Continue
+
+Yes. Measure and enroll the next bounded runtime slice without broadening type
+acceptance beyond files that pass both supported mypy versions.

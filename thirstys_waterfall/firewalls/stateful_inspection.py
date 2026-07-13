@@ -14,7 +14,7 @@ class StatefulInspectionFirewall(FirewallBase):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.connection_timeout = config.get("connection_timeout", 3600)
-        self._connection_table = {}
+        self._connection_table: Dict[str, Dict[str, Any]] = {}
 
     def start(self):
         """Start stateful inspection"""

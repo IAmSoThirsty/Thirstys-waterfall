@@ -1,7 +1,7 @@
 """Base firewall interface for all firewall types"""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict, List
 import logging
 
 
@@ -13,7 +13,7 @@ class FirewallBase(ABC):
         self.enabled = config.get("enabled", True)
         self.logger = logging.getLogger(self.__class__.__name__)
         self._active = False
-        self._rules = []
+        self._rules: List[Dict[str, Any]] = []
         self._statistics = {
             "packets_inspected": 0,
             "packets_allowed": 0,
