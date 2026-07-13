@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-07-13
+
+### Added
+
+- Added Standard v3 target-host evidence probes for host network policy,
+  rollback execution, secret rotation, and platform backend execution.
+- Added bounded JSON artifact capture for the remaining required target
+  evidence types.
+
+### Changed
+
+- Prepared a current release image path for the `22d1102` deployment-evidence
+  tooling state.
+- Kept final Production Deployment Verified status gated on a real target
+  evidence manifest.
+
 ## [1.0.2] - 2026-07-11
 
 ### Changed
