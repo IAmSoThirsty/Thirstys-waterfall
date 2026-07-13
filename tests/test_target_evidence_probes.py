@@ -2,8 +2,11 @@
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -30,6 +33,22 @@ common = _load_script("target_evidence_common")
 
 def _passing_command(args, timeout):
     return common.CommandResult(args, 0, "ok\n", "")
+
+
+@pytest.mark.parametrize("module", [common, service_hardening])
+def test_probe_command_timeout_decodes_partial_byte_output(monkeypatch, module):
+    def time_out(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=["probe"], timeout=1, output=b"partial output", stderr=b"failure"
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", time_out)
+
+    result = module.run_command(["probe"], timeout=1)
+
+    assert result.returncode == 124
+    assert result.stdout == "partial output"
+    assert result.stderr == "failure\ncommand timed out"
 
 
 def test_target_rollback_probe_requires_execution_and_validation():

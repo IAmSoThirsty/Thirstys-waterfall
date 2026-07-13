@@ -24,6 +24,8 @@ from werkzeug.security import generate_password_hash
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_TEST_TIMEOUT_SECONDS = 480
+SUBPROCESS_ENCODING = "utf-8"
 SENSITIVE_ENV_NAMES = {
     "SECRET_KEY",
     "JWT_SECRET_KEY",
@@ -70,6 +72,8 @@ def run(cmd: list[str], *, timeout: int = 120, env: dict[str, str] | None = None
         cwd=ROOT,
         env=env,
         text=True,
+        encoding=SUBPROCESS_ENCODING,
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         timeout=timeout,
@@ -172,6 +176,8 @@ def smoke_local_web(thirsty_lang_path: str | None) -> None:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        encoding=SUBPROCESS_ENCODING,
+        errors="replace",
     )
     try:
         health = wait_for_health(port, "thirsty-lang" if thirsty_lang_path else None)
@@ -261,6 +267,8 @@ def docker_logs(name: str, *, tail: str = "120") -> str:
         ["docker", "logs", name, "--tail", tail],
         cwd=ROOT,
         text=True,
+        encoding=SUBPROCESS_ENCODING,
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     ).stdout
@@ -288,7 +296,13 @@ def run_smoke_container(
     ]
     print(f"\n$ docker {redacted_command(cmd)}", flush=True)
     try:
-        subprocess.check_output(["docker", *cmd], cwd=ROOT, text=True)
+        subprocess.check_output(
+            ["docker", *cmd],
+            cwd=ROOT,
+            text=True,
+            encoding=SUBPROCESS_ENCODING,
+            errors="replace",
+        )
     except subprocess.CalledProcessError as exc:
         raise SystemExit(
             f"Command failed with exit code {exc.returncode}: docker {redacted_command(cmd)}"
@@ -367,6 +381,8 @@ def container_exists(name: str) -> bool:
         ["docker", "ps", "-a", "--filter", f"name={name}", "--format", "{{.Names}}"],
         cwd=ROOT,
         text=True,
+        encoding=SUBPROCESS_ENCODING,
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
     )
@@ -445,8 +461,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Fail closed unless --target-evidence-manifest is provided.",
     )
     parser.add_argument("--skip-tests", action="store_true")
+    parser.add_argument(
+        "--test-timeout",
+        type=int,
+        default=DEFAULT_TEST_TIMEOUT_SECONDS,
+        help="Maximum seconds allowed for the complete pytest suite.",
+    )
     args = parser.parse_args(argv)
 
+    if args.test_timeout <= 0:
+        raise SystemExit("--test-timeout must be a positive integer")
     if args.thirsty_lang_path and not Path(args.thirsty_lang_path).exists():
         raise SystemExit(f"THIRSTY_LANG_PATH does not exist: {args.thirsty_lang_path}")
     if args.require_target_evidence and args.target_evidence_manifest is None:
@@ -497,11 +521,26 @@ def main(argv: list[str] | None = None) -> int:
         ]
     )
     run([sys.executable, "-m", "compileall", "-q", "scripts", "thirstys_waterfall", "tests", "web"])
-    run(["flake8", "scripts/", "thirstys_waterfall/", "web/", "tests/", "--count", "--select=E9,F63,F7,F82", "--show-source", "--statistics"])
+    run(
+        [
+            "flake8",
+            "scripts/",
+            "thirstys_waterfall/",
+            "web/",
+            "tests/",
+            "--count",
+            "--max-line-length=127",
+            "--statistics",
+        ]
+    )
+    run([sys.executable, "-m", "mypy"])
     run(["bandit", "-r", "thirstys_waterfall/", "-q"])
     run(["safety", "check", "-r", "requirements-deploy.lock", "--json"])
     if not args.skip_tests:
-        run([sys.executable, "-m", "pytest", "-q"], timeout=240)
+        run(
+            [sys.executable, "-m", "pytest", "-q"],
+            timeout=args.test_timeout,
+        )
     run([sys.executable, "-m", "pip", "wheel", ".", "--no-deps", "--no-build-isolation", "-w", "..\\wheelhouse"], timeout=180)
     smoke_local_web(args.thirsty_lang_path)
 

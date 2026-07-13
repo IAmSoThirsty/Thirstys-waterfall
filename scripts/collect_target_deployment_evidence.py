@@ -36,8 +36,14 @@ REQUIRED_PROOF = {
     "target_rollback": "rollback executed on the target host or orchestrator",
     "secret_rotation": "target secrets rotated and old credentials rejected",
     "shared_revocation_store": "every API worker/container uses the same JWT revocation store",
-    "host_network_policy": "host firewall, exposed ports, CORS/origin, TLS/proxy, and boundary evidence",
-    "service_orchestrator_hardening": "service manager or orchestrator restart, health, resource, privilege, and persistence hardening",
+    "host_network_policy": (
+        "host firewall, exposed ports, CORS/origin, TLS/proxy, and boundary "
+        "evidence"
+    ),
+    "service_orchestrator_hardening": (
+        "service manager or orchestrator restart, health, resource, privilege, "
+        "and persistence hardening"
+    ),
     "platform_backend_execution": "real OS VPN/firewall backend apply/rollback or narrowed production claim",
 }
 
@@ -98,7 +104,7 @@ def target_addresses() -> list[str]:
     except OSError:
         return []
     for info in infos:
-        address = info[4][0]
+        address = str(info[4][0])
         if address:
             addresses.add(address)
     return sorted(addresses)

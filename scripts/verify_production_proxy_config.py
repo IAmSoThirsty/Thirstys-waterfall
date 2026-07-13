@@ -82,11 +82,21 @@ def run_command(
             stderr=completed.stderr,
         )
     except subprocess.TimeoutExpired as exc:
+        stdout = (
+            exc.stdout.decode("utf-8", errors="replace")
+            if isinstance(exc.stdout, bytes)
+            else exc.stdout or ""
+        )
+        stderr = (
+            exc.stderr.decode("utf-8", errors="replace")
+            if isinstance(exc.stderr, bytes)
+            else exc.stderr or ""
+        )
         return CommandResult(
             args=args,
             returncode=124,
-            stdout=exc.stdout or "",
-            stderr=(exc.stderr or "") + "\ncommand timed out",
+            stdout=stdout,
+            stderr=stderr + "\ncommand timed out",
         )
     except OSError as exc:
         return CommandResult(args=args, returncode=1, stdout="", stderr=str(exc))

@@ -158,11 +158,21 @@ def run_command(args: list[str], timeout: int = 120) -> CommandResult:
             stderr=completed.stderr,
         )
     except subprocess.TimeoutExpired as exc:
+        stdout = (
+            exc.stdout.decode("utf-8", errors="replace")
+            if isinstance(exc.stdout, bytes)
+            else exc.stdout or ""
+        )
+        stderr = (
+            exc.stderr.decode("utf-8", errors="replace")
+            if isinstance(exc.stderr, bytes)
+            else exc.stderr or ""
+        )
         return CommandResult(
             args=args,
             returncode=124,
-            stdout=exc.stdout or "",
-            stderr=(exc.stderr or "") + "\ncommand timed out",
+            stdout=stdout,
+            stderr=stderr + "\ncommand timed out",
         )
 
 
@@ -425,9 +435,13 @@ def run_probe(
     inspect_data = (
         parse_body(inspect.stdout.strip()) if inspect.stdout else None
     )
-    repo_digests = []
+    repo_digests: list[str] = []
     if isinstance(inspect_data, dict):
-        repo_digests = inspect_data.get("RepoDigests") or []
+        raw_repo_digests = inspect_data.get("RepoDigests")
+        if isinstance(raw_repo_digests, list):
+            repo_digests = [
+                digest for digest in raw_repo_digests if isinstance(digest, str)
+            ]
     digest_seen = any(image_digest in digest for digest in repo_digests)
     checks.append(
         CheckResult(

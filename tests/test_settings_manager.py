@@ -5,6 +5,7 @@ import unittest
 from cryptography.fernet import Fernet
 
 from thirstys_waterfall.settings import SettingsManager
+from thirstys_waterfall.settings.qa_system import QASystem
 
 
 class LocalEncryptionHelper:
@@ -57,6 +58,18 @@ class TestSettingsManagerEncryptionEvidence(unittest.TestCase):
         self.assertTrue(status["local_helper_encrypted"])
         self.assertFalse(status["encryption_accepted"])
         self.assertIsNone(status["encryption_layers"])
+
+
+class TestQASystemClaimEvidence(unittest.TestCase):
+    def test_security_answers_do_not_promise_unproven_backend_results(self):
+        answers = " ".join(
+            item["answer"] for item in QASystem(None).qa_database
+        ).lower()
+
+        self.assertNotIn("100% guaranteed", answers)
+        self.assertNotIn("eliminates all", answers)
+        self.assertIn("backend", answers)
+        self.assertIn("evidence", answers)
 
 
 if __name__ == "__main__":

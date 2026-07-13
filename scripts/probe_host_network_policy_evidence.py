@@ -184,7 +184,7 @@ def capture_tls(
         with context.wrap_socket(
             raw_socket, server_hostname=host
         ) as tls_socket:
-            cert = tls_socket.getpeercert()
+            cert = tls_socket.getpeercert() or {}
             return {
                 "version": tls_socket.version(),
                 "cipher": tls_socket.cipher(),

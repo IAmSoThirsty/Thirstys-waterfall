@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -115,3 +116,18 @@ def test_verify_config_uses_compose_json_output(tmp_path):
     )
 
     assert report["status"] == "passed"
+
+
+def test_proxy_command_timeout_decodes_partial_byte_output(monkeypatch):
+    def time_out(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=["docker"], timeout=1, output=b"partial output", stderr=b"failure"
+        )
+
+    monkeypatch.setattr(proxy_config.subprocess, "run", time_out)
+
+    result = proxy_config.run_command(["docker"], timeout=1)
+
+    assert result.returncode == 124
+    assert result.stdout == "partial output"
+    assert result.stderr == "failure\ncommand timed out"

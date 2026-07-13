@@ -34,11 +34,17 @@ Run the full local gate from the repository root:
 python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
 ```
 
+The complete pytest subprocess has a bounded 480-second default. Use
+`--test-timeout <seconds>` only when a slower target requires a larger explicit
+bound; nonpositive values fail closed.
+
 What this proves locally:
 
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
-- Flake8 syntax/undefined-name gate passes.
+- Full Flake8 lint gate passes with a 127-character line limit.
+- Mypy passes for the production deployment and target-evidence scripts. The
+  broader application runtime is not yet included in this typed surface.
 - Full-repo Bandit passes.
 - Locked deployment dependency vulnerability check passes.
 - Full pytest suite passes.
@@ -252,4 +258,6 @@ Rotation checklist:
 - Service manager/orchestrator hardening evidence for the chosen external target. Current local Docker service-hardening evidence exists.
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
+- Whole-runtime type-check adoption. The current hard mypy gate covers the
+  production deployment and target-evidence scripts only.
 - External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.

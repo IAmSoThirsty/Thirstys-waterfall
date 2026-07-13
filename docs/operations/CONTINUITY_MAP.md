@@ -6,13 +6,13 @@ Repo: `C:\Users\Quencher\Documents\Codex\2026-07-09\iamsothirsty-thirstys-waterf
 
 Remote: `https://github.com/IAmSoThirsty/Thirstys-waterfall.git`
 
-Branch: `main`
+Branch: `main` integration target; current work branch `harden/production-lint-gate`
 
-Baseline HEAD: `0158ec8a114c137cc14d30c6e3a777a95bf2d15f`
+Baseline HEAD: `176398bfce893abd8607ba578c744eade703c3da`
 
 Local enhanced Thirsty-Lang source: `T:\00-Active\thirsty_lang_exploration_0754`
 
-Review date: 2026-07-10 America/Denver
+Review date: 2026-07-13 America/Denver
 
 ## Current Mode
 
@@ -356,3 +356,77 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 2. Add external/public target logs, live TLS/proxy boundary evidence, external service/orchestrator hardening, and real OS backend evidence or narrowed production claims.
 3. Prove end-to-end encryption for stored state, browser data, telemetry, downloads, transport paths, target logs, and any accepted post-quantum backend.
 4. Prove real OS VPN/firewall backend execution, privilege behavior, service setup, and rollback on Linux, Windows, and macOS, or narrow the README claims.
+
+## 2026-07-13 Production Lint And Typed Tooling Update
+
+### Current State
+
+- Full Flake8 validation is now a hard CI and production-verifier gate; the
+  former advisory `--exit-zero` command was removed.
+- The 19 non-complexity findings exposed by that gate were fixed. Complexity
+  notices remain outside the configured lint contract and are not represented
+  as passing complexity analysis.
+- Mypy now checks all 13 modules under `scripts/` with untyped function bodies
+  checked. It is pinned to `>=1.11,<2.0` for CI reproducibility.
+- Timeout evidence paths now normalize partial `bytes` or `str` output before
+  constructing string-only command results.
+- User-facing Q/A text no longer promises guaranteed kill-switch or universal
+  ad-blocking outcomes without backend evidence.
+
+### Files Modified
+
+- `.github/workflows/ci.yml`
+- `pyproject.toml`
+- `scripts/*.py` production deployment and target-evidence tooling
+- `tests/test_consigliere.py`
+- `tests/test_probe_target_image_evidence.py`
+- `tests/test_production_proxy_config.py`
+- `tests/test_settings_manager.py`
+- `tests/test_target_evidence_probes.py`
+- Narrow lint corrections in `thirstys_waterfall/` and `web/app.py`
+- This continuity map and deployment acceptance documentation
+
+### Commands And Verification
+
+- `flake8 scripts/ thirstys_waterfall/ web/ tests/ --count --max-line-length=127 --statistics`: passed with `0` findings.
+- `python -m mypy`: passed, 13 script modules checked.
+- `uvx --from mypy==1.19.1 mypy`: passed, 13 script modules checked under the pinned CI-compatible version.
+- `python -m pytest tests\test_target_evidence_probes.py tests\test_production_proxy_config.py tests\test_probe_target_image_evidence.py -q`: 21 passed.
+- Split validation after the original 120-second combined timeout: 59 evidence/Wi-Fi/consigliere tests passed, 31 MFA tests passed, and 16 web import/auth tests passed.
+- `python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed in 395.8 seconds after the timeout repair; 541 tests passed, wheel build passed, local web smoke passed, Docker build/health/auth/log smoke passed, and Docker rollback smoke passed.
+- `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:codex-verify --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed after UTF-8 subprocess decoding was added; no reader-thread exception occurred.
+- `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile`: passed 15/15 checks.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed when rerun sequentially.
+
+### Known Failures And Risks
+
+- The first combined targeted pytest command timed out after 124 seconds with
+  no test failure output. Splitting the same surfaces completed successfully.
+- The first full verifier run on this branch reached the former 240-second
+  pytest subprocess limit before Docker. The verifier now defaults that bounded
+  full-suite limit to 480 seconds and accepts an explicit positive
+  `--test-timeout` override.
+- The next full verifier run passed 541 tests, package build, local web smoke,
+  Docker build/health/auth/log smoke, and rollback in 395.8 seconds, then a
+  Windows subprocess reader emitted a CP1252 `UnicodeDecodeError`. Text-mode
+  verifier subprocesses now decode as UTF-8 with replacement so undecodable
+  tool output cannot raise a background reader exception.
+- Two verifier instances run in parallel collided in the shared setuptools
+  `build/` directory and one wheel build failed. The strict target-evidence
+  verifier passed when rerun alone. Concurrent verifier execution remains
+  unsupported and is not represented as verified.
+- Whole-runtime mypy validation is not yet accepted. The local mypy 2.1 build
+  raised an internal error while scanning `thirstys_waterfall` and `web`; the
+  hard gate currently covers production deployment/evidence tooling only.
+- External/public deployment evidence remains missing as documented above.
+
+### Pending Work
+
+- Extend type checking to the application runtime in staged, explicit surfaces.
+- Obtain an external host/DNS/secrets boundary and capture the required public
+  target evidence bundle.
+
+### Safe To Continue
+
+Yes. The current work is reversible and does not alter external deployment
+state or production credentials.

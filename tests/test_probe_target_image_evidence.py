@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,6 +16,21 @@ probe = importlib.util.module_from_spec(PROBE_SPEC)
 assert PROBE_SPEC.loader is not None
 sys.modules[PROBE_SPEC.name] = probe
 PROBE_SPEC.loader.exec_module(probe)
+
+
+def test_image_probe_command_timeout_decodes_partial_byte_output(monkeypatch):
+    def time_out(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=["docker"], timeout=1, output=b"partial output", stderr=b"failure"
+        )
+
+    monkeypatch.setattr(probe.subprocess, "run", time_out)
+
+    result = probe.run_command(["docker"], timeout=1)
+
+    assert result.returncode == 124
+    assert result.stdout == "partial output"
+    assert result.stderr == "failure\ncommand timed out"
 
 
 def _command_runner(args, timeout):

@@ -6,6 +6,7 @@ import json
 from .orchestrator import ThirstysWaterfall
 from .sovereign_binding import execute_sovereign_protocol
 
+
 def main_sovereign_protocol():
     # Translated to Sovereign Master Tier
     """Main CLI entry point"""

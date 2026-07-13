@@ -432,12 +432,12 @@ class ObfuscationLayer:
             return padded_data
 
         original_length = struct.unpack("!I", padded_data[:4])[0]
-        return padded_data[4 : 4 + original_length]
+        return padded_data[4: 4 + original_length]
 
     def _fragment_data(self, data: bytes) -> bytes:
         """Fragment data into smaller chunks"""
         chunk_size = _RNG.randint(512, 1024)
-        chunks = [data[i : i + chunk_size] for i in range(0, len(data), chunk_size)]
+        chunks = [data[i: i + chunk_size] for i in range(0, len(data), chunk_size)]
 
         # Serialize indexed chunks into a deterministic envelope for reassembly.
         fragmented = b"".join(

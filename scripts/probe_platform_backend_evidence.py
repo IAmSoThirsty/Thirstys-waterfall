@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -32,7 +32,7 @@ def run_probe(
     narrowed_claim_file: Path | None,
     captured_at_utc: str,
     command_runner: Callable[[list[str], int], CommandResult] = run_command,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Capture backend apply/rollback or narrowed-claim evidence."""
     checks: list[CheckResult] = []
 

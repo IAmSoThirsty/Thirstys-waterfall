@@ -5,7 +5,6 @@ Tests for privacy-first AI assistant following Code of Omertà
 
 import unittest
 import time
-from unittest.mock import Mock, patch
 from cryptography.fernet import Fernet
 
 from thirstys_waterfall.consigliere import (

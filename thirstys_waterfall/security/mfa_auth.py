@@ -327,7 +327,7 @@ class TOTPProvider(AuthenticationProvider):
 
         # Dynamic truncation
         offset = hmac_hash[-1] & 0x0F
-        code = struct.unpack(">I", hmac_hash[offset : offset + 4])[0] & 0x7FFFFFFF
+        code = struct.unpack(">I", hmac_hash[offset: offset + 4])[0] & 0x7FFFFFFF
 
         # Generate token
         token = str(code % (10**config.digits)).zfill(config.digits)
