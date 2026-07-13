@@ -85,6 +85,30 @@ The collector captures `target_identity` directly from the host. Any evidence
 type not supplied as an artifact is written with `status: pending`, which keeps
 the verifier fail-closed until the real artifact is attached.
 
+## Published Image Pull/Run Probe
+
+Run the published-image probe on the target host to prove the exact published
+image digest can be pulled and started in production mode. Prefer environment
+variables for secret values:
+
+```powershell
+$env:THIRSTYS_TARGET_USERNAME = "operator"
+$env:THIRSTYS_TARGET_PASSWORD = "<target password>"
+$env:THIRSTYS_TARGET_ADMIN_PASSWORD_HASH = "<werkzeug password hash>"
+$env:SECRET_KEY = "<target secret key>"
+$env:JWT_SECRET_KEY = "<target jwt secret key>"
+python scripts\probe_target_image_evidence.py `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image-digest sha256:<published digest> `
+  --output artifacts\published-image-pull-run.json
+```
+
+The probe writes a redacted JSON artifact and exits non-zero unless Docker or
+Podman can pull the pinned digest, inspect the pulled image, start a container
+with production auth configuration, pass health/auth/default-login rejection
+checks, and capture container logs. Supply the resulting artifact to the bundle
+collector as `published_image_pull_run`.
+
 ## Live Auth Probe
 
 Use the live probe against the deployed target to create the
