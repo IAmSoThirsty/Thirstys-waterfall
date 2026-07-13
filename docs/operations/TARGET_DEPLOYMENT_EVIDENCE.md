@@ -57,3 +57,27 @@ the evidence folder and include the artifact SHA-256 digest.
 The target deployment is not accepted unless
 `verify_target_deployment_evidence.py` exits with status `0` for the target
 manifest and the manifest artifacts match their recorded SHA-256 digests.
+
+## Bundle Collector
+
+Use the collector on the target host to create `target-evidence.json` and the
+artifact files in one folder:
+
+```powershell
+python scripts\collect_target_deployment_evidence.py `
+  --output-dir evidence\target-deployment `
+  --target-host prod-host-1 `
+  --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.2 `
+  --image-digest sha256:<published digest> `
+  --evidence published_image_pull_run=artifacts\published-image-pull-run.log `
+  --evidence target_health_auth_logs=artifacts\target-health-auth-logs.log `
+  --evidence target_rollback=artifacts\target-rollback.log `
+  --evidence secret_rotation=artifacts\secret-rotation.log `
+  --evidence host_network_policy=artifacts\host-network-policy.log `
+  --evidence platform_backend_execution=artifacts\platform-backend-execution.log `
+  --require-complete
+```
+
+The collector captures `target_identity` directly from the host. Any evidence
+type not supplied as an artifact is written with `status: pending`, which keeps
+the verifier fail-closed until the real artifact is attached.
