@@ -45,6 +45,24 @@ def test_target_rollback_probe_requires_execution_and_validation():
     assert artifact["summary"]["passed"] is True
 
 
+def test_target_rollback_probe_waits_for_post_rollback_health(monkeypatch):
+    health_results = iter([(None, "starting"), (200, "healthy")])
+
+    monkeypatch.setattr(rollback.time, "sleep", lambda _seconds: None)
+
+    artifact = rollback.run_probe(
+        rollback_commands=[["deployctl", "rollback", "previous"]],
+        validation_commands=[],
+        base_url="http://target.local",
+        timeout=1,
+        captured_at_utc="2026-07-13T04:00:00Z",
+        command_runner=_passing_command,
+        health_client=lambda base_url, timeout: next(health_results),
+    )
+
+    assert artifact["summary"]["passed"] is True
+
+
 def test_target_rollback_probe_fails_without_validation_signal():
     artifact = rollback.run_probe(
         rollback_commands=[["deployctl", "rollback", "previous"]],
@@ -70,6 +88,7 @@ def test_secret_rotation_probe_checks_old_and_new_credentials():
         old_password="old",
         new_password="new",
         rotation_commands=[["deployctl", "rotate-secrets"]],
+        require_pre_rotation_old_login=False,
         timeout=1,
         captured_at_utc="2026-07-13T04:00:00Z",
         command_runner=_passing_command,
@@ -96,8 +115,65 @@ def test_secret_rotation_probe_fails_when_old_credentials_still_work():
         old_password="old",
         new_password="new",
         rotation_commands=[],
+        require_pre_rotation_old_login=False,
         timeout=1,
         captured_at_utc="2026-07-13T04:00:00Z",
+        login_client=login_client,
+    )
+
+    assert artifact["summary"]["passed"] is False
+
+
+def test_secret_rotation_probe_can_require_old_login_before_rotation():
+    calls = []
+
+    def login_client(base_url, username, password, timeout):
+        calls.append(password)
+        if len(calls) == 1 and password == "old":
+            return 200, {"access_token": "old-token"}
+        if password == "old":
+            return 401, {"msg": "bad credentials"}
+        return 200, {"access_token": "new-token"}
+
+    artifact = rotation.run_probe(
+        base_url="https://prod.example",
+        username="operator",
+        old_password="old",
+        new_password="new",
+        rotation_commands=[["deployctl", "rotate-secrets"]],
+        require_pre_rotation_old_login=True,
+        timeout=1,
+        captured_at_utc="2026-07-13T04:00:00Z",
+        command_runner=_passing_command,
+        login_client=login_client,
+    )
+    pre_check = next(
+        check
+        for check in artifact["checks"]
+        if check["name"] == "old_credentials_accepted_before_rotation"
+    )
+
+    assert artifact["summary"]["passed"] is True
+    assert pre_check["passed"] is True
+    assert calls == ["old", "old", "new"]
+
+
+def test_secret_rotation_probe_fails_when_required_pre_rotation_login_fails():
+    def login_client(base_url, username, password, timeout):
+        if password == "new":
+            return 200, {"access_token": "new-token"}
+        return 401, {"msg": "bad credentials"}
+
+    artifact = rotation.run_probe(
+        base_url="https://prod.example",
+        username="operator",
+        old_password="old",
+        new_password="new",
+        rotation_commands=[["deployctl", "rotate-secrets"]],
+        require_pre_rotation_old_login=True,
+        timeout=1,
+        captured_at_utc="2026-07-13T04:00:00Z",
+        command_runner=_passing_command,
         login_client=login_client,
     )
 

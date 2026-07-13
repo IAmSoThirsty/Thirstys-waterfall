@@ -39,6 +39,9 @@ Thumbs.db
 # Logs (encrypted or not)
 *.log
 
+# Local deployment evidence bundles
+evidence/
+
 # Temporary files
 /tmp/
 *.tmp

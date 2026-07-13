@@ -158,12 +158,19 @@ $env:THIRSTYS_TARGET_NEW_PASSWORD = "<new password>"
 python scripts\probe_secret_rotation_evidence.py `
   --base-url https://prod-host-1.example `
   --rotation-command '["deployctl","rotate-secrets"]' `
+  --require-pre-rotation-old-login `
   --output artifacts\secret-rotation.json
 ```
 
-The probe exits non-zero unless the old credentials are rejected and the new
-credentials receive an access token. Token-bearing response fields are redacted
-from the artifact. Supply the artifact as `secret_rotation`.
+The `--require-pre-rotation-old-login` option makes the probe prove the old
+credential worked before rotation commands run, then prove the old credential is
+rejected and the new credential receives an access token afterward.
+Token-bearing response fields are redacted from the artifact. Supply the
+artifact as `secret_rotation`.
+
+Generated local target bundles under `evidence/` are ignored by git by default.
+Package or copy a bundle deliberately when it must be retained outside the local
+machine.
 
 ## Platform Backend Probe
 
