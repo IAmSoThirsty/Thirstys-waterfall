@@ -210,7 +210,9 @@ class ConfigRegistry:
         return self._config.copy()
 
     @staticmethod
-    def generate_encryption_key(password: str, salt: bytes = None) -> bytes:
+    def generate_encryption_key(
+        password: str, salt: Optional[bytes] = None
+    ) -> bytes:
         """Generate encryption key from password"""
         if salt is None:
             salt = os.urandom(16)

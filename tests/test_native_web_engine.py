@@ -64,6 +64,13 @@ class TestThirstyWebEngine(unittest.TestCase):
         self.assertEqual(snapshot["layout"]["tag_name"], "document")
         self.assertGreater(snapshot["layout"]["height"], 0)
 
+    def test_render_html_preserves_unknown_status(self):
+        engine = ThirstyWebEngine()
+
+        document = engine.render_html("<p>Local document</p>", status_code=None)
+
+        self.assertIsNone(document.status_code)
+
     def test_layout_snapshot_records_visible_boxes_only(self):
         engine = ThirstyWebEngine()
 

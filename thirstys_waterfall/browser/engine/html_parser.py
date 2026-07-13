@@ -1,7 +1,7 @@
 """HTML parser for the native Thirstys web engine."""
 
 from html.parser import HTMLParser
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .document import BrowserDocument, ElementNode, TextNode
 
@@ -32,7 +32,9 @@ class NativeHTMLParser(HTMLParser):
         self.root = ElementNode("document")
         self._stack: List[ElementNode] = [self.root]
 
-    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]) -> None:
+    def handle_starttag(
+        self, tag: str, attrs: List[Tuple[str, Optional[str]]]
+    ) -> None:
         tag_name = tag.lower()
         attributes: Dict[str, str] = {}
         for key, value in attrs:
@@ -55,7 +57,12 @@ class NativeHTMLParser(HTMLParser):
             self._stack[-1].append_child(TextNode(data))
 
 
-def parse_html(source: str, url: str, content_type: str = "text/html", status_code: int = None) -> BrowserDocument:
+def parse_html(
+    source: str,
+    url: str,
+    content_type: str = "text/html",
+    status_code: Optional[int] = None,
+) -> BrowserDocument:
     parser = NativeHTMLParser()
     parser.feed(source)
     parser.close()
