@@ -23,8 +23,8 @@ class DNSProtection:
         self.leak_detector = leak_detector
         self.logger = logging.getLogger(__name__)
         self._active = False
-        self._dns_servers = []
-        self._original_dns = []
+        self._dns_servers: List[str] = []
+        self._original_dns: List[str] = []
         self._start_result: Optional[Dict[str, Any]] = None
         self._stop_result: Optional[Dict[str, Any]] = None
         self._dns_leak_result: Optional[Dict[str, Any]] = None

@@ -466,3 +466,33 @@ state or production credentials.
 
 Yes. Continue by enrolling and fixing another explicit runtime slice, starting
 with the VPN/firewall backend contracts exposed by the pinned analyzer.
+
+## 2026-07-13 VPN Runtime Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 28 explicit files, adding all six VPN package
+  files to the 22-file production-tooling and core-runtime foundation.
+- OpenVPN process state, backend factory constructors, VPN manager connection
+  state, route records, and DNS server collections now have concrete contracts.
+- `VPNManager.get_current_ip()` fails closed for absent or non-string backend
+  endpoint values.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 28 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 28 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_vpn_backends.py tests\test_vpn_manager.py tests\test_vpn_dns_protection.py tests\test_vpn_kill_switch.py -q`: 47 passed.
+
+### Known Failures And Risks
+
+- Type acceptance does not prove privileged OS VPN execution. Real connect,
+  disconnect, service, privilege, and rollback evidence is still required on
+  each claimed platform.
+- The firewall package and remaining application runtime are not yet enrolled
+  in the hard mypy gate.
+
+### Safe To Continue
+
+Yes. Continue with the firewall package as the next explicit type-check slice.

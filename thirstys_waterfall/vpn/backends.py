@@ -9,7 +9,7 @@ import platform
 import time
 import logging
 import shutil
-from typing import Dict, Any, Optional, List
+from typing import Callable, Dict, Any, Optional, List
 from abc import ABC, abstractmethod
 
 
@@ -246,7 +246,7 @@ class OpenVPNBackend(VPNBackend):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.config_file = config.get("config_file", "/etc/openvpn/client.conf")
-        self.process = None
+        self.process: Optional[subprocess.Popen[bytes]] = None
 
     def check_availability(self) -> bool:
         """Check if OpenVPN is available"""
@@ -482,7 +482,7 @@ class VPNBackendFactory:
         Returns:
             VPNBackend instance or None if protocol unsupported
         """
-        backends = {
+        backends: Dict[str, Callable[[Dict[str, Any]], VPNBackend]] = {
             "wireguard": WireGuardBackend,
             "openvpn": OpenVPNBackend,
             "ikev2": IKEv2Backend,
@@ -502,8 +502,8 @@ class VPNBackendFactory:
         Returns:
             List of available backend names
         """
-        available = []
-        test_config = {}
+        available: List[str] = []
+        test_config: Dict[str, Any] = {}
 
         for protocol in ["wireguard", "openvpn", "ikev2"]:
             backend = VPNBackendFactory.create_backend(protocol, test_config)

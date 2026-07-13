@@ -129,6 +129,12 @@ files = [
     "thirstys_waterfall/browser/engine/html_parser.py",
     "thirstys_waterfall/browser/engine/layout.py",
     "thirstys_waterfall/config/registry.py",
+    "thirstys_waterfall/vpn/__init__.py",
+    "thirstys_waterfall/vpn/backends.py",
+    "thirstys_waterfall/vpn/dns_protection.py",
+    "thirstys_waterfall/vpn/kill_switch.py",
+    "thirstys_waterfall/vpn/multi_hop.py",
+    "thirstys_waterfall/vpn/vpn_manager.py",
 ]
 check_untyped_defs = true
 follow_imports = "skip"

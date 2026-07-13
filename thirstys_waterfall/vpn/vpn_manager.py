@@ -1,11 +1,11 @@
 """VPN Manager - Coordinates VPN functionality"""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 import logging
 import threading
 import time
 from cryptography.fernet import Fernet
-from .backends import VPNBackendFactory
+from .backends import VPNBackend, VPNBackendFactory
 from .multi_hop import MultiHopRouter
 from .kill_switch import KillSwitch
 from .dns_protection import DNSProtection
@@ -44,11 +44,11 @@ class VPNManager:
 
         self._active = False
         self._connected = False
-        self._current_route = []
-        self._active_backend = None
-        self._last_error = None
+        self._current_route: List[Dict[str, Any]] = []
+        self._active_backend: Optional[VPNBackend] = None
+        self._last_error: Optional[str] = None
         self._lock = threading.Lock()
-        self._connection_thread = None
+        self._connection_thread: Optional[threading.Thread] = None
 
     def start(self):
         """Start VPN manager and connect through an available backend."""
@@ -229,5 +229,6 @@ class VPNManager:
     def get_current_ip(self) -> Optional[str]:
         """Get current exit IP"""
         if self._current_route:
-            return self._current_route[-1].get("endpoint")
+            endpoint = self._current_route[-1].get("endpoint")
+            return endpoint if isinstance(endpoint, str) else None
         return None

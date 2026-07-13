@@ -30,7 +30,7 @@ class MultiHopRouter:
         Returns:
             List of nodes in route order
         """
-        route = []
+        route: List[Dict[str, Any]] = []
         available_nodes = self._nodes.copy()
 
         for i in range(min(self.hop_count, len(available_nodes))):
