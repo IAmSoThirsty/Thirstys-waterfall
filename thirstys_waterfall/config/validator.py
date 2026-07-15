@@ -1,7 +1,7 @@
 """Configuration validation and schema enforcement"""
 
+import ipaddress
 from typing import Any, Dict, List
-import re
 
 
 class ConfigValidator:
@@ -137,10 +137,11 @@ class ConfigValidator:
     @staticmethod
     def validate_ip_address(ip: str) -> bool:
         """Validate IPv4 or IPv6 address"""
-        ipv4_pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
-        ipv6_pattern = r"^([0-9a-fA-F]{0,4}:){7}[0-9a-fA-F]{0,4}$"
-
-        return bool(re.match(ipv4_pattern, ip) or re.match(ipv6_pattern, ip))
+        try:
+            ipaddress.ip_address(ip)
+        except (ValueError, TypeError):
+            return False
+        return True
 
     @staticmethod
     def validate_port(port: int) -> bool:

@@ -40,7 +40,17 @@ class TestConsoleEntrypoint(unittest.TestCase):
 
 class TestEnhancedThirstyLangPath(unittest.TestCase):
     def test_local_enhanced_thirsty_lang_path_can_be_loaded(self):
-        local_path = Path(r"T:\00-Active\thirsty_lang_exploration_0754")
+        local_path = next(
+            (
+                candidate
+                for candidate in (
+                    Path(r"T:\01-Projects\thirsty_lang_exploration_0754"),
+                    Path(r"T:\00-Active\thirsty_lang_exploration_0754"),
+                )
+                if candidate.exists()
+            ),
+            Path(r"T:\01-Projects\thirsty_lang_exploration_0754"),
+        )
         if not local_path.exists():
             self.skipTest("local enhanced Thirsty-Lang checkout is not present")
 

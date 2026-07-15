@@ -10,7 +10,7 @@ Branch: `main` integration target; current work branch `harden/production-lint-g
 
 Baseline HEAD: `176398bfce893abd8607ba578c744eade703c3da`
 
-Local enhanced Thirsty-Lang source: `T:\00-Active\thirsty_lang_exploration_0754`
+Local enhanced Thirsty-Lang source: `T:\01-Projects\thirsty_lang_exploration_0754`
 
 Review date: 2026-07-13 America/Denver
 
@@ -699,3 +699,48 @@ bounded runtime slice or external deployment evidence.
 
 Yes. Publish through the protected `main` workflow, then continue with the next
 clean runtime package group.
+
+## 2026-07-15 Clean Runtime Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 96 explicit files, adding 24 clean runtime
+  files to the 72-file foundation.
+- The new enrollment covers the remaining clean root/configuration modules, all
+  ad-annihilator modules, all AI-assistant modules, all setup modules, and all
+  theme modules.
+- Configuration IP address validation now uses the standard library IP parser
+  so invalid IPv4 octets are rejected and compressed IPv6 addresses are
+  accepted.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 96 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 96 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_ai_setup_themes.py tests\test_ad_annihilator.py tests\test_local_inference.py tests\test_entrypoints.py tests\test_encryption_evidence.py tests\test_global_kill_switch.py tests\test_orchestrator_status.py -q`:
+  52 passed, 1 skipped.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+  passed after Docker was found unavailable locally; wheel sha256 was
+  `d539e7f49651258efb6b106c698983508a1387300d3a1ec0d76cca9c3547ad4e`,
+  and local web smoke reported `backend=thirsty-lang`.
+
+### Known Failures And Risks
+
+- Type and unit-test acceptance do not prove real ad-blocking effectiveness,
+  local inference backend availability, target setup acceptance, or UI theme
+  behavior on all supported hosts.
+- Docker Desktop's Linux engine was not running locally for this increment:
+  `docker ps` failed to connect to `npipe:////./pipe/dockerDesktopLinuxEngine`.
+  Container proof must come from a later local Docker run or hosted checks.
+- The first hosted Code Quality and Standard v3 jobs failed because Linux mypy
+  saw the Windows-only `winreg` import without registry attributes. The theme
+  detector now uses a typed dynamic import for that Windows-only path.
+- Twenty-four application runtime files remain outside the hard mypy gate in
+  packages with known type findings: consigliere, Wi-Fi, network, settings,
+  and security.
+
+### Safe To Continue
+
+Yes. Publish through the protected `main` workflow, then continue with the
+remaining defect-bearing runtime packages.

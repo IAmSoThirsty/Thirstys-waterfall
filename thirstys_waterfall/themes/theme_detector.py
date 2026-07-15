@@ -1,8 +1,10 @@
 """System Theme Detector"""
 
+import importlib
 import logging
 import platform
 import shutil
+from typing import Any, cast
 
 
 class SystemThemeDetector:
@@ -23,7 +25,7 @@ class SystemThemeDetector:
 
     def _detect_windows(self):
         try:
-            import winreg
+            winreg = cast(Any, importlib.import_module("winreg"))
 
             key = winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
