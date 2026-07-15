@@ -67,6 +67,7 @@ from flask_jwt_extended import (
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash
+from thirstys_waterfall.browser import BrowserTabLimitError
 from thirstys_waterfall.firewalls.manager import FirewallManager
 from thirstys_waterfall.sovereign_binding import (
     execute_sovereign_protocol,
@@ -765,6 +766,14 @@ class ThirstysWebService:
                 "real": True,
             }
 
+        except BrowserTabLimitError as e:
+            logger.info(f"Browser tab creation rejected: {e}")
+            return {
+                "success": False,
+                "error": "Browser tab could not be created",
+                "reason": "tab_creation_rejected",
+                "real": True,
+            }
         except Exception as e:
             logger.error(f"Failed to create browser tab: {e}")
             return {"success": False, "error": str(e), "real": True}

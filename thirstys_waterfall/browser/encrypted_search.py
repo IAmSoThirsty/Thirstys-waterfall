@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from cryptography.fernet import Fernet
 import hashlib
 import time
@@ -20,7 +20,7 @@ class EncryptedSearchEngine:
         self._active = False
 
         # Encrypted search history (encrypted queries)
-        self._encrypted_search_history = []
+        self._encrypted_search_history: List[Dict[str, Any]] = []
 
         # Encrypted cache (query_hash -> encrypted results)
         # Use hash as key since Fernet encryption is non-deterministic

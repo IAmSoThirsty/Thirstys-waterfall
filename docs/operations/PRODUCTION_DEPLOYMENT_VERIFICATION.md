@@ -259,8 +259,8 @@ Rotation checklist:
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
 - Whole-runtime type-check adoption. The current hard mypy gate covers the 13
-  production deployment and target-evidence scripts plus 43 explicitly
+  production deployment and target-evidence scripts plus 51 explicitly
   enrolled runtime files for platform capabilities, enhanced Thirsty-Lang
-  binding, native browser-engine behavior, configuration, VPN, firewalls, and
+  binding, the complete browser package, configuration, VPN, firewalls,
   privacy, storage, and utilities.
 - External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.

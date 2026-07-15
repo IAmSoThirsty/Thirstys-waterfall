@@ -30,7 +30,7 @@ class TabManager:
     - For concurrent access, use TabManagerThreadSafe wrapper
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize TabManager
 
         Args:

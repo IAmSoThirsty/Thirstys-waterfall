@@ -35,7 +35,7 @@ class BrowserSandbox:
 
     def __init__(
         self,
-        config: Dict[str, Any] = None,
+        config: Optional[Dict[str, Any]] = None,
         policy_backend: Optional[Any] = None,
         resource_monitor: Optional[Any] = None,
         script_executor: Optional[Any] = None,

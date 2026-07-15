@@ -333,6 +333,36 @@ class TestWebAppImport(unittest.TestCase):
         self.assertEqual(list_payload["evidence"]["source"], "waterfall.browser.tab_manager")
         self.assertEqual(len(list_payload["tabs"]), 1)
 
+    def test_browser_tab_limit_preserves_rejection_contract(self):
+        app_module = importlib.import_module("web.app")
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        class FakeBrowser:
+            def get_status(self):
+                return {"active": True}
+
+            def create_tab(self, url):
+                raise app_module.BrowserTabLimitError("Browser tab limit reached")
+
+        class FakeWaterfall:
+            browser = FakeBrowser()
+
+        with mock.patch.object(app_module, "THIRSTYS_AVAILABLE", True), mock.patch.object(
+            app_module.service, "waterfall", FakeWaterfall()
+        ):
+            response = app_module.app.test_client().post(
+                "/api/browser/tabs",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"url": "https://example.invalid"},
+            )
+            payload = response.get_json()
+
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(payload["success"])
+        self.assertEqual(payload["reason"], "tab_creation_rejected")
+        self.assertEqual(payload["error"], "Browser tab could not be created")
+
     def test_frontend_does_not_embed_demo_credentials_or_fake_active_claims(self):
         root = Path(__file__).resolve().parents[1]
         app_js = (root / "web" / "static" / "js" / "app.js").read_text(
