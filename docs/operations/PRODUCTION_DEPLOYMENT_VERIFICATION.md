@@ -43,11 +43,12 @@ What this proves locally:
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
 - Full Flake8 lint gate passes with a 127-character line limit.
-- Mypy passes for 106 explicitly enrolled source files: the production
-  deployment/evidence scripts plus 93 runtime files covering platform,
+- Mypy passes for 108 explicitly enrolled source files: the production
+  deployment/evidence scripts plus 95 runtime files covering platform,
   Thirsty-Lang binding, browser, configuration, VPN, firewall, privacy,
   storage, utility, remote-access, media-download, root orchestration,
-  AI assistant, ad-annihilator, setup, theme, Consigliere, and Wi-Fi surfaces.
+  AI assistant, ad-annihilator, setup, theme, Consigliere, Wi-Fi, and network
+  stealth surfaces.
 - Full-repo Bandit passes.
 - Locked deployment dependency vulnerability check passes.
 - Full pytest suite passes.
@@ -262,7 +263,7 @@ Rotation checklist:
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
 - Whole-runtime type-check adoption. The current hard mypy gate covers the 13
-  production deployment and target-evidence scripts plus 93 explicitly
-  enrolled runtime files. The remaining 14 unenrolled runtime files are the
-  defect-bearing network, settings, and security packages.
+  production deployment and target-evidence scripts plus 95 explicitly
+  enrolled runtime files. The remaining 12 unenrolled runtime files are the
+  defect-bearing settings and security packages.
 - External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.
