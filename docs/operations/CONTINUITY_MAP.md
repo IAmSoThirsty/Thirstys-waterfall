@@ -878,19 +878,19 @@ workflow, then finish the security package.
 
 ### Commands And Verification
 
-- `python -m mypy --no-incremental thirstys_waterfall\security`: passed, 7 files
+- `python -m mypy --no-incremental thirstys_waterfall/security`: passed, 7 files
   checked.
 - `python -m mypy --no-incremental`: passed, all 120 files checked with mypy
   2.1.
 - `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, all 120 files
   checked under the pinned CI-compatible version.
-- `python -m pytest tests\test_dos_trap.py tests\test_hardware_root_of_trust.py tests\test_mfa_auth.py tests\test_microvm_isolation.py tests\test_privacy_ledger.py tests\test_privacy_risk_engine.py -q --no-cov`:
+- `python -m pytest tests/test_dos_trap.py tests/test_hardware_root_of_trust.py tests/test_mfa_auth.py tests/test_microvm_isolation.py tests/test_privacy_ledger.py tests/test_privacy_risk_engine.py -q --no-cov`:
   168 passed.
 - Full-repository Flake8 passed with zero findings.
-- `python scripts\verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+- `python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
   passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
-  scan, all 567 tests, wheel build, and local web smoke. The wheel sha256 was
-  `06be8e7dec82729ffd928b56f9ca3a758cc838ac0742ce9fa44d5a4783516de5`,
+  scan, all 570 tests, wheel build, and local web smoke. The wheel sha256 was
+  `109fbbb3702618b4b42e22c6a3f949edec86eeee54a60ea91695c5640a987e5c`,
   and local web smoke reported `backend=thirsty-lang`.
 
 ### Known Failures And Risks
