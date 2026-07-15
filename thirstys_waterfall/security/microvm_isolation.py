@@ -118,9 +118,16 @@ class CommunicationChannel:
                     if address_family is None:
                         self.logger.error("Unix domain sockets are unavailable")
                         return False
-                    self._socket = socket.socket(address_family, socket.SOCK_STREAM)
-                    self._socket.settimeout(timeout)
-                    self._socket.connect(self.socket_path)
+                    channel_socket = socket.socket(
+                        address_family, socket.SOCK_STREAM
+                    )
+                    try:
+                        channel_socket.settimeout(timeout)
+                        channel_socket.connect(self.socket_path)
+                    except Exception:
+                        channel_socket.close()
+                        raise
+                    self._socket = channel_socket
                     self._connected = True
                     self.logger.info(
                         f"Connected to VM {self.vm_id} via {self.socket_path}"

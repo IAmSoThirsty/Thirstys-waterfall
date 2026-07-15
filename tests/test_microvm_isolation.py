@@ -69,6 +69,26 @@ class TestCommunicationChannel(unittest.TestCase):
         channel = CommunicationChannel("test_vm", "/tmp/custom.sock")
         self.assertEqual(channel.socket_path, "/tmp/custom.sock")
 
+    @patch(
+        "thirstys_waterfall.security.microvm_isolation.socket.AF_UNIX",
+        1,
+        create=True,
+    )
+    @patch("thirstys_waterfall.security.microvm_isolation.socket.socket")
+    @patch("thirstys_waterfall.security.microvm_isolation.os.path.exists")
+    def test_failed_connection_closes_created_socket(
+        self, mock_exists, mock_socket_factory
+    ):
+        mock_exists.return_value = True
+        created_socket = mock_socket_factory.return_value
+        created_socket.connect.side_effect = OSError("connection failed")
+        channel = CommunicationChannel("test_vm", "/tmp/custom.sock")
+
+        self.assertFalse(channel.connect())
+
+        created_socket.close.assert_called_once_with()
+        self.assertIsNone(channel._socket)
+
 
 class TestMicroVMInstance(unittest.TestCase):
     """Test MicroVM instance"""
