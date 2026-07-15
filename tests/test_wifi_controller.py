@@ -49,6 +49,16 @@ class InvalidChannelWiFiBackend(WiFiBackend):
         return {"channel": "44"}
 
 
+class BooleanChannelWiFiBackend(WiFiBackend):
+    def optimize_channel(self, band, networks=None):
+        return True
+
+
+class BooleanMappingChannelWiFiBackend(WiFiBackend):
+    def optimize_channel(self, band, networks=None):
+        return {"channel": False}
+
+
 def test_linux_iw_scan_parser_extracts_networks():
     output = """
 BSS aa:bb:cc:dd:ee:ff(on wlan0)
@@ -154,6 +164,19 @@ def test_optimize_channel_rejects_non_integer_channel():
     )
 
     with pytest.raises(ValueError, match="integer or null 'channel'"):
+        controller.optimize_channel(WiFiBand.BAND_5_GHZ)
+
+
+@pytest.mark.parametrize(
+    "backend",
+    [BooleanChannelWiFiBackend(), BooleanMappingChannelWiFiBackend()],
+)
+def test_optimize_channel_rejects_boolean_channel(backend):
+    controller = WiFiController(
+        config={"skip_discovery": True}, wifi_backend=backend
+    )
+
+    with pytest.raises((TypeError, ValueError), match="int|integer"):
         controller.optimize_channel(WiFiBand.BAND_5_GHZ)
 
 
