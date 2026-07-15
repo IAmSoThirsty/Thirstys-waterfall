@@ -278,7 +278,7 @@ class ThirstyConsigliere:
         Apply data minimization - keep only what's strictly needed.
         Strip URLs, IPs, identifiers where possible.
         """
-        minimized = {}
+        minimized: Dict[str, Any] = {}
 
         for key, value in context.items():
             # Strip URLs to just domains

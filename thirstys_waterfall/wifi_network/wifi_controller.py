@@ -934,16 +934,23 @@ class WiFiController:
             return None
 
         result = optimizer(band=band, networks=list(self.available_networks))
+        channel: Optional[int]
         if isinstance(result, int):
+            channel = result
             normalized = {"status": "optimized", "channel": result}
         elif isinstance(result, dict):
-            if "channel" not in result or not isinstance(
-                result["channel"], (int, type(None))
-            ):
+            if "channel" not in result:
                 raise ValueError(
                     "WiFi backend optimize_channel result must include "
                     "integer or null 'channel'"
                 )
+            raw_channel: object = result["channel"]
+            if raw_channel is not None and not isinstance(raw_channel, int):
+                raise ValueError(
+                    "WiFi backend optimize_channel result must include "
+                    "integer or null 'channel'"
+                )
+            channel = raw_channel
             normalized = dict(result)
             normalized.setdefault("status", "optimized")
         else:
@@ -954,7 +961,7 @@ class WiFiController:
         normalized["backend"] = self._backend_name()
         normalized["band"] = band.value
         self._record_operation("optimize_channel", normalized)
-        return normalized["channel"]
+        return channel
 
     def _connect_via_backend(
         self, platform_name: str, ssid: str, password: Optional[str], security: Optional[str]

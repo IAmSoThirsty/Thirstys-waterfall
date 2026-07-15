@@ -1,3 +1,5 @@
+import pytest
+
 from thirstys_waterfall.wifi_network.wifi_controller import (
     WiFiBand,
     WiFiController,
@@ -35,6 +37,16 @@ class WiFiBackend:
 
     def get_driver_windows(self, interface):
         return f"Driver for {interface}"
+
+
+class IntegerChannelWiFiBackend(WiFiBackend):
+    def optimize_channel(self, band, networks=None):
+        return 44
+
+
+class InvalidChannelWiFiBackend(WiFiBackend):
+    def optimize_channel(self, band, networks=None):
+        return {"channel": "44"}
 
 
 def test_linux_iw_scan_parser_extracts_networks():
@@ -126,6 +138,23 @@ def test_backend_scan_connect_disconnect_and_optimize_records_evidence():
     assert status["last_operation_results"]["connect"]["connected"] is True
     assert status["last_operation_results"]["disconnect"]["disconnected"] is True
     assert status["last_operation_results"]["optimize_channel"]["sample_count"] == 1
+
+
+def test_optimize_channel_accepts_integer_backend_result():
+    controller = WiFiController(
+        config={"skip_discovery": True}, wifi_backend=IntegerChannelWiFiBackend()
+    )
+
+    assert controller.optimize_channel(WiFiBand.BAND_5_GHZ) == 44
+
+
+def test_optimize_channel_rejects_non_integer_channel():
+    controller = WiFiController(
+        config={"skip_discovery": True}, wifi_backend=InvalidChannelWiFiBackend()
+    )
+
+    with pytest.raises(ValueError, match="integer or null 'channel'"):
+        controller.optimize_channel(WiFiBand.BAND_5_GHZ)
 
 
 def test_connect_and_optimize_without_backend_fail_closed():
