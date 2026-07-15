@@ -946,7 +946,7 @@ accepted production scope to local Docker.
 - `python -m mypy`: passed, all 121 governed source files checked.
 - Full-repository Flake8 and Bandit passed with zero findings.
 - `python scripts/verify_reproducible_build.py`: passed with wheel sha256
-  `93c754ef225749c3372f752a7f2393278690542d6fdb3712abc0fa59b19ffcc4`
+  `3d0302eb21a6f1ef073270fe42914781c7c4b80265e6a6e718957c3c815e290e`
   and a byte-identical independently rebuilt source distribution.
 - Both verified artifacts passed `twine check`, installed in isolated Python
   3.11 environments, and exposed the expected CLI.

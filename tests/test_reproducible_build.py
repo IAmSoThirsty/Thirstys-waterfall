@@ -78,3 +78,31 @@ def test_source_date_epoch_rejects_pre_zip_timestamp(monkeypatch):
         assert "must be at least" in str(exc)
     else:
         raise AssertionError("pre-ZIP SOURCE_DATE_EPOCH did not fail closed")
+
+
+def test_source_date_epoch_requires_explicit_value_without_git(monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    monkeypatch.setattr(
+        reproducible_build.subprocess,
+        "run",
+        lambda *args, **kwargs: (_ for _ in ()).throw(FileNotFoundError("git")),
+    )
+
+    try:
+        reproducible_build._source_date_epoch()
+    except SystemExit as exc:
+        assert "required when Git metadata is unavailable" in str(exc)
+    else:
+        raise AssertionError("missing Git metadata did not fail closed")
+
+
+def test_prepare_output_directory_rejects_file(tmp_path):
+    output_path = tmp_path / "dist"
+    output_path.write_text("not a directory", encoding="utf-8")
+
+    try:
+        reproducible_build._prepare_output_directory(output_path)
+    except SystemExit as exc:
+        assert "output path is not a directory" in str(exc)
+    else:
+        raise AssertionError("file output path did not fail closed")

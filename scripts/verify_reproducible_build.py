@@ -49,15 +49,20 @@ def _sha256(path: Path) -> str:
 def _source_date_epoch() -> int:
     configured = os.environ.get("SOURCE_DATE_EPOCH")
     if configured is None:
-        completed = subprocess.run(
-            ["git", "log", "-1", "--pretty=%ct"],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
+        try:
+            completed = subprocess.run(
+                ["git", "log", "-1", "--pretty=%ct"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(
+                "SOURCE_DATE_EPOCH is required when Git metadata is unavailable"
+            ) from exc
         configured = completed.stdout.strip()
 
     try:
@@ -175,6 +180,17 @@ def _toolchain_versions() -> dict[str, str]:
     return versions
 
 
+def _prepare_output_directory(output_dir: Path) -> Path:
+    destination = output_dir.resolve()
+    if destination.exists():
+        if not destination.is_dir():
+            raise SystemExit(f"output path is not a directory: {destination}")
+        if any(destination.iterdir()):
+            raise SystemExit(f"output directory is not empty: {destination}")
+    destination.mkdir(parents=True, exist_ok=True)
+    return destination
+
+
 def verify_reproducible_build(output_dir: Path | None = None) -> dict[str, object]:
     epoch = _source_date_epoch()
     with tempfile.TemporaryDirectory(prefix="thirstys-waterfall-build-") as temporary:
@@ -211,10 +227,7 @@ def verify_reproducible_build(output_dir: Path | None = None) -> dict[str, objec
             )
 
         if output_dir is not None:
-            destination = output_dir.resolve()
-            if destination.exists() and any(destination.iterdir()):
-                raise SystemExit(f"output directory is not empty: {destination}")
-            destination.mkdir(parents=True, exist_ok=True)
+            destination = _prepare_output_directory(output_dir)
             for artifact in build_outputs[0].iterdir():
                 if artifact.is_file():
                     shutil.copy2(artifact, destination / artifact.name)
