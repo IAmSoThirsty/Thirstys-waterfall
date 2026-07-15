@@ -20,7 +20,7 @@ class AntiFingerprintEngine:
         self._active = False
 
         # Randomized fingerprint data
-        self._spoofed_data = {}
+        self._spoofed_data: Dict[str, Any] = {}
 
     def start(self):
         """Start anti-fingerprinting"""
