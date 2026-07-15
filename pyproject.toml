@@ -173,6 +173,8 @@ files = [
     "thirstys_waterfall/media_downloader/format_converter.py",
     "thirstys_waterfall/media_downloader/media_engine.py",
     "thirstys_waterfall/media_downloader/media_library.py",
+    "thirstys_waterfall/network/__init__.py",
+    "thirstys_waterfall/network/advanced_stealth.py",
     "thirstys_waterfall/privacy/__init__.py",
     "thirstys_waterfall/privacy/anti_fingerprint.py",
     "thirstys_waterfall/privacy/anti_malware.py",

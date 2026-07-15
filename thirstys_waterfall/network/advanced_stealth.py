@@ -9,7 +9,7 @@ import secrets
 import time
 import threading
 import struct
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, DefaultDict, Deque
 from dataclasses import dataclass, field
 from enum import Enum
 from collections import defaultdict, deque
@@ -272,13 +272,16 @@ class PluggableTransport:
     def _perform_obfs4_handshake(self):
         """Perform obfs4 protocol handshake"""
         # Generate obfs4 session keys
-        handshake_data = {
+        session_id = secrets.token_hex(16)
+        handshake_data: Dict[str, Any] = {
             "node_id": self.config.fingerprint,
             "public_key": secrets.token_bytes(32),
             "iat_mode": 1,  # Inter-arrival time obfuscation
-            "session_id": secrets.token_hex(16),
+            "session_id": session_id,
         }
-        self.logger.debug(f"obfs4 handshake: session {handshake_data['session_id']}")
+        self.logger.debug(
+            "obfs4 handshake: session %s", handshake_data["session_id"]
+        )
 
     def _update_success_rate(self, success: bool):
         """Update transport success rate"""
@@ -385,7 +388,7 @@ class ObfuscationLayer:
         self.mimicry_enabled = config.get("protocol_mimicry", True)
         self.default_protocol = ProtocolMimicry.HTTPS
 
-        self._metrics = defaultdict(int)
+        self._metrics: DefaultDict[str, int] = defaultdict(int)
 
     def obfuscate_request(
         self, data: bytes, technique: Optional[ObfuscationTechnique] = None
@@ -580,8 +583,8 @@ class DomainFronting:
             "akamai": ["akamai.net", "akamaiedge.net"],
         }
 
-        self._active_fronts = []
-        self._usage_count = defaultdict(int)
+        self._active_fronts: List[Dict[str, Any]] = []
+        self._usage_count: DefaultDict[str, int] = defaultdict(int)
 
     def setup_front(self, target_domain: str) -> Optional[str]:
         """
@@ -709,7 +712,7 @@ class AdvancedStealthManager:
         self._metrics = StealthMetrics()
 
         # Request queue for rate limiting
-        self._request_queue = deque(maxlen=1000)
+        self._request_queue: Deque[Dict[str, Any]] = deque(maxlen=1000)
 
         # Integration points
         self._vpn_manager = None
