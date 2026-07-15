@@ -565,3 +565,36 @@ acceptance beyond files that pass both supported mypy versions.
 ### Safe To Continue
 
 Yes. Continue with another bounded runtime slice or external deployment evidence.
+
+## 2026-07-15 Storage And Utilities Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 56 explicit files, adding all three storage
+  modules and all five utility modules to the 48-file foundation.
+- The enrolled modules passed the type checker without runtime code changes.
+- Direct tests now cover encrypted vault round-trip and wipe behavior,
+  deterministic ephemeral expiry, and DoH fail-closed behavior.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 56 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 56 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_storage_runtime.py tests\test_encrypted_logging.py tests\test_encrypted_network.py tests\test_god_tier_encryption.py -q`:
+  13 passed.
+- Full-repository Flake8: passed with zero findings.
+- Standard v3 aggregate smoke passed the marker scans, compile step, mypy,
+  Bandit, locked-dependency Safety scan, wheel build, local web startup,
+  Docker health/auth/log smoke, and Docker rollback smoke.
+
+### Known Failures And Risks
+
+- Type and unit-test acceptance do not prove a network-backed DoH resolver or
+  durable external vault integration; the current resolver remains fail-closed.
+- The remaining browser, security, web, and orchestration runtime modules are
+  not yet fully enrolled in the hard mypy gate.
+
+### Safe To Continue
+
+Yes. Continue with the remaining browser package as the next bounded slice.
