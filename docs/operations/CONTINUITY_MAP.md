@@ -599,13 +599,15 @@ Yes. Continue with another bounded runtime slice or external deployment evidence
 
 Yes. Continue with the remaining browser package as the next bounded slice.
 
-## 2026-07-15 Main Branch Protection
+## 2026-07-15 Main Branch Governance
 
 ### Current State
 
-- GitHub `main` branch protection is enabled and enforced for administrators.
-- Changes require a pull request, strict up-to-date status checks, and resolved
-  review conversations; force pushes and branch deletion are disabled.
+- An active repository ruleset requires changes to use a pull request with
+  zero approvals, resolved review conversations, and no bypass actors.
+- GitHub `main` branch protection independently requires strict up-to-date
+  status checks and is enforced for administrators; force pushes and branch
+  deletion are disabled by both policy layers.
 - Eleven quality, security, Standard v3, package-build, CodeQL, integration,
   and Python 3.11 platform checks are required before future merges.
 - PR #92 exposed the missing protection by merging while checks were pending;
@@ -613,9 +615,11 @@ Yes. Continue with the remaining browser package as the next bounded slice.
 
 ### Commands And Verification
 
+- GitHub's effective-rules API confirms the active PR-only, deletion, and
+  non-fast-forward rules from ruleset `18974290`.
 - GitHub's branch-protection API confirms strict checks, administrator
-  enforcement, pull-request requirements, conversation resolution, disabled
-  force pushes, disabled deletion, and the 11 required check contexts.
+  enforcement, conversation resolution, disabled force pushes, disabled
+  deletion, and the 11 required check contexts.
 
 ### Known Failures And Risks
 
