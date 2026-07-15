@@ -15,6 +15,10 @@ from .downloads import EncryptedDownloadBackend
 from .engine import BrowserDocument, FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 
+class BrowserTabLimitError(RuntimeError):
+    """Raised when the browser cannot create another tab."""
+
+
 class IncognitoBrowser:
     """
     Privacy-first browser runtime.
@@ -177,7 +181,7 @@ class IncognitoBrowser:
         # Create isolated tab
         tab_id = self.tab_manager.create_tab(url)
         if tab_id is None:
-            raise RuntimeError("Browser tab limit reached")
+            raise BrowserTabLimitError("Browser tab limit reached")
 
         # Apply privacy policies to tab
         self._apply_privacy_policies(tab_id)

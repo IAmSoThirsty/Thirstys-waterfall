@@ -201,7 +201,7 @@ class TestIncognitoBrowserNativeEngine(unittest.TestCase):
                 "max_tabs": 1,
             }
         )
-        self.addCleanup(lambda: browser._active and browser.stop())
+        self.addCleanup(browser.stop)
         browser.start()
 
         self.assertIsInstance(browser.create_tab(), str)
