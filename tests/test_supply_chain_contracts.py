@@ -86,3 +86,23 @@ def test_governed_paths_use_current_audit_and_reproducible_build_gates():
     assert "safety check" not in combined
     assert "pip_audit" in combined or "pip-audit" in combined
     assert "verify_reproducible_build.py" in combined
+
+
+def test_active_docs_name_the_current_dependency_scanner():
+    active_docs = [
+        ROOT / "README.md",
+        ROOT / "SECURITY.md",
+        ROOT / "docs" / "operations" / "README_CLAIM_ACCEPTANCE.md",
+    ]
+    retired_phrases = (
+        "Bandit, Safety",
+        "Bandit/Safety",
+        "Safety dependency checker",
+        "safety>=2.3.0",
+        "**safety**",
+    )
+
+    for path in active_docs:
+        contents = path.read_text(encoding="utf-8")
+        assert "pip-audit" in contents, f"current scanner missing from {path.name}"
+        assert not any(phrase in contents for phrase in retired_phrases)
