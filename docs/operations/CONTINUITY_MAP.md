@@ -722,7 +722,7 @@ clean runtime package group.
   52 passed, 1 skipped.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
   passed after Docker was found unavailable locally; wheel sha256 was
-  `e0469681d834578fa0debf9f17e823336007a146eab6b35fefbc8090e50d248c`,
+  `d539e7f49651258efb6b106c698983508a1387300d3a1ec0d76cca9c3547ad4e`,
   and local web smoke reported `backend=thirsty-lang`.
 
 ### Known Failures And Risks
@@ -733,6 +733,9 @@ clean runtime package group.
 - Docker Desktop's Linux engine was not running locally for this increment:
   `docker ps` failed to connect to `npipe:////./pipe/dockerDesktopLinuxEngine`.
   Container proof must come from a later local Docker run or hosted checks.
+- The first hosted Code Quality and Standard v3 jobs failed because Linux mypy
+  saw the Windows-only `winreg` import without registry attributes. The theme
+  detector now uses a typed dynamic import for that Windows-only path.
 - Twenty-four application runtime files remain outside the hard mypy gate in
   packages with known type findings: consigliere, Wi-Fi, network, settings,
   and security.
