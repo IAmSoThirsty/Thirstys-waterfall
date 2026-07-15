@@ -43,8 +43,10 @@ What this proves locally:
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
 - Full Flake8 lint gate passes with a 127-character line limit.
-- Mypy passes for the production deployment and target-evidence scripts. The
-  broader application runtime is not yet included in this typed surface.
+- Mypy passes for 72 explicitly enrolled source files: the production
+  deployment/evidence scripts plus 59 runtime files covering platform,
+  Thirsty-Lang binding, browser, configuration, VPN, firewall, privacy,
+  storage, utility, remote-access, and media-download surfaces.
 - Full-repo Bandit passes.
 - Locked deployment dependency vulnerability check passes.
 - Full pytest suite passes.
