@@ -799,13 +799,13 @@ workflow, then continue with the remaining runtime packages.
 
 ### Commands And Verification
 
-- `python -m mypy --no-incremental thirstys_waterfall\network`: passed, 2 files
+- `python -m mypy --no-incremental thirstys_waterfall/network`: passed, 2 files
   checked.
 - `python -m mypy --no-incremental`: passed, 108 files checked with mypy 2.1.
 - `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 108 files checked
   under the pinned CI-compatible version.
-- `python -m pytest tests\test_advanced_stealth.py -q --no-cov`: 4 passed.
-- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+- `python -m pytest tests/test_advanced_stealth.py -q --no-cov`: 4 passed.
+- `python scripts/verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
   passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
   scan, wheel build, and local web smoke. The wheel sha256 was
   `e7356d5fb0f48d4aec87131f93a9577d4d05108dd327dfa9db8500086ef0fba9`,
