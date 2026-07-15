@@ -65,6 +65,20 @@ class TestSettingsManagerEncryptionEvidence(unittest.TestCase):
         self.assertEqual(manager.get_all_settings(), before)
         self.assertFalse(manager.get_status()["modified"])
 
+    def test_import_settings_deep_merges_nested_values(self):
+        helper = LocalEncryptionHelper()
+        manager = SettingsManager(helper)
+        imported = helper.encrypt_god_tier(
+            b'{"ai_assistant":{"capabilities":{"text_generation":false}}}'
+        )
+
+        manager.import_settings(imported)
+
+        capabilities = manager.get_setting("ai_assistant", "capabilities")
+        self.assertFalse(capabilities["text_generation"])
+        self.assertTrue(capabilities["code_assistance"])
+        self.assertTrue(capabilities["privacy_analysis"])
+
     def test_reset_uses_isolated_default_snapshot(self):
         manager = SettingsManager(LocalEncryptionHelper())
         manager.set_setting("general", "theme", "solarized")

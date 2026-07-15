@@ -287,6 +287,16 @@ class SettingsManager:
 
         return encrypted_settings
 
+    @staticmethod
+    def _deep_update(target: Dict[str, Any], source: Dict[str, Any]) -> None:
+        """Merge imported settings without dropping nested sibling values."""
+        for key, value in source.items():
+            existing = target.get(key)
+            if isinstance(existing, dict) and isinstance(value, dict):
+                SettingsManager._deep_update(existing, value)
+            else:
+                target[key] = copy.deepcopy(value)
+
     def import_settings(self, encrypted_data: bytes):
         """Import settings from encrypted data"""
         try:
@@ -303,7 +313,7 @@ class SettingsManager:
                         "Imported settings categories must contain mappings"
                     )
                 if category in candidate:
-                    candidate[category].update(values)
+                    self._deep_update(candidate[category], values)
 
             self.settings = candidate
             self._modified = True
