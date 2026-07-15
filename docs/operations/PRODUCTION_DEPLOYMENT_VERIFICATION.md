@@ -4,6 +4,14 @@ Standard: Thirsty's Standard v3
 
 Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, production TLS reverse-proxy config validation, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, live TLS certificate/boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
+Latest exact-head local verification on commit
+`28d3d608f6579e10fcacfa5a9a15d8c624164a10` passed 572 tests with 70% total
+coverage, all 120-file mypy checks, Flake8, Bandit, the locked dependency scan,
+package build, Thirsty-Lang local smoke, Docker health/auth/log smoke, and Docker
+rollback smoke. The Docker run produced manifest-list sha256
+`02e0badadad9eb334b58c13badc561378c7a09385dc30419ac9933a19967063a`.
+This is local Docker evidence, not external/public target acceptance.
+
 Target evidence manifests are validated with:
 
 ```powershell

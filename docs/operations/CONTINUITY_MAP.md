@@ -6,13 +6,15 @@ Repo: `C:\Users\Quencher\Documents\Codex\2026-07-09\iamsothirsty-thirstys-waterf
 
 Remote: `https://github.com/IAmSoThirsty/Thirstys-waterfall.git`
 
-Branch: `main` integration target; current work branch `harden/production-lint-gate`
+Branch: `main` integration target; current work branch `agent/security-type-gate`
 
-Baseline HEAD: `176398bfce893abd8607ba578c744eade703c3da`
+Original review baseline: `176398bfce893abd8607ba578c744eade703c3da`
+
+Current locally verified HEAD: `28d3d608f6579e10fcacfa5a9a15d8c624164a10`
 
 Local enhanced Thirsty-Lang source: `T:\01-Projects\thirsty_lang_exploration_0754`
 
-Review date: 2026-07-13 America/Denver
+Review date: 2026-07-15 America/Denver
 
 ## Current Mode
 
@@ -870,7 +872,8 @@ workflow, then finish the security package.
 - Privacy-risk rolling metrics and counters now have an explicit mixed-state
   contract, including typed threat and learning result queues.
 - MicroVM control sockets fail closed where Unix sockets are unavailable, and
-  Firecracker launch commands reject missing configuration files.
+  Firecracker launch commands reject missing configuration files. Failed
+  control-socket connection attempts close the created socket before returning.
 - MFA providers now share an enrollment-result contract and reject absent
   passkey/certificate challenge fields before decoding or verification.
 - DOS trap sanitization patterns, monitoring configuration, and threat-level
@@ -887,11 +890,22 @@ workflow, then finish the security package.
 - `python -m pytest tests/test_dos_trap.py tests/test_hardware_root_of_trust.py tests/test_mfa_auth.py tests/test_microvm_isolation.py tests/test_privacy_ledger.py tests/test_privacy_risk_engine.py -q --no-cov`:
   168 passed.
 - Full-repository Flake8 passed with zero findings.
+- `python -m pytest tests/test_microvm_isolation.py tests/test_production_verifier_target_evidence.py -q --no-cov`:
+  50 passed, including failed-socket cleanup and Windows console-encoding
+  coverage for verifier output.
 - `python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
   passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
-  scan, all 570 tests, wheel build, and local web smoke. The wheel sha256 was
-  `109fbbb3702618b4b42e22c6a3f949edec86eeee54a60ea91695c5640a987e5c`,
+  scan, all 572 tests with 70% total coverage, wheel build, and local web smoke.
+  The wheel sha256 for that run was
+  `a6a535d86f700e8423c79705ebfa84feb65c7712ee3e3a9cb39ec21b40121800`,
   and local web smoke reported `backend=thirsty-lang`.
+- `python scripts/verify_production_deployment.py --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+  passed the same static, type, security, package, and local web gates, then
+  built and verified the Docker image, production health/auth/log smoke, and
+  last-known-good rollback smoke. The run produced wheel sha256
+  `4451e7c52c9234f697ccd993352f28303c8f5c97a7eca13bd7d838c074e73688`
+  and Docker manifest-list sha256
+  `02e0badadad9eb334b58c13badc561378c7a09385dc30419ac9933a19967063a`.
 
 ### Known Failures And Risks
 
@@ -903,5 +917,6 @@ workflow, then finish the security package.
 
 ### Safe To Continue
 
-Yes. Run the full aggregate Standard v3 gate, publish through the protected
-`main` workflow, and continue target-evidence completion.
+Yes. Complete protected-branch publication, verify the merged `main` commit,
+and continue external target-evidence completion or explicitly narrow the
+accepted production scope to local Docker.
