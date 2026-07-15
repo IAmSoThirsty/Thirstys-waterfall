@@ -3,7 +3,7 @@ Capability Manager - Fine-grained permission system
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from cryptography.fernet import Fernet
 import time
 
@@ -51,7 +51,7 @@ class CapabilityManager:
             },
         }
 
-        self._permission_requests = []
+        self._permission_requests: List[Dict[str, Any]] = []
 
     def request_permission(self, capability: str, reason: str) -> bool:
         """Request permission for a capability"""

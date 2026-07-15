@@ -744,3 +744,44 @@ clean runtime package group.
 
 Yes. Publish through the protected `main` workflow, then continue with the
 remaining defect-bearing runtime packages.
+
+## 2026-07-15 Consigliere And Wi-Fi Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 106 explicit files, adding all five Consigliere
+  modules and all five Wi-Fi modules to the 96-file foundation.
+- Permission-request audit records and minimized assistant context now have
+  explicit heterogeneous value contracts.
+- Wi-Fi channel optimization narrows validated backend results to its declared
+  integer-or-null return contract before returning them.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental thirstys_waterfall\consigliere thirstys_waterfall\wifi_network`:
+  passed, 10 files checked.
+- `python -m mypy --no-incremental`: passed, 106 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 106 files
+  checked under the pinned CI-compatible version.
+- `python -m pytest tests\test_consigliere.py tests\test_wifi_controller.py tests\test_wifi_security.py -q --no-cov`:
+  48 passed.
+- `python scripts\verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+  passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
+  scan, all 562 tests, wheel build, and local web smoke. The wheel sha256 was
+  `1a907cb3239463c5a7f34ce920bbad90379120c11692213119a31f4d98cfd58c`,
+  and local web smoke reported `backend=thirsty-lang`.
+- Parent PR #95 passed every hosted quality, Standard v3, security, package,
+  integration, CodeQL, and Python 3.10-3.11 platform check.
+
+### Known Failures And Risks
+
+- Type and unit-test acceptance do not prove a configured local inference
+  backend or privileged Wi-Fi connect, disconnect, and channel-control behavior
+  on supported operating systems.
+- Fourteen runtime files remain outside the hard mypy gate in the network,
+  settings, and security packages.
+
+### Safe To Continue
+
+Yes. Run the full Standard v3 local gate, publish through the protected `main`
+workflow, then continue with the remaining runtime packages.
