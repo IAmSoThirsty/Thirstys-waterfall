@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,8 @@ name = "thirstys-waterfall"
 version = "1.0.3"
 description = "Integrated privacy-first system with 8 firewalls, built-in VPN, and incognito browser"
 readme = "README.md"
-license = {text = "MIT"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
     {name = "Thirsty Security Team", email = "security@thirstys.local"}
 ]
