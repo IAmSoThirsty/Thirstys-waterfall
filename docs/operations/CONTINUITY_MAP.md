@@ -598,3 +598,63 @@ Yes. Continue with another bounded runtime slice or external deployment evidence
 ### Safe To Continue
 
 Yes. Continue with the remaining browser package as the next bounded slice.
+
+## 2026-07-15 Main Branch Protection
+
+### Current State
+
+- GitHub `main` branch protection is enabled and enforced for administrators.
+- Changes require a pull request, strict up-to-date status checks, and resolved
+  review conversations; force pushes and branch deletion are disabled.
+- Eleven quality, security, Standard v3, package-build, CodeQL, integration,
+  and Python 3.11 platform checks are required before future merges.
+- PR #92 exposed the missing protection by merging while checks were pending;
+  protection was enabled immediately afterward and applies to future changes.
+
+### Commands And Verification
+
+- GitHub's branch-protection API confirms strict checks, administrator
+  enforcement, pull-request requirements, conversation resolution, disabled
+  force pushes, disabled deletion, and the 11 required check contexts.
+
+### Known Failures And Risks
+
+- PR #92's protection evidence is post-merge because the rule did not exist at
+  merge time. Its hosted checks must still finish cleanly.
+
+## 2026-07-15 Browser Runtime Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 64 explicit files, adding all eight remaining
+  browser modules to the 56-file foundation and covering the complete browser
+  package.
+- Browser document, session, and encrypted-search history state now has
+  explicit contracts.
+- Optional browser configuration parameters are represented explicitly.
+- Browser tab exhaustion now raises a deterministic runtime error instead of
+  passing an absent tab identifier into privacy-policy setup.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 64 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 64 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_browser.py tests\test_native_web_engine.py tests\test_browser_downloads.py -q`:
+  67 passed.
+- Full-repository Flake8: passed with zero findings.
+- Standard v3 aggregate smoke passed the marker scans, compile step, mypy,
+  Bandit, locked-dependency Safety scan, wheel build, local web startup,
+  Docker health/auth/log smoke, and Docker rollback smoke.
+
+### Known Failures And Risks
+
+- Type and unit-test acceptance do not prove broad supported-site rendering,
+  script execution, real sandbox enforcement, or external browser backends.
+- Security, web, orchestration, and other application runtime modules remain
+  outside the hard mypy gate.
+
+### Safe To Continue
+
+Yes. Publish through the protected `main` workflow, then continue with another
+bounded runtime slice or external deployment evidence.

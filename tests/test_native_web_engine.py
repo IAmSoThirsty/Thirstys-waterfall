@@ -191,6 +191,23 @@ class TestIncognitoBrowserNativeEngine(unittest.TestCase):
         self.assertIsNone(self.browser.get_session_snapshot(tab_id))
         self.assertIsNone(self.browser.get_document_snapshot(tab_id))
 
+    def test_create_tab_fails_explicitly_when_limit_is_reached(self):
+        browser = IncognitoBrowser(
+            {
+                "incognito_mode": True,
+                "no_history": True,
+                "no_cache": True,
+                "no_cookies": True,
+                "max_tabs": 1,
+            }
+        )
+        self.addCleanup(lambda: browser._active and browser.stop())
+        browser.start()
+
+        self.assertIsInstance(browser.create_tab(), str)
+        with self.assertRaisesRegex(RuntimeError, "Browser tab limit reached"):
+            browser.create_tab()
+
 
 if __name__ == "__main__":
     unittest.main()

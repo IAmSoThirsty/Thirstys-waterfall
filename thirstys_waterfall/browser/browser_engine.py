@@ -12,7 +12,7 @@ from .encrypted_navigation import (
     LocalEncryptedHistorySearchBackend,
 )
 from .downloads import EncryptedDownloadBackend
-from .engine import FetchBlocked, FetchPolicy, ThirstyWebEngine
+from .engine import BrowserDocument, FetchBlocked, FetchPolicy, ThirstyWebEngine
 
 
 class IncognitoBrowser:
@@ -101,8 +101,8 @@ class IncognitoBrowser:
         self.encrypted_navigation = self._nav_history
         self._navigation_history = self._nav_history  # Alias
         self.web_engine = self._web_engine
-        self._rendered_documents = {}
-        self._tab_sessions = {}
+        self._rendered_documents: Dict[str, BrowserDocument] = {}
+        self._tab_sessions: Dict[str, Dict[str, Any]] = {}
 
         self._active = False
         self._extension_whitelist = config.get("extension_whitelist", [])
@@ -176,6 +176,8 @@ class IncognitoBrowser:
 
         # Create isolated tab
         tab_id = self.tab_manager.create_tab(url)
+        if tab_id is None:
+            raise RuntimeError("Browser tab limit reached")
 
         # Apply privacy policies to tab
         self._apply_privacy_policies(tab_id)
