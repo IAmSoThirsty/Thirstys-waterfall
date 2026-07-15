@@ -5,6 +5,7 @@ Covers ALL features: standard + additional features
 
 import logging
 from typing import Dict, Any
+import copy
 import json
 from cryptography.fernet import Fernet
 
@@ -34,7 +35,7 @@ class SettingsManager:
         self._cipher = Fernet(Fernet.generate_key())
 
         # Comprehensive settings for ALL features
-        self.settings = {
+        self.settings: Dict[str, Dict[str, Any]] = {
             # General Settings
             "general": {
                 "language": "en",
@@ -229,7 +230,7 @@ class SettingsManager:
         }
 
         self._modified = False
-        self._defaults = self.settings.copy()  # Keep defaults for reset
+        self._defaults: Dict[str, Dict[str, Any]] = copy.deepcopy(self.settings)
 
     def get_setting(self, category: str, key: str) -> Any:
         """Get a specific setting"""
@@ -256,22 +257,22 @@ class SettingsManager:
 
     def get_category(self, category: str) -> Dict[str, Any]:
         """Get all settings in a category"""
-        return self.settings.get(category, {}).copy()
+        return copy.deepcopy(self.settings.get(category, {}))
 
     def get_all_settings(self) -> Dict[str, Dict[str, Any]]:
         """Get all settings"""
-        return self.settings.copy()
+        return copy.deepcopy(self.settings)
 
     def reset_category(self, category: str):
         """Reset a category to defaults"""
         if category in self._defaults:
-            self.settings[category] = self._defaults[category].copy()
+            self.settings[category] = copy.deepcopy(self._defaults[category])
             self._modified = True
             self.logger.info(f"Category reset to defaults: {category}")
 
     def reset_all(self):
         """Reset all settings to defaults"""
-        self.settings = self._defaults.copy()
+        self.settings = copy.deepcopy(self._defaults)
         self._modified = True
         self.logger.warning("ALL SETTINGS RESET TO DEFAULTS")
 
@@ -286,17 +287,35 @@ class SettingsManager:
 
         return encrypted_settings
 
+    @staticmethod
+    def _deep_update(target: Dict[str, Any], source: Dict[str, Any]) -> None:
+        """Merge imported settings without dropping nested sibling values."""
+        for key, value in source.items():
+            existing = target.get(key)
+            if isinstance(existing, dict) and isinstance(value, dict):
+                SettingsManager._deep_update(existing, value)
+            else:
+                target[key] = copy.deepcopy(value)
+
     def import_settings(self, encrypted_data: bytes):
         """Import settings from encrypted data"""
         try:
             decrypted_data = self.god_tier_encryption.decrypt_god_tier(encrypted_data)
             imported = json.loads(decrypted_data.decode())
+            if not isinstance(imported, dict):
+                raise ValueError("Imported settings must be a category mapping")
 
-            # Merge with current settings (preserve structure)
+            # Validate the complete import before applying any category.
+            candidate = copy.deepcopy(self.settings)
             for category, values in imported.items():
-                if category in self.settings:
-                    self.settings[category].update(values)
+                if not isinstance(category, str) or not isinstance(values, dict):
+                    raise ValueError(
+                        "Imported settings categories must contain mappings"
+                    )
+                if category in candidate:
+                    self._deep_update(candidate[category], values)
 
+            self.settings = candidate
             self._modified = True
             self.logger.info("Settings imported successfully")
 
