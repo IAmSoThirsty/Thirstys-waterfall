@@ -727,7 +727,7 @@ sysctl -w net.core.wmem_max=26214400
 
 ## License
 
-MIT License - See [LICENSE](../LICENSE) file
+Apache License 2.0 - See [LICENSE](../LICENSE) file
 
 ---
 

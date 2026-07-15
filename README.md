@@ -921,7 +921,7 @@ This is a security-critical project. Contributions should preserve Standard v3 e
 
 ## 📄 License
 
-MIT License - See LICENSE file
+Apache License 2.0 - See LICENSE file
 
 ## ⚠️ Disclaimer
 
