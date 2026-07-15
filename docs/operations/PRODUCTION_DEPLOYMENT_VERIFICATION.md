@@ -4,12 +4,14 @@ Standard: Thirsty's Standard v3
 
 Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, production TLS reverse-proxy config validation, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, live TLS certificate/boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
-Latest exact-head local verification on commit
-`28d3d608f6579e10fcacfa5a9a15d8c624164a10` passed 572 tests with 70% total
-coverage, all 120-file mypy checks, Flake8, Bandit, the locked dependency scan,
-package build, Thirsty-Lang local smoke, Docker health/auth/log smoke, and Docker
-rollback smoke. The Docker run produced manifest-list sha256
-`02e0badadad9eb334b58c13badc561378c7a09385dc30419ac9933a19967063a`.
+Latest local supply-chain verification passed 581 tests with 70% total
+coverage, all 121-file mypy checks, Flake8, Bandit, zero known vulnerabilities
+in the complete hash-verified runtime and build locks, byte-for-byte wheel and
+source-distribution reproducibility, Thirsty-Lang local smoke, Docker
+health/auth/log smoke, and Docker rollback smoke. The pinned-base, multi-stage
+runtime image was 59,992,751 bytes, contained no compiler or Python build
+toolchain, and produced manifest-list sha256
+`5f7a1de6270bf84c27bda4569a21679f882399a1dde34aca933bc8f579bd10de`.
 This is local Docker evidence, not external/public target acceptance.
 
 Target evidence manifests are validated with:
@@ -51,12 +53,12 @@ What this proves locally:
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
 - Full Flake8 lint gate passes with a 127-character line limit.
-- Mypy passes for all 120 governed source files: the 13 production
-  deployment/evidence scripts plus the complete 107-file application runtime.
+- Mypy passes for all 121 governed source files: the 14 production
+  deployment/evidence/build scripts plus the complete 107-file application runtime.
 - Full-repo Bandit passes.
-- Locked deployment dependency vulnerability check passes.
+- Complete hash-verified runtime and build dependency vulnerability checks pass.
 - Full pytest suite passes.
-- Wheel build passes.
+- Wheel and source distributions pass independent byte-for-byte reproducibility checks.
 - Local web process starts and serves `/health`.
 - Local web production-mode startup uses explicit `SECRET_KEY`, `JWT_SECRET_KEY`, admin credentials, and non-wildcard `CORS_ORIGINS`.
 - Enhanced Thirsty-Lang binding reports backend `thirsty-lang` when the checkout is supplied.

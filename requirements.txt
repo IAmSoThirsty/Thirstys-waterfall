@@ -1,7 +1,7 @@
 # Thirstys Waterfall - Production Requirements
 
 # Core dependencies
-cryptography>=46.0.7,<50.0.0
+cryptography>=48.0.1,<50.0.0
 
 # No external VPN dependencies - VPN is built-in!
 # No browser engine dependencies - browser engine is built-in!

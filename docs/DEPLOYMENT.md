@@ -207,8 +207,8 @@ docker logs thirstys-waterfall
 The Docker image includes several security features:
 
 - **Non-root user**: Container runs as user `thirsty` (UID 1000)
-- **Minimal base image**: Uses `python:3.11-slim`
-- **Multi-stage build**: Reduces image size and attack surface
+- **Pinned minimal base image**: Uses an immutable `python:3.11-slim` manifest digest
+- **Multi-stage build**: Keeps compilers and the hash-verified build toolchain out of the runtime image
 - **Security options**: `no-new-privileges` enabled
 - **Resource limits**: CPU and memory limits defined
 - **Health checks**: Automatic health monitoring
