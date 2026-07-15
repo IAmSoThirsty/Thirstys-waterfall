@@ -139,7 +139,7 @@ class ConfigValidator:
         """Validate IPv4 or IPv6 address"""
         try:
             ipaddress.ip_address(ip)
-        except ValueError:
+        except (ValueError, TypeError):
             return False
         return True
 

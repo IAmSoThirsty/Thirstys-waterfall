@@ -117,6 +117,8 @@ class TestThemesAndConfig(unittest.TestCase):
 
     def test_ip_validation_rejects_invalid_octets_and_accepts_compressed_ipv6(self):
         self.assertFalse(ConfigValidator.validate_ip_address("999.999.999.999"))
+        self.assertFalse(ConfigValidator.validate_ip_address(None))
+        self.assertFalse(ConfigValidator.validate_ip_address([]))
         self.assertTrue(ConfigValidator.validate_ip_address("192.0.2.10"))
         self.assertTrue(ConfigValidator.validate_ip_address("2001:db8::1"))
 
