@@ -303,7 +303,7 @@ Recommended tools for security verification:
 
 - **detect-secrets**: Find secrets in code
 - **bandit**: Python security linter
-- **safety**: Check dependencies for vulnerabilities
+- **pip-audit**: Audit hash-locked build and deployment dependencies for known vulnerabilities
 - **trivy**: Container vulnerability scanner
 - **git-secrets**: Prevent committing secrets
 - **GitGuardian**: Automated secret detection

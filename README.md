@@ -434,7 +434,7 @@ See `examples/config.json` for full configuration options.
 
 ## 🚀 Deployment Verification
 
-Thirstys Waterfall currently has **release, local deployment-smoke, local Docker target evidence verification, and verified production TLS proxy configuration**, not final external/public Production Deployment Verified status. The verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, local rollback smoke, and a required target-evidence manifest when supplied. Release `v1.0.3` also pushed a verified GHCR image that was pulled and smoke-tested locally.
+Thirstys Waterfall currently has **release, local deployment-smoke, local Docker target evidence verification, and verified production TLS proxy configuration**, not final external/public Production Deployment Verified status. The verifier runs tests, syntax and type gates, Bandit, hash-enforced `pip-audit` scans of the build and deployment locks, reproducible wheel/source-distribution builds, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, local rollback smoke, and a required target-evidence manifest when supplied. Release `v1.0.3` also pushed a verified GHCR image that was pulled and smoke-tested locally.
 
 ```powershell
 python scripts\verify_production_deployment.py --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
@@ -811,7 +811,7 @@ Automated testing across multiple platforms:
 - **Integration Tests**: backend command construction, browser behavior, auth, MicroVM lifecycle, privacy ledger, and security components
 - **Platform Tests**: Linux (Ubuntu), Windows, macOS in CI workflow configuration; external run evidence is still required for acceptance
 - **Python Versions**: 3.10, 3.11
-- **Security Scans**: Bandit, Safety, dependency checks
+- **Security Scans**: Bandit, hash-enforced `pip-audit`, CodeQL, and secret scanning
 
 ### Run Tests Locally
 
@@ -858,7 +858,7 @@ The CI workflow is configured for:
 - **Platforms**: Linux (Ubuntu), Windows, macOS
 - **Python Versions**: 3.10, 3.11
 - **Tests**: Unit tests, integration tests, platform tests
-- **Security Scans**: Bandit, Safety, dependency checks
+- **Security Scans**: Bandit, hash-enforced `pip-audit`, CodeQL, and secret scanning
 
 View the [CI workflow results](https://github.com/IAmSoThirsty/Thirstys-waterfall/actions)
 
