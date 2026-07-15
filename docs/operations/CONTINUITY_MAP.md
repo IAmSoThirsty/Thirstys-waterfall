@@ -945,9 +945,9 @@ accepted production scope to local Docker.
 - `python -m pytest -q`: 581 passed in 267.08 seconds with 70% total coverage.
 - `python -m mypy`: passed, all 121 governed source files checked.
 - Full-repository Flake8 and Bandit passed with zero findings.
-- `python scripts/verify_reproducible_build.py`: passed with wheel sha256
-  `3d0302eb21a6f1ef073270fe42914781c7c4b80265e6a6e718957c3c815e290e`
-  and a byte-identical independently rebuilt source distribution.
+- `python scripts/verify_reproducible_build.py`: passed with byte-identical
+  independently rebuilt wheel and source-distribution artifacts. The verifier
+  reports the commit-specific artifact digests in its execution output.
 - Both verified artifacts passed `twine check`, installed in isolated Python
   3.11 environments, and exposed the expected CLI.
 - The multi-stage Docker image built from the complete Linux lock, measured
