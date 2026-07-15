@@ -822,3 +822,41 @@ workflow, then continue with the remaining runtime packages.
 
 Yes. Run the aggregate local gate, publish through the protected `main`
 workflow, then continue with settings and security.
+
+## 2026-07-15 Settings Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 113 explicit files, adding all five settings
+  modules to the 108-file foundation.
+- Settings and defaults now use isolated deep snapshots, so reset operations
+  restore original nested values and returned snapshots cannot mutate manager
+  state.
+- Imported settings are shape-validated completely and applied atomically, so
+  a malformed later category cannot leave earlier categories partially changed.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental thirstys_waterfall\settings`: passed, 5 files
+  checked.
+- `python -m mypy --no-incremental`: passed, 113 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 113 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_settings_manager.py -q --no-cov`: 8 passed.
+- Full-repository Flake8 passed with zero findings.
+- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+  passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
+  scan, wheel build, and local web smoke. The wheel sha256 was
+  `d26b50d13497d7b79f08b808c048f5ea40f4d5cc81ac541b11ac0b19af1026e5`,
+  and local web smoke reported `backend=thirsty-lang`.
+
+### Known Failures And Risks
+
+- Type and unit-test acceptance do not prove target-host persistence,
+  operator-facing settings UI behavior, or external support delivery.
+- Seven runtime files remain outside the hard mypy gate in the security package.
+
+### Safe To Continue
+
+Yes. Run the aggregate local gate, publish through the protected `main`
+workflow, then finish the security package.

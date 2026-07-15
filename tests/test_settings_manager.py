@@ -52,6 +52,42 @@ class TestSettingsManagerEncryptionEvidence(unittest.TestCase):
         self.assertEqual(manager.get_all_settings(), before)
         self.assertFalse(manager.get_status()["modified"])
 
+    def test_import_settings_rejects_invalid_shape_atomically(self):
+        helper = LocalEncryptionHelper()
+        manager = SettingsManager(helper)
+        before = manager.get_all_settings()
+        invalid = helper.encrypt_god_tier(
+            b'{"general":{"theme":"solarized"},"privacy":[]}'
+        )
+
+        manager.import_settings(invalid)
+
+        self.assertEqual(manager.get_all_settings(), before)
+        self.assertFalse(manager.get_status()["modified"])
+
+    def test_reset_uses_isolated_default_snapshot(self):
+        manager = SettingsManager(LocalEncryptionHelper())
+        manager.set_setting("general", "theme", "solarized")
+        manager.set_setting("ai_assistant", "capabilities", {"text_generation": False})
+
+        manager.reset_category("general")
+        manager.reset_category("ai_assistant")
+
+        self.assertEqual(manager.get_setting("general", "theme"), "dark")
+        capabilities = manager.get_setting("ai_assistant", "capabilities")
+        self.assertTrue(capabilities["text_generation"])
+
+    def test_returned_settings_snapshot_cannot_mutate_manager(self):
+        manager = SettingsManager(LocalEncryptionHelper())
+        snapshot = manager.get_all_settings()
+
+        snapshot["general"]["theme"] = "solarized"
+        snapshot["ai_assistant"]["capabilities"]["text_generation"] = False
+
+        self.assertEqual(manager.get_setting("general", "theme"), "dark")
+        capabilities = manager.get_setting("ai_assistant", "capabilities")
+        self.assertTrue(capabilities["text_generation"])
+
     def test_status_reports_unaccepted_local_helper_scope(self):
         status = SettingsManager(LocalEncryptionHelper()).get_status()
 
