@@ -683,6 +683,8 @@ bounded runtime slice or external deployment evidence.
 - Standard v3 aggregate smoke passed the marker scans, compile step, mypy,
   Bandit, locked-dependency Safety scan, wheel build, local web startup,
   Docker health/auth/log smoke, and Docker rollback smoke.
+- A read-only remainder scan passed all seven unenrolled root/configuration
+  modules, completing their classification for a later bounded increment.
 - PR #93's hosted Standard v3 verifier passed 551 tests on the protected
   browser-runtime foundation before this increment.
 
@@ -690,9 +692,8 @@ bounded runtime slice or external deployment evidence.
 
 - Type and unit-test acceptance do not prove external remote-access transports,
   a real secure-tunnel backend, or target-host media download/conversion.
-- Forty-eight application runtime files remain outside the hard mypy gate: 17
-  package files are currently clean, 24 are in packages with known type
-  findings, and seven root/configuration modules still require classification.
+- Forty-eight application runtime files remain outside the hard mypy gate: 24
+  are currently clean and 24 are in packages with known type findings.
 
 ### Safe To Continue
 
