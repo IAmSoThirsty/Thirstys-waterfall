@@ -58,7 +58,7 @@ Until the acceptance matrix is green, the repository should not claim:
 Use these local commands to reproduce the strongest current evidence:
 
 ```bash
-python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 python -m pytest -q
 ```
 

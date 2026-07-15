@@ -11,7 +11,7 @@ Guide for deploying Thirstys Waterfall and collecting the Standard v3 evidence r
 For the current hard local gate, run:
 
 ```powershell
-python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts\verify_production_deployment.py --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 ```
 
 See [Production Deployment Verification](operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md) for rollback, secret rotation, and remaining external evidence requirements.

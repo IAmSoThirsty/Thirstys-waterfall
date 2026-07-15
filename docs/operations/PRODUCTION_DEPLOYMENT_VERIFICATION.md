@@ -31,7 +31,7 @@ The manifest format and required artifact types are documented in
 Run the full local gate from the repository root:
 
 ```powershell
-python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts\verify_production_deployment.py --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 ```
 
 The complete pytest subprocess has a bounded 480-second default. Use
@@ -43,10 +43,11 @@ What this proves locally:
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
 - Full Flake8 lint gate passes with a 127-character line limit.
-- Mypy passes for 72 explicitly enrolled source files: the production
-  deployment/evidence scripts plus 59 runtime files covering platform,
+- Mypy passes for 96 explicitly enrolled source files: the production
+  deployment/evidence scripts plus 83 runtime files covering platform,
   Thirsty-Lang binding, browser, configuration, VPN, firewall, privacy,
-  storage, utility, remote-access, and media-download surfaces.
+  storage, utility, remote-access, media-download, root orchestration,
+  AI assistant, ad-annihilator, setup, and theme surfaces.
 - Full-repo Bandit passes.
 - Locked deployment dependency vulnerability check passes.
 - Full pytest suite passes.
@@ -66,7 +67,7 @@ What this proves locally:
 If Docker is unavailable, run the non-container portion only:
 
 ```powershell
-python scripts\verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts\verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 ```
 
 That is useful development evidence, but it is not enough for production Deployment Verified.
@@ -91,13 +92,13 @@ This mode is used by the release workflow so the Docker smoke covers the actual 
 - GHCR image: `ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3`
 - GHCR digest: `sha256:9bcb45941b19bd8ae1b848c5ffecaca8df9a15472ca02efb45999e283fe564bc`
 - Published image pull: `docker pull ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3` succeeded.
-- Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed.
-- Target evidence fail-closed check without a manifest: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` fails with `target deployment evidence is required; pass --target-evidence-manifest`.
+- Published image verifier: `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image ghcr.io/iamsothirsty/thirstys-waterfall:1.0.3 --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"` passed.
+- Target evidence fail-closed check without a manifest: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"` fails with `target deployment evidence is required; pass --target-evidence-manifest`.
 
 ## Local Docker Target Evidence
 
 - Local manifest: `evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json`
-- Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"` passed on branch `harden/service-orchestrator-evidence`.
+- Strict verifier: `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"` passed on branch `harden/service-orchestrator-evidence`.
 - Evidence types present: `target_identity`, `published_image_pull_run`, `target_health_auth_logs`, `target_rollback`, `secret_rotation`, `shared_revocation_store`, `host_network_policy`, `service_orchestrator_hardening`, and `platform_backend_execution`.
 - Scope caveat: this bundle proves a local Docker target with explicit local HTTP boundary, local Docker service-hardening evidence, and a narrowed platform-backend claim. It does not prove an external/public target, TLS/proxy boundary, external service manager/orchestrator hardening, or real OS VPN/firewall backend execution.
 
@@ -187,7 +188,7 @@ docker run --rm -p 18082:8080 `
   -e THIRSTYS_ADMIN_PASSWORD_HASH="<generated-hash>" `
   -e THIRSTYS_ALLOW_DEMO_LOGIN=false `
   -e JWT_REVOCATION_DB_PATH=/home/thirsty/.thirstys_waterfall/revoked_tokens.sqlite3 `
-  -v "T:\00-Active\thirsty_lang_exploration_0754:/opt/thirsty-lang:ro" `
+  -v "T:\01-Projects\thirsty_lang_exploration_0754:/opt/thirsty-lang:ro" `
   thirstys-waterfall:codex-verify
 ```
 
@@ -261,8 +262,7 @@ Rotation checklist:
 - Real platform evidence for claimed VPN/firewall backends, or production-scope claim narrowing.
 - Review and reconciliation of remaining simulated, simplified, placeholder, and demo-mode paths.
 - Whole-runtime type-check adoption. The current hard mypy gate covers the 13
-  production deployment and target-evidence scripts plus 51 explicitly
-  enrolled runtime files for platform capabilities, enhanced Thirsty-Lang
-  binding, the complete browser package, configuration, VPN, firewalls,
-  privacy, storage, and utilities.
+  production deployment and target-evidence scripts plus 83 explicitly
+  enrolled runtime files. The remaining unenrolled runtime files are the
+  defect-bearing consigliere, Wi-Fi, network, settings, and security packages.
 - External/public target packaged evidence archive created after the external/public manifest passes validation. Current package proof is local Docker target evidence only.

@@ -31,7 +31,7 @@ For the active acceptance matrix, see `docs/operations/README_CLAIM_ACCEPTANCE.m
 These workflows are currently supported as evidence-producing local checks:
 
 ```bash
-python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts/verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 python -m pytest -q
 python -m pytest tests\test_native_web_engine.py tests\test_web_app_import.py -q
 ```

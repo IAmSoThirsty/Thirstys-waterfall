@@ -437,7 +437,7 @@ See `examples/config.json` for full configuration options.
 Thirstys Waterfall currently has **release, local deployment-smoke, local Docker target evidence verification, and verified production TLS proxy configuration**, not final external/public Production Deployment Verified status. The verifier runs tests, syntax gates, Bandit, Safety against the deployment lock, wheel build, local web health/auth smoke, Docker Compose config validation, Docker image build, Docker container health/auth smoke, local rollback smoke, and a required target-evidence manifest when supplied. Release `v1.0.3` also pushed a verified GHCR image that was pulled and smoke-tested locally.
 
 ```powershell
-python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"
+python scripts\verify_production_deployment.py --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 ```
 
 See [Production Deployment Verification](docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md) and the [README Claim Acceptance Matrix](docs/operations/README_CLAIM_ACCEPTANCE.md) for current evidence and blockers.
