@@ -920,3 +920,50 @@ workflow, then finish the security package.
 Yes. Complete protected-branch publication, verify the merged `main` commit,
 and continue external target-evidence completion or explicitly narrow the
 accepted production scope to local Docker.
+
+## 2026-07-15 Deterministic Supply-Chain Completion
+
+### Current State
+
+- The deployment input now compiles into a complete 35-package runtime lock;
+  every direct and transitive package is pinned and hash-verified.
+- The release toolchain is separately pinned and hash-verified with `build
+  1.5.0`, `setuptools 83.0.0`, and `wheel 0.47.0`.
+- The deprecated Safety command was replaced by `pip-audit 2.10.1`. The new
+  audit found and drove remediation of current advisories in `cryptography
+  46.0.7` and `setuptools 82.0.1`.
+- The governed package gate builds independent wheel and source distributions
+  twice, normalizes source-archive ownership and timestamps, and requires
+  byte-for-byte SHA-256 equality before exporting artifacts.
+- The Dockerfile now uses a pinned base-image digest and separate build/runtime
+  stages. Compilers, `build`, `setuptools`, and `wheel` are absent from the
+  final non-root image.
+
+### Commands And Verification
+
+- Both hash-verified locks passed `pip-audit` with zero known vulnerabilities.
+- `python -m pytest -q`: 581 passed in 267.08 seconds with 70% total coverage.
+- `python -m mypy`: passed, all 121 governed source files checked.
+- Full-repository Flake8 and Bandit passed with zero findings.
+- `python scripts/verify_reproducible_build.py`: passed with wheel sha256
+  `93c754ef225749c3372f752a7f2393278690542d6fdb3712abc0fa59b19ffcc4`
+  and a byte-identical independently rebuilt source distribution.
+- Both verified artifacts passed `twine check`, installed in isolated Python
+  3.11 environments, and exposed the expected CLI.
+- The multi-stage Docker image built from the complete Linux lock, measured
+  59,992,751 bytes, ran as `thirsty`, and contained no compiler or Python build
+  toolchain. Its manifest-list sha256 was
+  `5f7a1de6270bf84c27bda4569a21679f882399a1dde34aca933bc8f579bd10de`.
+- The full Standard v3 verifier passed strict nine-type local target evidence,
+  enhanced Thirsty-Lang binding, health/auth/log smoke, and rollback smoke.
+
+### Known Failures And Risks
+
+- External/public target, live TLS boundary, non-local secret-store rotation,
+  external service-manager evidence, and real privileged OS backend evidence
+  remain required for full external production acceptance.
+
+### Safe To Continue
+
+Yes. Publish through the protected branch, verify the merged `main` commit,
+then collect the remaining evidence from a selected external deployment target.

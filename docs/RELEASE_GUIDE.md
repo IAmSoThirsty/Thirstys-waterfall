@@ -93,13 +93,14 @@ Once the tag is pushed, GitHub Actions will automatically:
 
 ```bash
 
-# Install build tools
+# Install the hash-verified build toolchain
 
-pip install build wheel twine
+pip install --require-hashes -r requirements-build.lock
+pip install twine==6.2.0
 
-# Build distributions
+# Build each distribution twice and export only matching artifacts
 
-python -m build
+python scripts/verify_reproducible_build.py --output-dir dist
 
 # Check distributions
 

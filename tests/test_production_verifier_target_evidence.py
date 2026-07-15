@@ -147,6 +147,30 @@ def test_main_uses_configured_full_suite_timeout(monkeypatch):
     assert pytest_call[1]["timeout"] == 481
 
 
+def test_main_uses_hash_checked_audits_and_reproducible_build(monkeypatch):
+    calls = []
+    _stub_expensive_verifier_steps(monkeypatch, calls)
+
+    exit_code = production_verifier.main(["--skip-tests", "--skip-docker"])
+
+    for requirements_file in ("requirements-build.lock", "requirements-deploy.lock"):
+        assert [
+            sys.executable,
+            "-m",
+            "pip_audit",
+            "--require-hashes",
+            "-r",
+            requirements_file,
+            "--format",
+            "json",
+            "--progress-spinner",
+            "off",
+        ] in calls
+    assert [sys.executable, "scripts/verify_reproducible_build.py"] in calls
+    assert all("safety" not in command for call in calls for command in call)
+    assert exit_code == 0
+
+
 def test_main_rejects_nonpositive_full_suite_timeout(monkeypatch):
     monkeypatch.setattr(
         production_verifier,

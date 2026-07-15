@@ -446,7 +446,7 @@ See [Production Deployment Verification](docs/operations/PRODUCTION_DEPLOYMENT_V
 
 1. **Docker Deployment** (verified release-image smoke path)
 
-   - Locked deployment dependencies through `requirements-deploy.lock`
+   - Complete hash-verified runtime dependencies through `requirements-deploy.in` and `requirements-deploy.lock`
    - Docker Compose orchestration
    - Health checks and resource limits
    - Non-root user security

@@ -506,6 +506,9 @@ def main(argv: list[str] | None = None) -> int:
             ROOT / ".env.example",
             ROOT / "pyproject.toml",
             ROOT / "requirements.txt",
+            ROOT / "requirements-build.in",
+            ROOT / "requirements-build.lock",
+            ROOT / "requirements-deploy.in",
             ROOT / "requirements-deploy.lock",
         ]
     )
@@ -542,13 +545,31 @@ def main(argv: list[str] | None = None) -> int:
     )
     run([sys.executable, "-m", "mypy"])
     run(["bandit", "-r", "thirstys_waterfall/", "-q"])
-    run(["safety", "check", "-r", "requirements-deploy.lock", "--json"])
+    for requirements_file in ("requirements-build.lock", "requirements-deploy.lock"):
+        run(
+            [
+                sys.executable,
+                "-m",
+                "pip_audit",
+                "--require-hashes",
+                "-r",
+                requirements_file,
+                "--format",
+                "json",
+                "--progress-spinner",
+                "off",
+            ],
+            timeout=240,
+        )
     if not args.skip_tests:
         run(
             [sys.executable, "-m", "pytest", "-q"],
             timeout=args.test_timeout,
         )
-    run([sys.executable, "-m", "pip", "wheel", ".", "--no-deps", "--no-build-isolation", "-w", "..\\wheelhouse"], timeout=180)
+    run(
+        [sys.executable, "scripts/verify_reproducible_build.py"],
+        timeout=360,
+    )
     smoke_local_web(args.thirsty_lang_path)
 
     if not args.skip_docker:
