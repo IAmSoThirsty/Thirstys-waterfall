@@ -23,7 +23,7 @@ class PrivacyAuditor:
 
         self._encrypted_audit_log: List[bytes] = []
         self._violation_indexes: List[int] = []
-        self._leak_tests = []
+        self._leak_tests: List[Any] = []
         self._last_leak_results: Dict[str, Optional[Dict[str, Any]]] = {
             "dns": None,
             "ipv6": None,

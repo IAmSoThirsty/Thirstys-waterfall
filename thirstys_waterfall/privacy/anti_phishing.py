@@ -1,7 +1,7 @@
 """Anti-Phishing Engine"""
 
 import logging
-from typing import Dict, Any, Set
+from typing import Dict, Any, List, Set
 import re
 
 
@@ -17,7 +17,7 @@ class AntiPhishingEngine:
         self._active = False
 
         self._phishing_domains: Set[str] = set()
-        self._suspicious_patterns = []
+        self._suspicious_patterns: List[str] = []
         self._blocked_count = 0
 
         self._load_phishing_database()

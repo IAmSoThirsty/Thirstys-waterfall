@@ -531,3 +531,37 @@ Yes. Continue with the firewall package as the next explicit type-check slice.
 
 Yes. Measure and enroll the next bounded runtime slice without broadening type
 acceptance beyond files that pass both supported mypy versions.
+
+## 2026-07-15 Privacy Runtime Type-Check Increment
+
+### Current State
+
+- The hard mypy gate now checks 48 explicit files, adding all seven privacy
+  package modules to the 41-file production-tooling and runtime foundation.
+- Privacy engine collection state now has explicit list and mapping contracts.
+- Anti-malware file scans explicitly accept an absent byte payload, matching
+  the existing public default and fail-closed scanning path.
+- Suspicious byte signatures are decoded to readable text before logging.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental`: passed, 48 files checked with mypy 2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 48 files checked
+  under the pinned CI-compatible version.
+- `python -m pytest tests\test_privacy_engines.py tests\test_privacy_auditor.py tests\test_python_marker_hygiene.py -q`:
+  11 passed.
+- Full-repository Flake8: passed with zero findings.
+- Standard v3 aggregate smoke passed the marker scans, compile step, mypy,
+  Bandit, locked-dependency Safety scan, wheel build, local web startup,
+  Docker health/auth/log smoke, and Docker rollback smoke.
+
+### Known Failures And Risks
+
+- Type acceptance does not prove live anti-phishing, anti-malware, onion-routing,
+  fingerprint-protection, or leak-audit backend enforcement on target hosts.
+- The remaining browser, storage, security, web, and orchestration runtime
+  modules are not yet fully enrolled in the hard mypy gate.
+
+### Safe To Continue
+
+Yes. Continue with another bounded runtime slice or external deployment evidence.
