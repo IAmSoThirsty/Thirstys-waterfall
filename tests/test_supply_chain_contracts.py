@@ -105,4 +105,7 @@ def test_active_docs_name_the_current_dependency_scanner():
     for path in active_docs:
         contents = path.read_text(encoding="utf-8")
         assert "pip-audit" in contents, f"current scanner missing from {path.name}"
-        assert not any(phrase in contents for phrase in retired_phrases)
+        for phrase in retired_phrases:
+            assert phrase not in contents, (
+                f"retired phrase {phrase!r} found in {path.name}"
+            )
