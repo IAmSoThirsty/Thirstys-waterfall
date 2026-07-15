@@ -7,7 +7,7 @@ in response to anomalies or threats with auto-escalation capabilities.
 import logging
 import time
 import threading
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional, Callable, Deque, TypedDict
 from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
@@ -62,8 +62,22 @@ class BehaviorProfile:
     typical_session_duration: float = 3600.0  # seconds
 
     # Learned patterns
-    request_patterns: deque = field(default_factory=lambda: deque(maxlen=1000))
-    connection_patterns: deque = field(default_factory=lambda: deque(maxlen=1000))
+    request_patterns: Deque[int] = field(
+        default_factory=lambda: deque(maxlen=1000)
+    )
+    connection_patterns: Deque[int] = field(
+        default_factory=lambda: deque(maxlen=1000)
+    )
+
+
+class RiskMetrics(TypedDict):
+    """Typed shape for mixed rolling metrics and counters."""
+
+    request_rate: Deque[float]
+    data_volume: Deque[int]
+    connection_count: Deque[float]
+    failed_auth_attempts: int
+    suspicious_patterns: int
 
 
 class PrivacyRiskEngine:
@@ -98,11 +112,11 @@ class PrivacyRiskEngine:
 
         # Risk analysis state
         self._current_risk_level = RiskLevel.MINIMAL
-        self._threat_events: deque = deque(maxlen=10000)
+        self._threat_events: Deque[ThreatEvent] = deque(maxlen=10000)
         self._behavior_profile = BehaviorProfile()
 
         # Monitoring metrics
-        self._metrics = {
+        self._metrics: RiskMetrics = {
             "request_rate": deque(maxlen=100),
             "data_volume": deque(maxlen=100),
             "connection_count": deque(maxlen=100),
@@ -117,12 +131,12 @@ class PrivacyRiskEngine:
 
         # Heuristic model state. A real ML model must be supplied as a backend.
         self._model_weights = self._initialize_heuristic_model()
-        self._hardening_results: deque = deque(maxlen=1000)
-        self._learning_results: deque = deque(maxlen=1000)
+        self._hardening_results: Deque[Dict[str, Any]] = deque(maxlen=1000)
+        self._learning_results: Deque[Dict[str, Any]] = deque(maxlen=1000)
 
         # Thread control
         self._active = False
-        self._monitor_thread = None
+        self._monitor_thread: Optional[threading.Thread] = None
         self._lock = threading.RLock()
 
     def start(self):
@@ -512,7 +526,7 @@ class PrivacyRiskEngine:
                 t for t in self._threat_events if current_time - t.timestamp < 300.0
             ]
 
-            threat_counts = {}
+            threat_counts: Dict[str, int] = {}
             for threat in recent_threats:
                 threat_type = threat.threat_type.value
                 threat_counts[threat_type] = threat_counts.get(threat_type, 0) + 1

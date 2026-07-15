@@ -860,3 +860,48 @@ workflow, then continue with settings and security.
 
 Yes. Run the aggregate local gate, publish through the protected `main`
 workflow, then finish the security package.
+
+## 2026-07-15 Security And Whole-Runtime Type-Check Completion
+
+### Current State
+
+- The hard mypy gate now checks all 120 governed files: 13 production
+  deployment/evidence scripts and the complete 107-file application runtime.
+- Privacy-risk rolling metrics and counters now have an explicit mixed-state
+  contract, including typed threat and learning result queues.
+- MicroVM control sockets fail closed where Unix sockets are unavailable, and
+  Firecracker launch commands reject missing configuration files.
+- MFA providers now share an enrollment-result contract and reject absent
+  passkey/certificate challenge fields before decoding or verification.
+- DOS trap sanitization patterns, monitoring configuration, and threat-level
+  ordering now have explicit contracts.
+
+### Commands And Verification
+
+- `python -m mypy --no-incremental thirstys_waterfall\security`: passed, 7 files
+  checked.
+- `python -m mypy --no-incremental`: passed, all 120 files checked with mypy
+  2.1.
+- `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, all 120 files
+  checked under the pinned CI-compatible version.
+- `python -m pytest tests\test_dos_trap.py tests\test_hardware_root_of_trust.py tests\test_mfa_auth.py tests\test_microvm_isolation.py tests\test_privacy_ledger.py tests\test_privacy_risk_engine.py -q --no-cov`:
+  168 passed.
+- Full-repository Flake8 passed with zero findings.
+- `python scripts\verify_production_deployment.py --skip-docker --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+  passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
+  scan, all 567 tests, wheel build, and local web smoke. The wheel sha256 was
+  `06be8e7dec82729ffd928b56f9ca3a758cc838ac0742ce9fa44d5a4783516de5`,
+  and local web smoke reported `backend=thirsty-lang`.
+
+### Known Failures And Risks
+
+- Whole-runtime static typing and unit tests do not prove privileged MicroVM,
+  hardware-root, biometric, DOS response, or platform security execution on a
+  production target.
+- External/public target, live TLS boundary, non-local secret rotation, and
+  real privileged OS backend evidence remain required for full acceptance.
+
+### Safe To Continue
+
+Yes. Run the full aggregate Standard v3 gate, publish through the protected
+`main` workflow, and continue target-evidence completion.

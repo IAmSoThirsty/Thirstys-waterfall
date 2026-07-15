@@ -111,6 +111,19 @@ class TestMicroVMInstance(unittest.TestCase):
         self.assertEqual(info["state"], VMState.CREATED.value)
         self.assertEqual(info["vm_id"], "test_vm_001")
 
+    def test_firecracker_command_requires_initialized_config(self):
+        vm = MicroVMInstance(
+            vm_id="firecracker_config",
+            backend=VMBackend.FIRECRACKER,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "configuration file"):
+            vm._build_firecracker_command()
+
     def test_resource_limits_applied(self):
         """Test resource limits are applied"""
         info = self.vm.get_info()
