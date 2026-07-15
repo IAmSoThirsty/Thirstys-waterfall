@@ -1,9 +1,12 @@
 """Tests for target evidence wiring in the production verifier."""
 
+import io
 import hashlib
 import importlib.util
 import json
+import subprocess
 import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 
 
@@ -171,3 +174,25 @@ def test_run_replaces_undecodable_subprocess_output():
     )
 
     assert "\ufffd" in output
+
+
+def test_run_replaces_output_unencodable_by_console(monkeypatch):
+    completed = subprocess.CompletedProcess(
+        args=["docker", "build"],
+        returncode=0,
+        stdout="build complete \u2713\n",
+    )
+    monkeypatch.setattr(
+        production_verifier.subprocess,
+        "run",
+        lambda *args, **kwargs: completed,
+    )
+    buffer = io.BytesIO()
+    stream = io.TextIOWrapper(buffer, encoding="cp1252", errors="strict")
+
+    with redirect_stdout(stream):
+        output = production_verifier.run(["docker", "build"])
+    stream.flush()
+
+    assert "\u2713" in output
+    assert "build complete ?" in buffer.getvalue().decode("cp1252")

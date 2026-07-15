@@ -14,7 +14,7 @@ import ctypes
 import platform
 import shutil
 import subprocess  # nosec B404
-from typing import Dict, Any, Optional, List, Tuple, Callable, Set
+from typing import Dict, Any, Optional, List, Tuple, Callable, Set, TypedDict
 from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
@@ -72,6 +72,16 @@ class SanitizationMode(Enum):
     SEVEN_PASS_DOD = "seven_pass_dod"  # nosec B105
     GUTMANN = "gutmann"  # 35-pass Gutmann method
     CRYPTO_ERASE = "crypto_erase"
+
+
+class DOSTrapConfig(TypedDict):
+    """Typed configuration for monitoring and emergency response."""
+
+    auto_respond: bool
+    monitor_interval: float
+    response_threshold: ThreatLevel
+    auto_sanitize: bool
+    emergency_shutdown: bool
 
 
 @dataclass
@@ -1082,6 +1092,7 @@ class DiskSanitizer:
             file_size = os.path.getsize(file_path)
 
             # Determine passes
+            patterns: List[Optional[bytes]]
             if mode == SanitizationMode.SINGLE_PASS:
                 patterns = [b"\x00"]
             elif mode == SanitizationMode.THREE_PASS:
@@ -1217,7 +1228,7 @@ class DOSTrapMode:
         self._stop_monitoring = threading.Event()
 
         # Configuration
-        self.config = {
+        self.config: DOSTrapConfig = {
             "auto_respond": True,
             "monitor_interval": 60,
             "response_threshold": ThreatLevel.HIGH,
@@ -1351,7 +1362,11 @@ class DOSTrapMode:
             self._detected_threats.extend(events)
 
             # Determine maximum threat level
-            max_threat = max((e.threat_level for e in events), default=ThreatLevel.NONE)
+            max_threat = max(
+                (e.threat_level for e in events),
+                default=ThreatLevel.NONE,
+                key=lambda level: level.value,
+            )
 
             if max_threat.value > self._threat_level.value:
                 self._threat_level = max_threat

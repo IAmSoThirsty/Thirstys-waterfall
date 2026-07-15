@@ -291,6 +291,23 @@ class TestPasskeyProvider(unittest.TestCase):
         success = self.provider.revoke(self.user_id, passkey_id)
         self.assertTrue(success)
 
+    def test_authentication_rejects_missing_challenge_fields(self):
+        self.provider.enroll(
+            self.user_id,
+            {"device_name": "Test Device", "device_key": b"0" * 32},
+        )
+        context = AuthContext(
+            user_id=self.user_id,
+            session_id="passkey_session",
+            ip_address="127.0.0.1",
+            user_agent="Test",
+        )
+        passkey_id = self.provider._passkeys[self.user_id][0].passkey_id
+
+        self.assertFalse(
+            self.provider.authenticate({"passkey_id": passkey_id}, context)
+        )
+
 
 class TestCertificateProvider(unittest.TestCase):
     """Test X.509 certificate provider"""

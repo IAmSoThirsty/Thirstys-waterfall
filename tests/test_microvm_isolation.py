@@ -69,6 +69,26 @@ class TestCommunicationChannel(unittest.TestCase):
         channel = CommunicationChannel("test_vm", "/tmp/custom.sock")
         self.assertEqual(channel.socket_path, "/tmp/custom.sock")
 
+    @patch(
+        "thirstys_waterfall.security.microvm_isolation.socket.AF_UNIX",
+        1,
+        create=True,
+    )
+    @patch("thirstys_waterfall.security.microvm_isolation.socket.socket")
+    @patch("thirstys_waterfall.security.microvm_isolation.os.path.exists")
+    def test_failed_connection_closes_created_socket(
+        self, mock_exists, mock_socket_factory
+    ):
+        mock_exists.return_value = True
+        created_socket = mock_socket_factory.return_value
+        created_socket.connect.side_effect = OSError("connection failed")
+        channel = CommunicationChannel("test_vm", "/tmp/custom.sock")
+
+        self.assertFalse(channel.connect())
+
+        created_socket.close.assert_called_once_with()
+        self.assertIsNone(channel._socket)
+
 
 class TestMicroVMInstance(unittest.TestCase):
     """Test MicroVM instance"""
@@ -110,6 +130,19 @@ class TestMicroVMInstance(unittest.TestCase):
         info = self.vm.get_info()
         self.assertEqual(info["state"], VMState.CREATED.value)
         self.assertEqual(info["vm_id"], "test_vm_001")
+
+    def test_firecracker_command_requires_initialized_config(self):
+        vm = MicroVMInstance(
+            vm_id="firecracker_config",
+            backend=VMBackend.FIRECRACKER,
+            isolation_type=IsolationType.BROWSER_TAB,
+            resource_limits=self.limits,
+            kernel_path=self.kernel_path,
+            rootfs_path=self.rootfs_path,
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "configuration file"):
+            vm._build_firecracker_command()
 
     def test_resource_limits_applied(self):
         """Test resource limits are applied"""

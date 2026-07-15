@@ -65,6 +65,12 @@ SKIP_DIRS = {
 }
 
 
+def console_safe_text(value: str) -> str:
+    """Replace characters that the active console encoding cannot render."""
+    encoding = getattr(sys.stdout, "encoding", None) or SUBPROCESS_ENCODING
+    return value.encode(encoding, errors="replace").decode(encoding)
+
+
 def run(cmd: list[str], *, timeout: int = 120, env: dict[str, str] | None = None) -> str:
     print(f"\n$ {' '.join(cmd)}", flush=True)
     completed = subprocess.run(
@@ -79,7 +85,8 @@ def run(cmd: list[str], *, timeout: int = 120, env: dict[str, str] | None = None
         timeout=timeout,
     )
     if completed.stdout:
-        print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
+        output = console_safe_text(completed.stdout)
+        print(output, end="" if output.endswith("\n") else "\n")
     if completed.returncode != 0:
         raise SystemExit(f"Command failed with exit code {completed.returncode}: {' '.join(cmd)}")
     return completed.stdout

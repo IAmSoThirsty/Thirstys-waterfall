@@ -12,7 +12,7 @@ import time
 import base64
 import struct
 import threading
-from typing import Dict, Any, Optional, List, Tuple, Callable, Set
+from typing import Dict, Any, Optional, List, Tuple, Callable, Set, Union
 from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
@@ -176,6 +176,9 @@ class BiometricTemplate:
     last_verified: float = field(default_factory=time.time)
 
 
+EnrollmentResult = Union[bool, Tuple[bool, Optional[Dict[str, Any]]]]
+
+
 class AuthenticationProvider(ABC):
     """Abstract base class for authentication providers"""
 
@@ -185,7 +188,7 @@ class AuthenticationProvider(ABC):
         pass
 
     @abstractmethod
-    def enroll(self, user_id: str, credential_data: Any) -> bool:
+    def enroll(self, user_id: str, credential_data: Any) -> EnrollmentResult:
         """Enroll new credential"""
         pass
 
@@ -301,7 +304,7 @@ class TOTPProvider(AuthenticationProvider):
                 self.logger.error(f"TOTP authentication error: {e}")
                 return False
 
-    def revoke(self, user_id: str, credential_id: str = None) -> bool:
+    def revoke(self, user_id: str, credential_id: Optional[str] = None) -> bool:
         """Revoke TOTP secret"""
         with self._lock:
             if user_id in self._secrets:
@@ -589,7 +592,12 @@ class PasskeyProvider(AuthenticationProvider):
 
                 # Verify challenge signature
                 challenge = credential.get("challenge")
-                signature = base64.b64decode(credential.get("signature"))
+                signature_data = credential.get("signature")
+                if not isinstance(challenge, str) or not isinstance(
+                    signature_data, (str, bytes)
+                ):
+                    return False
+                signature = base64.b64decode(signature_data)
 
                 public_key = serialization.load_der_public_key(
                     matching_passkey.public_key, backend=default_backend()
@@ -682,6 +690,14 @@ class CertificateProvider(AuthenticationProvider):
         with self._lock:
             try:
                 cert_pem = credential.get("certificate")
+                challenge_data = credential.get("challenge")
+                signature_data = credential.get("signature")
+                if (
+                    not isinstance(cert_pem, str)
+                    or not isinstance(challenge_data, str)
+                    or not isinstance(signature_data, (str, bytes))
+                ):
+                    return False
                 cert = x509.load_pem_x509_certificate(
                     cert_pem.encode(), default_backend()
                 )
@@ -698,8 +714,8 @@ class CertificateProvider(AuthenticationProvider):
                     return False
 
                 # Verify challenge signature
-                challenge = credential.get("challenge").encode("utf-8")
-                signature = base64.b64decode(credential.get("signature"))
+                challenge = challenge_data.encode("utf-8")
+                signature = base64.b64decode(signature_data)
 
                 public_key = cert.public_key()
 

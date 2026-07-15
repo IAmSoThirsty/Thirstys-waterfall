@@ -114,9 +114,20 @@ class CommunicationChannel:
         with self._lock:
             try:
                 if os.path.exists(self.socket_path):
-                    self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                    self._socket.settimeout(timeout)
-                    self._socket.connect(self.socket_path)
+                    address_family = getattr(socket, "AF_UNIX", None)
+                    if address_family is None:
+                        self.logger.error("Unix domain sockets are unavailable")
+                        return False
+                    channel_socket = socket.socket(
+                        address_family, socket.SOCK_STREAM
+                    )
+                    try:
+                        channel_socket.settimeout(timeout)
+                        channel_socket.connect(self.socket_path)
+                    except Exception:
+                        channel_socket.close()
+                        raise
+                    self._socket = channel_socket
                     self._connected = True
                     self.logger.info(
                         f"Connected to VM {self.vm_id} via {self.socket_path}"
@@ -546,6 +557,8 @@ class MicroVMInstance:
 
     def _build_firecracker_command(self) -> List[str]:
         """Build Firecracker command line"""
+        if self._config_file is None:
+            raise RuntimeError("Firecracker configuration file is not initialized")
         return [
             "firecracker",
             "--api-sock",
@@ -1159,7 +1172,7 @@ class MicroVMIsolationManager:
 
     def _count_vms_by_type(self) -> Dict[str, int]:
         """Count VMs by isolation type"""
-        counts = {}
+        counts: Dict[str, int] = {}
         for vm in self._vms.values():
             iso_type = vm.isolation_type.value
             counts[iso_type] = counts.get(iso_type, 0) + 1
@@ -1167,7 +1180,7 @@ class MicroVMIsolationManager:
 
     def _count_vms_by_state(self) -> Dict[str, int]:
         """Count VMs by state"""
-        counts = {}
+        counts: Dict[str, int] = {}
         for vm in self._vms.values():
             state = vm.get_state().value
             counts[state] = counts.get(state, 0) + 1
