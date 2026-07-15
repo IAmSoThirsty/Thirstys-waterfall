@@ -837,14 +837,14 @@ workflow, then continue with settings and security.
 
 ### Commands And Verification
 
-- `python -m mypy --no-incremental thirstys_waterfall\settings`: passed, 5 files
+- `python -m mypy --no-incremental thirstys_waterfall/settings`: passed, 5 files
   checked.
 - `python -m mypy --no-incremental`: passed, 113 files checked with mypy 2.1.
 - `uvx --from mypy==1.19.1 mypy --no-incremental`: passed, 113 files checked
   under the pinned CI-compatible version.
-- `python -m pytest tests\test_settings_manager.py -q --no-cov`: 8 passed.
+- `python -m pytest tests/test_settings_manager.py -q --no-cov`: 9 passed.
 - Full-repository Flake8 passed with zero findings.
-- `python scripts\verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
+- `python scripts/verify_production_deployment.py --skip-docker --skip-tests --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`:
   passed the marker scans, compilation, Flake8, mypy, Bandit, locked Safety
   scan, wheel build, and local web smoke. The wheel sha256 was
   `d26b50d13497d7b79f08b808c048f5ea40f4d5cc81ac541b11ac0b19af1026e5`,
