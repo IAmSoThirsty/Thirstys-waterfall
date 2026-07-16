@@ -1,273 +1,146 @@
-<div align="right">
-  <img src="https://img.shields.io/badge/Date-2026--03--10-blue?style=for-the-badge" alt="Date" />
-  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status" />
-  <img src="https://img.shields.io/badge/Tier-Master-gold?style=for-the-badge" alt="Tier" />
-</div>
-
 # Release Guide
 
-Quick reference for creating releases of Thirstys Waterfall.
+This is the governed release path for Thirstys Waterfall. A release is not a
+production deployment: the published artifacts and image must still be deployed
+to a selected target and verified with the target evidence gate.
 
-## Pre-Release Checklist
+## Pre-Release Requirements
 
-- [ ] All tests passing
-- [ ] Documentation updated
-- [ ] CHANGELOG.md updated with new version
-- [ ] Version numbers updated in:
-  - `setup.py`
-  - `pyproject.toml`
-  - `thirstys_waterfall/__init__.py` (if version is defined there)
+- The release commit is merged into the repository default branch.
+- CI and CodeQL pass for that exact commit.
+- `pyproject.toml`, `CHANGELOG.md`, and `.env.production.example` name the same
+  stable semantic version.
+- The production environment template is later updated with the immutable GHCR
+  digest emitted by the successful release.
+- No production secrets are present in the repository or release inputs.
 
-## Creating a Release
+`setup.py` is only a compatibility entry point. Package version metadata lives in
+`pyproject.toml`.
 
-### 1. Update Version
+## Prepare Release Metadata
 
-Update version in `setup.py` and `pyproject.toml`:
+For a patch release such as `1.0.4`:
 
-```python
+1. Set `project.version` in `pyproject.toml`.
+2. Add a dated `## [1.0.4]` section to `CHANGELOG.md`.
+3. Keep the matching versioned GHCR reference and intentionally unusable zero
+   digest in `.env.production.example`; replace that zero digest with the real
+   published digest after the release succeeds.
+4. Run the fail-closed metadata gate:
 
-# setup.py
-
-version="1.0.0"
-
-# pyproject.toml
-
-[project]
-version = "1.0.0"
+```powershell
+python scripts\verify_release_version.py --expected-version 1.0.4
 ```
 
-### 2. Update CHANGELOG.md
+Commit these changes on a branch, open a pull request, wait for all required
+checks, and merge through the protected default branch. Do not push release
+preparation directly to `main`.
 
-Add a new section for the release:
+## Run The Automated Release
 
-```markdown
+Dispatch the release workflow from the merged default branch:
 
-## [1.0.0] - 2026-02-12
-
-### Added
-
-- New feature 1
-- New feature 2
-
-### Fixed
-
-- Bug fix 1
-- Bug fix 2
-
+```powershell
+gh workflow run release.yml `
+  --repo IAmSoThirsty/Thirstys-waterfall `
+  --ref main `
+  -f version=1.0.4
 ```
 
-### 3. Commit Changes
+The workflow rejects:
 
-```bash
-git add setup.py pyproject.toml CHANGELOG.md
-git commit -m "Release v1.0.0"
-git push origin main
+- a manual dispatch from a non-default branch;
+- a commit not contained in the default branch;
+- a non-stable version string;
+- version drift among the workflow input, package metadata, changelog, and
+  production image template.
+- a tag-only production image reference without a SHA-256 digest.
+
+After validation it runs the cross-platform tests, builds reproducible wheel and
+source artifacts, builds and smoke-tests the Docker image, pushes the versioned
+and `latest` GHCR tags, verifies the immutable digest of the pushed versioned
+image, uploads that deployment input as release evidence, and creates the
+GitHub release.
+
+Monitor the run and require a successful conclusion:
+
+```powershell
+gh run list `
+  --repo IAmSoThirsty/Thirstys-waterfall `
+  --workflow release.yml `
+  --limit 1
 ```
 
-### 4. Create and Push Tag
+## Post-Release Verification
 
-```bash
+Inspect the release and immutable image digest:
 
-# Create annotated tag
+```powershell
+gh release view v1.0.4 `
+  --repo IAmSoThirsty/Thirstys-waterfall
 
-git tag -a v1.0.0 -m "Release v1.0.0"
-
-# Push tag to GitHub
-
-git push origin v1.0.0
+docker buildx imagetools inspect `
+  ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4
 ```
 
-### 5. Automated Release
+Update `THIRSTYS_IMAGE` in `.env.production.example` to the exact form emitted by
+the registry:
 
-Once the tag is pushed, GitHub Actions will automatically:
-
-1. Run all tests across platforms
-2. Build source and wheel distributions
-3. Build Docker images
-4. Create GitHub Release with artifacts
-5. Publish to PyPI (if configured)
-
-## Manual Release (if needed)
-
-### Build Packages
-
-```bash
-
-# Install the hash-verified build toolchain
-
-pip install --require-hashes -r requirements-build.lock
-pip install twine==6.2.0
-
-# Build each distribution twice and export only matching artifacts
-
-python scripts/verify_reproducible_build.py --output-dir dist
-
-# Check distributions
-
-twine check dist/*
+```text
+ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4@sha256:<64-hex-digest>
 ```
 
-### Build Docker Image
+Then pull and verify those exact published bytes locally before target rollout:
 
-```bash
-
-# Build image
-
-docker build -t thirstys-waterfall:1.0.0 .
-
-# Tag as latest
-
-docker tag thirstys-waterfall:1.0.0 thirstys-waterfall:latest
-
-# Test image
-
-docker run --rm thirstys-waterfall:1.0.0 thirstys-waterfall --help
+```powershell
+docker pull $env:THIRSTYS_IMAGE
+python scripts\verify_production_deployment.py `
+  --skip-tests `
+  --skip-docker-build `
+  --image $env:THIRSTYS_IMAGE `
+  --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"
 ```
 
-### Publish to PyPI
+Record the release URL, workflow run, commit SHA, package hashes, and image digest
+in `docs/operations/PRODUCTION_DEPLOYMENT_VERIFICATION.md` and the continuity map.
 
-```bash
+## Production Rollout
 
-# Upload to PyPI (requires API token)
+Production Compose requires `THIRSTYS_IMAGE`; it has no source-build fallback.
+Use the exact version and digest verified above, inject real target secrets, and
+validate the normalized proxy configuration before starting services:
 
-twine upload dist/*
+```powershell
+python scripts\verify_production_proxy_config.py `
+  --compose-file docker-compose.production.yml `
+  --caddyfile deploy\caddy\Caddyfile
 
-# Or upload to TestPyPI first
+docker compose `
+  --env-file .env.production `
+  -f docker-compose.production.yml `
+  config --quiet
 
-twine upload --repository testpypi dist/*
+docker compose `
+  --env-file .env.production `
+  -f docker-compose.production.yml `
+  up -d --no-build
 ```
 
-### Push Docker Image
-
-```bash
-
-# Tag for registry
-
-docker tag thirstys-waterfall:1.0.0 yourusername/thirstys-waterfall:1.0.0
-docker tag thirstys-waterfall:1.0.0 yourusername/thirstys-waterfall:latest
-
-# Push to Docker Hub
-
-docker push yourusername/thirstys-waterfall:1.0.0
-docker push yourusername/thirstys-waterfall:latest
-```
-
-## Release Types
-
-### Major Release (X.0.0)
-
-Breaking changes, major new features:
-
-```bash
-git tag -a v2.0.0 -m "Major release: Breaking changes"
-```
-
-### Minor Release (x.Y.0)
-
-New features, backwards compatible:
-
-```bash
-git tag -a v1.1.0 -m "Minor release: New features"
-```
-
-### Patch Release (x.y.Z)
-
-Bug fixes, security patches:
-
-```bash
-git tag -a v1.0.1 -m "Patch release: Bug fixes"
-```
-
-## Post-Release
-
-1. Verify release on GitHub
-2. Test installation: `pip install thirstys-waterfall==1.0.0`
-3. Test Docker image: `docker pull yourusername/thirstys-waterfall:1.0.0`
-4. Update documentation if needed
-5. Announce release
+The target is accepted only after live health/auth/log, TLS boundary, secret
+rotation, service hardening, rollback, host network policy, shared revocation,
+and platform-backend evidence passes `verify_target_deployment_evidence.py`.
 
 ## Rollback
 
-If a release has issues:
+Do not delete, move, or reuse a published release tag. Roll back the deployment by
+setting `THIRSTYS_IMAGE` to the previous known-good version and digest, running
+Compose with `--no-build`, then executing the target health/auth checks. Preserve
+the failed release and deployment evidence for audit. If source correction is
+required, publish a new patch version.
 
-```bash
+## PyPI
 
-# Delete local tag
-
-git tag -d v1.0.0
-
-# Delete remote tag
-
-git push origin :refs/tags/v1.0.0
-
-# Delete GitHub release via web interface
-
-# Unpublish from PyPI (contact PyPI support)
-
-```
-
-## Version Numbering
-
-Follow [Semantic Versioning](https://semver.org/):
-
-- **MAJOR**: Incompatible API changes
-- **MINOR**: New functionality, backwards compatible
-- **PATCH**: Bug fixes, backwards compatible
-
-## Secrets Configuration
-
-For automated PyPI publishing, configure the package index credential in GitHub Actions secrets:
-
-1. Go to repository Settings → Secrets and variables → Actions
-2. Add the token name expected by the release workflow
-3. Store the package index token value there
-
-For registry publishing:
-
-1. Configure the registry identity and credential names expected by the release workflow
-2. Update the release workflow only if the target registry changes
-
-## Troubleshooting
-
-### Build Fails
-
-```bash
-
-# Clean and rebuild
-
-rm -rf dist/ build/ *.egg-info
-python -m build
-```
-
-### Docker Build Fails
-
-```bash
-
-# Clear Docker cache
-
-docker builder prune
-
-# Rebuild without cache
-
-docker build --no-cache -t thirstys-waterfall:test .
-```
-
-### PyPI Upload Fails
-
-```bash
-
-# Check package
-
-twine check dist/*
-
-# Verify token
-
-# Test with TestPyPI first
-
-```
-
-## Resources
-
-- [GitHub Actions Workflows](.github/workflows/)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [CHANGELOG.md](CHANGELOG.md)
+Manual workflow dispatch publishes GitHub and GHCR artifacts but does not run the
+tag-push-only PyPI job. PyPI publication requires the configured `pypi`
+environment and `PYPI_API_TOKEN`; it must not be treated as successful unless that
+job runs and passes.

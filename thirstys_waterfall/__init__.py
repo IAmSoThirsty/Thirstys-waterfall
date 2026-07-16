@@ -13,7 +13,7 @@ from .platform_capabilities import (
     get_platform_capabilities,
 )
 
-__version__ = "1.0.2"
+__version__ = "1.0.4"
 __all__ = [
     "DataSurfaceEvidence",
     "EncryptionEvidenceReport",

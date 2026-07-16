@@ -121,6 +121,12 @@ def compose_validation_env() -> dict[str, str]:
             "THIRSTYS_ADMIN_USERNAME": "operator",
             "THIRSTYS_ADMIN_PASSWORD_HASH": "probe-redacted-password-hash",
             "CORS_ORIGINS": "https://operator-console.example",
+            "THIRSTYS_IMAGE": (
+                "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4@sha256:"
+                + "0" * 64
+            ),
+            "THIRSTYS_PUBLIC_HOST": "thirstys-waterfall.example.com",
+            "CADDY_ACME_EMAIL": "ops@example.com",
         }
     )
     return env

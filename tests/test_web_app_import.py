@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import thirstys_waterfall
 from werkzeug.security import generate_password_hash
 
 
@@ -50,8 +51,28 @@ class TestWebAppImport(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["status"], "healthy")
+        self.assertEqual(payload["version"], thirstys_waterfall.__version__)
         self.assertIn("sovereign_binding", payload)
         self.assertIn("available", payload["sovereign_binding"])
+
+    def test_metrics_endpoint_returns_authenticated_prometheus_metrics(self):
+        app_module = importlib.import_module("web.app")
+        client = app_module.app.test_client()
+
+        client.get("/health")
+        with app_module.app.app_context():
+            token = app_module.create_access_token(identity="operator")
+
+        response = client.get(
+            "/metrics",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content_type.startswith("text/plain;"))
+        self.assertIn("# TYPE thirstys_http_requests_total counter", response.text)
+        self.assertIn('thirstys_http_requests_total{method="GET",status="200"}', response.text)
+        self.assertIn("thirstys_http_request_duration_seconds_count", response.text)
 
     def test_default_login_fails_closed_without_configured_credentials(self):
         app_module = importlib.import_module("web.app")

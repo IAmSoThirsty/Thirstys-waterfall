@@ -540,7 +540,22 @@ tail -f /var/log/thirstys-waterfall.log
 
 ### Metrics
 
-Monitor these metrics:
+The authenticated `GET /metrics` endpoint emits Prometheus text exposition
+format. Supply the operator JWT in the `Authorization: Bearer <token>` header;
+unauthenticated scrapes are rejected. The registry uses bounded method/status
+labels and is process-local, so multi-worker deployments must scrape each
+worker or aggregate at the monitoring layer.
+
+The endpoint currently exposes:
+
+- `thirstys_up`
+- `thirstys_process_start_time_seconds`
+- `thirstys_http_requests_total`
+- `thirstys_http_request_duration_seconds_sum`
+- `thirstys_http_request_duration_seconds_count`
+
+Feature-specific health remains available through the existing authenticated
+status endpoints. Monitor these signals:
 
 - VPN connection status
 - Firewall rule counts

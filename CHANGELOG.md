@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-07-16
+
+### Added
+
+- Added reproducible wheel and source-distribution verification with a pinned,
+  hash-checked build toolchain.
+- Added production TLS reverse-proxy configuration and strict target evidence
+  packaging for rollback, secret rotation, service hardening, and network policy.
+
+### Changed
+
+- Expanded the hard type gate across the governed runtime and kept active
+  dependency scanning on hash-enforced `pip-audit` inputs.
+- Updated deployment and build locks to remove known vulnerable toolchain and
+  runtime versions.
+- Made release dispatch fail closed unless the requested version matches package,
+  changelog, and production-image metadata.
+- Required an explicit application image for production Compose deployments and
+  pinned the Caddy proxy image by registry digest.
+
+### Security
+
+- Preserved fail-closed production authentication, secret injection, shared token
+  revocation, non-root runtime, and target evidence requirements.
+- Kept external/public deployment acceptance pending until a real target produces
+  live TLS, target logs, service hardening, rollback, and backend evidence.
+
 ## [1.0.3] - 2026-07-13
 
 ### Added

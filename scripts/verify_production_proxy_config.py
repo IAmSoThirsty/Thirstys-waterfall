@@ -6,11 +6,25 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+
+
+PINNED_APP_IMAGE = (
+    "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4@sha256:"
+    + "0" * 64
+)
+PINNED_APP_IMAGE_PATTERN = re.compile(
+    r"^ghcr\.io/iamsothirsty/thirstys-waterfall:"
+    r"[0-9]+\.[0-9]+\.[0-9]+@sha256:[0-9a-f]{64}$"
+)
+PINNED_PROXY_IMAGE_PATTERN = re.compile(
+    r"^caddy:2\.10-alpine@sha256:[0-9a-f]{64}$"
+)
 
 
 @dataclass(frozen=True)
@@ -52,6 +66,7 @@ def validation_env() -> dict[str, str]:
             "JWT_SECRET_KEY": "proxy-config-redacted-jwt-secret",
             "THIRSTYS_ADMIN_USERNAME": "operator",
             "THIRSTYS_ADMIN_PASSWORD_HASH": "proxy-config-redacted-hash",
+            "THIRSTYS_IMAGE": PINNED_APP_IMAGE,
             "THIRSTYS_PUBLIC_HOST": "thirstys-waterfall.example.com",
             "CADDY_ACME_EMAIL": "ops@example.com",
         }
@@ -198,6 +213,8 @@ def run_checks(
     proxy = proxy if isinstance(proxy, dict) else {}
     app_env = service_env(app)
     proxy_env = service_env(proxy)
+    app_image = str(app.get("image", ""))
+    proxy_image = str(proxy.get("image", ""))
 
     app_networks = network_names(app)
     proxy_networks = network_names(proxy)
@@ -208,6 +225,24 @@ def run_checks(
             "services_defined",
             bool(app and proxy),
             "application and reverse-proxy services are defined",
+        ),
+        CheckResult(
+            "app_image_pinned_by_digest",
+            PINNED_APP_IMAGE_PATTERN.fullmatch(app_image) is not None,
+            "application image is an exact version pinned by sha256 digest",
+            {"image": app_image},
+        ),
+        CheckResult(
+            "app_uses_published_image_only",
+            not app.get("build"),
+            "application has no target-side source build path",
+            {"build": app.get("build")},
+        ),
+        CheckResult(
+            "proxy_image_pinned_by_digest",
+            PINNED_PROXY_IMAGE_PATTERN.fullmatch(proxy_image) is not None,
+            "reverse-proxy image is pinned by sha256 digest",
+            {"image": proxy_image},
         ),
         CheckResult(
             "app_not_publicly_published",

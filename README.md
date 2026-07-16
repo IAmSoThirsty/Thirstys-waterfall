@@ -487,19 +487,15 @@ docker-compose up -d
 # Production TLS proxy config
 
 cp .env.production.example .env.production
-# edit .env.production with real secrets, THIRSTYS_PUBLIC_HOST, and CADDY_ACME_EMAIL
+# set THIRSTYS_IMAGE to the exact version@sha256 digest from a successful release
+# then inject real secrets, THIRSTYS_PUBLIC_HOST, and CADDY_ACME_EMAIL
 python scripts/verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy/caddy/Caddyfile
-docker compose --env-file .env.production -f docker-compose.production.yml up -d
-
-# Linux systemd
-
-sudo systemctl enable thirstys-waterfall
-sudo systemctl start thirstys-waterfall
+docker compose --env-file .env.production -f docker-compose.production.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
 
 # Check status
 
 docker ps  # Docker
-sudo systemctl status thirstys-waterfall  # Systemd
 ```
 
 ### Packaging & Distribution
