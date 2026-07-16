@@ -10,7 +10,7 @@ Branch: `main` integration target; current work branch `agent/release-v1.0.4-rea
 
 Original review baseline: `176398bfce893abd8607ba578c744eade703c3da`
 
-Current locally verified implementation commit: `b809c6e185d1e7a027b3c662b73afe90188818ab`
+Current locally verified implementation commit: `53250bf`
 
 Local enhanced Thirsty-Lang source: `T:\01-Projects\thirsty_lang_exploration_0754`
 
@@ -1014,3 +1014,40 @@ Yes. The full repository gates passed and implementation commit
 `b809c6e185d1e7a027b3c662b73afe90188818ab` is created. Publish this branch
 through the protected-branch process, and only then perform release or target
 deployment.
+
+## 2026-07-16 Runtime Metrics And Version Coherence
+
+### Current State
+
+- Runtime package version and project metadata now agree on `1.0.4`.
+- `/health` reports the package version instead of a stale hard-coded value.
+- Authenticated `/metrics` now emits Prometheus text with bounded method/status
+  labels, request totals, request-duration sums/counts, process start time, and
+  an explicit process-local scope.
+- The Standard v3 verifier now authenticates and scrapes `/metrics` in both the
+  local web process and the Docker container smoke paths.
+
+### Commands And Verification
+
+- Focused web, release-version, and verifier tests: 31 passed.
+- `python scripts\verify_production_deployment.py --thirsty-lang-path
+  "T:\01-Projects\thirsty_lang_exploration_0754"`: passed all static, type,
+  security, dependency-audit, reproducible-build, local web health/auth/metrics,
+  Docker health/auth/metrics/log, and rollback checks.
+- Full pytest suite: 597 passed in 228.89 seconds with 70% total coverage.
+- Flake8: 0 findings; mypy: 122 source files passed; Bandit: 0 findings; both
+  hash-locked dependency audits: 0 known vulnerabilities.
+- Commit: `53250bf` (`Harden runtime metrics and release version evidence`).
+
+### Known Failures And Risks
+
+- The branch has local and hosted CI evidence but is not external/public
+  production evidence.
+- External target logs, live TLS boundary evidence, non-local secret rotation,
+  and real privileged VPN/firewall backend evidence remain required.
+
+### Safe To Continue
+
+Yes. Push `53250bf` through PR #103, wait for the exact-tip hosted checks, and
+keep release publication and external deployment separate until a target is
+selected and its evidence bundle is captured.
