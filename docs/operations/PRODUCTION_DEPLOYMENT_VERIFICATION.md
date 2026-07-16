@@ -4,11 +4,12 @@ Standard: Thirsty's Standard v3
 
 Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, production TLS reverse-proxy config validation, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, live TLS certificate/boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
-Latest local evidence passed 595 tests, all 122-file mypy checks, Flake8,
+Latest local evidence passed 597 tests, all 122-file mypy checks, Flake8,
 Bandit, zero known vulnerabilities in the complete hash-verified runtime and
 build locks, byte-for-byte wheel and source-distribution reproducibility,
-Thirsty-Lang local smoke, Docker health/auth/log smoke, and Docker rollback
-smoke. The current pinned-base, multi-stage runtime image was 59,992,851 bytes,
+Thirsty-Lang local smoke, authenticated Prometheus metrics smoke, Docker
+health/auth/metrics/log smoke, and Docker rollback smoke. The current pinned-base,
+multi-stage runtime image was 59,992,851 bytes,
 contained no compiler or Python build toolchain, and produced manifest-list
 sha256 `b3199a3c384b882246ef2b199418007ca75e21491049f7fc50aee4f772704cf3`.
 The bounded Standard v3 deployment verifier passed with the enhanced checkout
@@ -61,13 +62,15 @@ What this proves locally:
 - Full pytest suite passes.
 - Wheel and source distributions pass independent byte-for-byte reproducibility checks.
 - Local web process starts and serves `/health`.
+- Authenticated `/metrics` returns Prometheus text with the required process,
+  request-count, and request-duration series.
 - Local web production-mode startup uses explicit `SECRET_KEY`, `JWT_SECRET_KEY`, admin credentials, and non-wildcard `CORS_ORIGINS`.
 - Enhanced Thirsty-Lang binding reports backend `thirsty-lang` when the checkout is supplied.
 - Configured admin login succeeds.
 - Default `admin/admin` login is rejected.
 - `docker compose config` validates with required production secret interpolation supplied.
 - Docker image builds.
-- Docker container starts in production mode and passes the same health/auth smoke checks with explicit secrets.
+- Docker container starts in production mode and passes health/auth/metrics smoke checks with explicit secrets.
 - Docker container startup logs are captured and must be non-empty.
 - Docker command logging redacts secret-bearing values before printing verifier commands.
 - Local Docker rollback smoke starts a tagged last-known-good image with the same environment shape and passes health/auth/log checks.
