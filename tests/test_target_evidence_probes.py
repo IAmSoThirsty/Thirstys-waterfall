@@ -31,6 +31,14 @@ service_hardening = _load_script("probe_service_orchestrator_evidence")
 common = _load_script("target_evidence_common")
 
 
+def test_service_orchestrator_compose_env_covers_production_interpolation():
+    env = service_hardening.compose_validation_env()
+
+    assert env["THIRSTYS_IMAGE"].endswith("0" * 64)
+    assert env["THIRSTYS_PUBLIC_HOST"] == "thirstys-waterfall.example.com"
+    assert env["CADDY_ACME_EMAIL"] == "ops@example.com"
+
+
 def _passing_command(args, timeout):
     return common.CommandResult(args, 0, "ok\n", "")
 

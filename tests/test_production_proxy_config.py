@@ -20,6 +20,10 @@ def _valid_config():
     return {
         "services": {
             "thirstys-waterfall": {
+                "image": (
+                    "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4@sha256:"
+                    + "a" * 64
+                ),
                 "environment": {
                     "CORS_ORIGINS": "https://thirstys-waterfall.example.com",
                 },
@@ -27,6 +31,7 @@ def _valid_config():
                 "networks": {"thirstys_private": None},
             },
             "caddy": {
+                "image": "caddy:2.10-alpine@sha256:" + "b" * 64,
                 "depends_on": {
                     "thirstys-waterfall": {"condition": "service_healthy"}
                 },
@@ -98,6 +103,38 @@ def test_proxy_config_checks_fail_when_app_is_publicly_published():
     assert public_check.passed is False
 
 
+def test_proxy_config_checks_fail_for_mutable_application_image():
+    config = _valid_config()
+    config["services"]["thirstys-waterfall"]["image"] = (
+        "ghcr.io/iamsothirsty/thirstys-waterfall:1.0.4"
+    )
+
+    checks = proxy_config.run_checks(
+        compose_config=config,
+        caddyfile_text=_valid_caddyfile(),
+    )
+
+    image_check = next(
+        check for check in checks if check.name == "app_image_pinned_by_digest"
+    )
+    assert image_check.passed is False
+
+
+def test_proxy_config_checks_fail_for_target_side_build_or_mutable_proxy():
+    config = _valid_config()
+    config["services"]["thirstys-waterfall"]["build"] = {"context": "."}
+    config["services"]["caddy"]["image"] = "caddy:2.10-alpine"
+
+    checks = proxy_config.run_checks(
+        compose_config=config,
+        caddyfile_text=_valid_caddyfile(),
+    )
+
+    results = {check.name: check.passed for check in checks}
+    assert results["app_uses_published_image_only"] is False
+    assert results["proxy_image_pinned_by_digest"] is False
+
+
 def test_verify_config_uses_compose_json_output(tmp_path):
     compose_file = tmp_path / "docker-compose.production.yml"
     caddyfile = tmp_path / "Caddyfile"
@@ -106,6 +143,7 @@ def test_verify_config_uses_compose_json_output(tmp_path):
 
     def command_runner(args, timeout, env):
         assert args[-2:] == ["--format", "json"]
+        assert env["THIRSTYS_IMAGE"].endswith("0" * 64)
         assert env["THIRSTYS_PUBLIC_HOST"] == "thirstys-waterfall.example.com"
         return proxy_config.CommandResult(args, 0, json.dumps(_valid_config()), "")
 

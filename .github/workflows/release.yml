@@ -16,9 +16,48 @@ permissions:
   packages: write
 
 jobs:
+  validate-release:
+    name: Validate Release Metadata
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code and release history
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      with:
+        python-version: '3.11'
+
+    - name: Resolve and authorize release version
+      shell: bash
+      run: |
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          RELEASE_VERSION="${GITHUB_REF#refs/tags/v}"
+        else
+          RELEASE_VERSION="${{ github.event.inputs.version }}"
+          if [[ "${GITHUB_REF}" != "refs/heads/${DEFAULT_BRANCH}" ]]; then
+            echo "Manual releases must run from refs/heads/${DEFAULT_BRANCH}." >&2
+            exit 1
+          fi
+        fi
+        git fetch --no-tags origin "${DEFAULT_BRANCH}"
+        if ! git merge-base --is-ancestor "${GITHUB_SHA}" "origin/${DEFAULT_BRANCH}"; then
+          echo "Release commit ${GITHUB_SHA} is not contained in ${DEFAULT_BRANCH}." >&2
+          exit 1
+        fi
+        echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
+
+    - name: Verify coherent release metadata
+      run: python scripts/verify_release_version.py --expected-version "${RELEASE_VERSION}"
+
   # Build and test before release
   pre-release-tests:
     name: Pre-Release Tests
+    needs: validate-release
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -28,10 +67,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
     
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -53,12 +92,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       with:
         python-version: '3.11'
     
@@ -77,7 +116,7 @@ jobs:
         twine check dist/*
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: dist-packages
         path: dist/
@@ -94,10 +133,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
     
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
     
     - name: Extract version from tag
       id: version
@@ -120,7 +159,7 @@ jobs:
       run: echo "epoch=$(git log -1 --pretty=%ct)" >> $GITHUB_OUTPUT
     
     - name: Build Docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
       with:
         context: .
         push: false
@@ -144,7 +183,7 @@ jobs:
         python scripts/verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:${{ steps.version.outputs.version }}
 
     - name: Login to GHCR
-      uses: docker/login-action@v3
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -152,9 +191,27 @@ jobs:
 
     - name: Push verified Docker image
       run: |
-        docker push ${{ steps.image.outputs.registry_image }}:${{ steps.version.outputs.version }}
-        docker push ${{ steps.image.outputs.registry_image }}:latest
-        docker buildx imagetools inspect ${{ steps.image.outputs.registry_image }}:${{ steps.version.outputs.version }}
+        IMAGE="${{ steps.image.outputs.registry_image }}"
+        VERSION="${{ steps.version.outputs.version }}"
+        docker push "${IMAGE}:${VERSION}"
+        docker push "${IMAGE}:latest"
+        DIGEST="$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{.Manifest.Digest}}')"
+        if [[ ! "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+          echo "Published image did not return a valid immutable digest." >&2
+          exit 1
+        fi
+        printf 'THIRSTYS_IMAGE=%s@%s\n' "${IMAGE}:${VERSION}" "${DIGEST}" > release.env
+        python scripts/verify_release_version.py \
+          --expected-version "${VERSION}" \
+          --environment-example release.env
+        docker buildx imagetools inspect "${IMAGE}:${VERSION}"
+
+    - name: Upload immutable image metadata
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: release-image-metadata
+        path: release.env
+        retention-days: 7
 
   # Create GitHub Release
   create-release:
@@ -164,12 +221,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         fetch-depth: 0
     
     - name: Download artifacts
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: dist-packages
         path: dist/
@@ -193,7 +250,7 @@ jobs:
         fi
     
     - name: Create Release
-      uses: softprops/action-gh-release@v3
+      uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
       with:
         tag_name: v${{ steps.extract.outputs.version }}
         name: Release v${{ steps.extract.outputs.version }}
@@ -217,13 +274,13 @@ jobs:
     
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: dist-packages
         path: dist/
     
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}

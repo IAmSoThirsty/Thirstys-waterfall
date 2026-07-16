@@ -4,15 +4,16 @@ Standard: Thirsty's Standard v3
 
 Status: local verification, hosted CI, CodeQL, release workflow, GHCR publishing, published-image local smoke, production TLS reverse-proxy config validation, and a local Docker target evidence manifest with service/orchestrator hardening are verified. External/public production deployment verification still requires non-local target/proxy logs, live TLS certificate/boundary evidence, external service/orchestrator hardening evidence, and real OS backend evidence or narrowed claims.
 
-Latest local supply-chain verification passed 581 tests with 70% total
-coverage, all 121-file mypy checks, Flake8, Bandit, zero known vulnerabilities
-in the complete hash-verified runtime and build locks, byte-for-byte wheel and
-source-distribution reproducibility, Thirsty-Lang local smoke, Docker
-health/auth/log smoke, and Docker rollback smoke. The pinned-base, multi-stage
-runtime image was 59,992,751 bytes, contained no compiler or Python build
-toolchain, and produced manifest-list sha256
-`5f7a1de6270bf84c27bda4569a21679f882399a1dde34aca933bc8f579bd10de`.
-This is local Docker evidence, not external/public target acceptance.
+Latest local evidence passed 595 tests, all 122-file mypy checks, Flake8,
+Bandit, zero known vulnerabilities in the complete hash-verified runtime and
+build locks, byte-for-byte wheel and source-distribution reproducibility,
+Thirsty-Lang local smoke, Docker health/auth/log smoke, and Docker rollback
+smoke. The current pinned-base, multi-stage runtime image was 59,992,851 bytes,
+contained no compiler or Python build toolchain, and produced manifest-list
+sha256 `b3199a3c384b882246ef2b199418007ca75e21491049f7fc50aee4f772704cf3`.
+The bounded Standard v3 deployment verifier passed with the enhanced checkout
+at `T:\01-Projects\thirsty_lang_exploration_0754`. This is local Docker
+evidence, not external/public target acceptance.
 
 Target evidence manifests are validated with:
 
@@ -53,8 +54,8 @@ What this proves locally:
 - Retired Thirsty-Lang compatibility identifiers are rejected from source, tests, docs, and deployment files.
 - Python syntax compilation passes.
 - Full Flake8 lint gate passes with a 127-character line limit.
-- Mypy passes for all 121 governed source files: the 14 production
-  deployment/evidence/build scripts plus the complete 107-file application runtime.
+- Mypy passes for all 122 governed source files: the production
+  deployment/evidence/build scripts plus the complete application runtime.
 - Full-repo Bandit passes.
 - Complete hash-verified runtime and build dependency vulnerability checks pass.
 - Full pytest suite passes.
@@ -115,18 +116,22 @@ The production deployment configuration places the web service behind Caddy,
 publishes only ports `80` and `443` from the proxy, keeps the application
 container on a private Compose network, scopes CORS to
 `https://${THIRSTYS_PUBLIC_HOST}`, mounts the Caddyfile read-only, and stores
-ACME data in persistent volumes.
+ACME data in persistent volumes. It requires the application image as an
+explicit version-and-digest reference, has no target-side source build fallback,
+and pins the Caddy image by registry digest.
 
 ```powershell
 Copy-Item .env.production.example .env.production
-# edit .env.production with real secrets, THIRSTYS_PUBLIC_HOST, and CADDY_ACME_EMAIL
+# set THIRSTYS_IMAGE to the exact version@sha256 digest from a successful release
+# then inject real secrets, THIRSTYS_PUBLIC_HOST, and CADDY_ACME_EMAIL
 python scripts\verify_production_proxy_config.py `
   --compose-file docker-compose.production.yml `
   --caddyfile deploy\caddy\Caddyfile
-docker compose --env-file .env.production -f docker-compose.production.yml up -d
+docker compose --env-file .env.production -f docker-compose.production.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
 ```
 
-Current local config evidence: `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile` passed with 15/15 checks. This proves the repository's production proxy configuration shape. It does not prove that a public host has been deployed, that ACME issued a certificate, or that target proxy logs and live TLS evidence have been captured.
+Current local config evidence: `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile` verifies the repository's production proxy configuration shape, including immutable images and the published-image-only application path. It does not prove that a public host has been deployed, that ACME issued a certificate, or that target proxy logs and live TLS evidence have been captured.
 
 ## Evidence Package Retention
 

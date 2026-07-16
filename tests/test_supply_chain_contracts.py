@@ -74,6 +74,42 @@ def test_runtime_image_is_pinned_and_excludes_build_toolchain():
     assert "--no-deps /wheels/*.whl" in runtime
 
 
+def test_production_compose_requires_pinned_images():
+    compose = (ROOT / "docker-compose.production.yml").read_text(encoding="utf-8")
+
+    assert "${THIRSTYS_IMAGE:?" in compose
+    assert "${THIRSTYS_IMAGE:-" not in compose
+    assert "build:" not in compose
+    assert re.search(r"caddy:2\.10-alpine@sha256:[0-9a-f]{64}", compose)
+
+
+def test_release_workflow_fails_closed_on_version_or_branch_drift():
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "validate-release:" in workflow
+    assert "needs: validate-release" in workflow
+    assert "verify_release_version.py --expected-version" in workflow
+    assert "git merge-base --is-ancestor" in workflow
+    assert "Manual releases must run from" in workflow
+
+
+def test_all_github_actions_are_pinned_to_commit_shas():
+    action_pattern = re.compile(r"^\s*uses:\s*[^@\s]+@([0-9a-f]{40})(?:\s+#.*)?$")
+    for workflow in (ROOT / ".github" / "workflows").glob("*.yml"):
+        uses_lines = [
+            line
+            for line in workflow.read_text(encoding="utf-8").splitlines()
+            if "uses:" in line
+        ]
+        assert uses_lines, f"workflow has no actions: {workflow.name}"
+        for line in uses_lines:
+            assert action_pattern.fullmatch(line), (
+                f"mutable or malformed action reference in {workflow.name}: {line}"
+            )
+
+
 def test_governed_paths_use_current_audit_and_reproducible_build_gates():
     governed_files = [
         ROOT / "pyproject.toml",

@@ -6,7 +6,7 @@ Repo: `C:\Users\Quencher\Documents\Codex\2026-07-09\iamsothirsty-thirstys-waterf
 
 Remote: `https://github.com/IAmSoThirsty/Thirstys-waterfall.git`
 
-Branch: `main` integration target; current work branch `agent/security-type-gate`
+Branch: `main` integration target; current work branch `agent/release-v1.0.4-readiness`
 
 Original review baseline: `176398bfce893abd8607ba578c744eade703c3da`
 
@@ -14,7 +14,7 @@ Current locally verified HEAD: `28d3d608f6579e10fcacfa5a9a15d8c624164a10`
 
 Local enhanced Thirsty-Lang source: `T:\01-Projects\thirsty_lang_exploration_0754`
 
-Review date: 2026-07-15 America/Denver
+Review date: 2026-07-16 America/Denver
 
 ## Current Mode
 
@@ -397,7 +397,7 @@ This is a repair and completion pass, not a report-only pass. The target is to m
 - Split validation after the original 120-second combined timeout: 59 evidence/Wi-Fi/consigliere tests passed, 31 MFA tests passed, and 16 web import/auth tests passed.
 - `python scripts\verify_production_deployment.py --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed in 395.8 seconds after the timeout repair; 541 tests passed, wheel build passed, local web smoke passed, Docker build/health/auth/log smoke passed, and Docker rollback smoke passed.
 - `python scripts\verify_production_deployment.py --skip-tests --skip-docker-build --image thirstys-waterfall:codex-verify --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed after UTF-8 subprocess decoding was added; no reader-thread exception occurred.
-- `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile`: passed 15/15 checks.
+- `python scripts\verify_production_proxy_config.py --compose-file docker-compose.production.yml --caddyfile deploy\caddy\Caddyfile`: passed 18/18 checks after immutable image and published-image-only gates were added.
 - `python scripts\verify_production_deployment.py --skip-docker --skip-tests --require-target-evidence --target-evidence-manifest evidence\target-deployment\local-docker-v1.0.3-20260713T070000Z\target-evidence.json --thirsty-lang-path "T:\00-Active\thirsty_lang_exploration_0754"`: passed when rerun sequentially.
 
 ### Known Failures And Risks
@@ -967,3 +967,48 @@ accepted production scope to local Docker.
 
 Yes. Publish through the protected branch, verify the merged `main` commit,
 then collect the remaining evidence from a selected external deployment target.
+
+## 2026-07-16 Release Supply-Chain Hardening
+
+### Current State
+
+- GitHub Actions references in CI, CodeQL, and release workflows are pinned to
+  the immutable commit SHA resolved from their documented version tags.
+- Production release metadata now requires a versioned GHCR image with a
+  64-character SHA-256 digest; tag-only image metadata is rejected.
+- The production environment example uses an intentionally unusable zero digest
+  until the successful release publishes the real immutable image digest.
+- The release workflow now inspects the pushed versioned image, validates its
+  registry digest against the release metadata contract, and uploads the
+  resulting deployment input as short-retention release evidence.
+
+### Commands And Verification
+
+- GitHub CLI authentication was verified for account `IAmSoThirsty` without
+  exposing the credential value.
+- `git diff --check`: passed.
+- `python scripts/verify_release_version.py --expected-version 1.0.4`: passed.
+- `python scripts/verify_production_proxy_config.py --compose-file
+  docker-compose.production.yml --caddyfile deploy/caddy/Caddyfile`: passed
+  18/18 checks.
+- Focused release, supply-chain, proxy, and evidence-probe tests: 34 passed.
+- `python -m pytest -q --no-cov --timeout=180 --timeout-method=thread`: 595
+  tests passed in 230.08 seconds.
+- `python scripts/verify_production_deployment.py --skip-tests
+  --thirsty-lang-path "T:\01-Projects\thirsty_lang_exploration_0754"`: passed
+  all static, type, audit, reproducible-build, local web, Docker health/auth/log,
+  and rollback checks; Docker manifest-list SHA-256 was
+  `b3199a3c384b882246ef2b199418007ca75e21491049f7fc50aee4f772704cf3`.
+
+### Known Failures And Risks
+
+- This is a release-readiness branch, not external/public production evidence.
+- The zero digest in `.env.production.example` must be replaced by the digest
+  emitted by the successful release before deployment.
+- External target logs, live TLS boundary evidence, non-local secret rotation,
+  and real privileged VPN/firewall backend evidence remain required.
+
+### Safe To Continue
+
+Yes. Run the full repository gates, commit this branch, publish it through the
+protected-branch process, and only then perform release or target deployment.
