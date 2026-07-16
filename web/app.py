@@ -47,13 +47,14 @@ import sys
 import logging
 import sqlite3
 import threading
+import time
 import traceback
 from contextlib import closing
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 
 # Web framework and extensions
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, Response, g, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room
 from flask_jwt_extended import (
@@ -76,7 +77,7 @@ from thirstys_waterfall.sovereign_binding import (
 
 # Core system integration
 try:
-    from thirstys_waterfall import ThirstysWaterfall
+    from thirstys_waterfall import ThirstysWaterfall, __version__ as THIRSTYS_VERSION
 
     THIRSTYS_AVAILABLE = True
 except ImportError as e:
@@ -218,6 +219,93 @@ socketio = SocketIO(
 )
 jwt = JWTManager(app)
 revoked_token_jtis = set()
+
+
+class MetricsRegistry:
+    """Small process-local Prometheus registry with bounded label cardinality."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._request_count: Dict[Tuple[str, int], int] = {}
+        self._request_duration_seconds: Dict[str, float] = {}
+        self._request_duration_count: Dict[str, int] = {}
+        self._started_at = time.time()
+
+    def observe_request(self, method: str, status_code: int, duration_seconds: float) -> None:
+        with self._lock:
+            key = (method, status_code)
+            self._request_count[key] = self._request_count.get(key, 0) + 1
+            self._request_duration_seconds[method] = (
+                self._request_duration_seconds.get(method, 0.0) + duration_seconds
+            )
+            self._request_duration_count[method] = self._request_duration_count.get(method, 0) + 1
+
+    def render(self) -> str:
+        """Render stable, low-cardinality metrics for a Prometheus scrape."""
+        with self._lock:
+            request_count = dict(self._request_count)
+            duration_seconds = dict(self._request_duration_seconds)
+            duration_count = dict(self._request_duration_count)
+
+        lines = [
+            "# HELP thirstys_up Application process is available for authenticated monitoring.",
+            "# TYPE thirstys_up gauge",
+            "thirstys_up 1",
+            "# HELP thirstys_process_start_time_seconds Unix time when the process started.",
+            "# TYPE thirstys_process_start_time_seconds gauge",
+            "thirstys_process_start_time_seconds {0:.6f}".format(self._started_at),
+            "# HELP thirstys_http_requests_total Total HTTP responses by method and status code.",
+            "# TYPE thirstys_http_requests_total counter",
+        ]
+        for (method, status_code), count in sorted(request_count.items()):
+            lines.append(
+                'thirstys_http_requests_total{{method="{0}",status="{1}"}} {2}'.format(
+                    method, status_code, count
+                )
+            )
+
+        lines.extend(
+            [
+                "# HELP thirstys_http_request_duration_seconds HTTP response duration summary.",
+                "# TYPE thirstys_http_request_duration_seconds summary",
+            ]
+        )
+        for method in sorted(duration_count):
+            lines.append(
+                'thirstys_http_request_duration_seconds_sum{{method="{0}"}} {1:.6f}'.format(
+                    method, duration_seconds[method]
+                )
+            )
+            lines.append(
+                'thirstys_http_request_duration_seconds_count{{method="{0}"}} {1}'.format(
+                    method, duration_count[method]
+                )
+            )
+        return "\n".join(lines) + "\n"
+
+
+metrics_registry = MetricsRegistry()
+
+
+@app.before_request
+def start_request_metrics() -> None:
+    """Start timing without retaining request paths or user-controlled labels."""
+    g.metrics_started_at = time.perf_counter()
+
+
+@app.after_request
+def record_request_metrics(response: Response) -> Response:
+    """Record every response, including authentication and routing failures."""
+    started_at = getattr(g, "metrics_started_at", None)
+    if started_at is not None:
+        metrics_registry.observe_request(
+            request.method,
+            response.status_code,
+            max(0.0, time.perf_counter() - started_at),
+        )
+    return response
+
+
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -1211,7 +1299,7 @@ def health_check():
             {
                 "status": "healthy",
                 "timestamp": datetime.utcnow().isoformat(),
-                "version": "1.0.2",
+                "version": THIRSTYS_VERSION,
                 "sovereign_binding": get_sovereign_binding_status().as_dict(),
             }
         ),
@@ -1223,8 +1311,11 @@ def health_check():
 @jwt_required()
 def metrics():
     """Expose Prometheus-compatible metrics."""
-    # Placeholder for metrics implementation
-    return jsonify({"metrics": {}}), 200
+    return Response(
+        metrics_registry.render(),
+        status=200,
+        content_type="text/plain; version=0.0.4; charset=utf-8",
+    )
 
 
 # ============================================================================

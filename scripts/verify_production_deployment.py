@@ -109,6 +109,14 @@ def request_json(url: str, *, method: str = "GET", payload: dict[str, Any] | Non
         return json.loads(response.read().decode("utf-8"))
 
 
+def request_text(url: str, *, headers: dict[str, str] | None = None) -> tuple[str, str]:
+    """Return response content type and text without parsing user-controlled data."""
+    req = urllib.request.Request(url, headers=headers or {}, method="GET")
+    with urllib.request.urlopen(req, timeout=10) as response:
+        content_type = response.headers.get("Content-Type", "")
+        return content_type, response.read().decode("utf-8")
+
+
 def assert_rejected(url: str, payload: dict[str, Any]) -> None:
     try:
         request_json(url, method="POST", payload=payload)
@@ -138,20 +146,40 @@ def wait_for_health(port: int, expected_backend: str | None) -> dict[str, Any]:
     raise AssertionError(f"health check did not pass: {last_error}")
 
 
-def verify_auth(port: int, admin_password: str) -> None:
+def verify_auth(port: int, admin_password: str) -> str:
     login_url = f"http://127.0.0.1:{port}/api/auth/login"
     good = request_json(
         login_url,
         method="POST",
         payload={"username": "operator", "password": admin_password},
     )
-    if not good.get("access_token"):
+    access_token = good.get("access_token")
+    if not isinstance(access_token, str) or not access_token:
         raise AssertionError("configured admin login did not return an access token")
     default_username = "admin"
     assert_rejected(
         login_url,
         {"username": default_username, "password": default_username},
     )
+    return access_token
+
+
+def verify_metrics(port: int, access_token: str) -> None:
+    """Verify the authenticated endpoint emits useful Prometheus text."""
+    content_type, body = request_text(
+        f"http://127.0.0.1:{port}/metrics",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    if not content_type.startswith("text/plain;"):
+        raise AssertionError(f"metrics endpoint returned unexpected content type: {content_type!r}")
+    required_markers = (
+        "# TYPE thirstys_up gauge",
+        "# TYPE thirstys_http_requests_total counter",
+        "thirstys_http_request_duration_seconds_count",
+    )
+    missing = [marker for marker in required_markers if marker not in body]
+    if missing:
+        raise AssertionError(f"metrics endpoint omitted required markers: {missing!r}")
 
 
 def smoke_local_web(thirsty_lang_path: str | None) -> None:
@@ -188,7 +216,8 @@ def smoke_local_web(thirsty_lang_path: str | None) -> None:
     )
     try:
         health = wait_for_health(port, "thirsty-lang" if thirsty_lang_path else None)
-        verify_auth(port, admin_password)
+        access_token = verify_auth(port, admin_password)
+        verify_metrics(port, access_token)
         print(
             "local web smoke passed: "
             f"status={health.get('status')} backend={(health.get('sovereign_binding') or {}).get('backend')}"
@@ -316,7 +345,8 @@ def run_smoke_container(
         ) from exc
     try:
         health = wait_for_health(port, expected_backend)
-        verify_auth(port, admin_password)
+        access_token = verify_auth(port, admin_password)
+        verify_metrics(port, access_token)
         logs = docker_logs(name)
         if not logs.strip():
             raise AssertionError("container startup/log capture was empty")

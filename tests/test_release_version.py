@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import thirstys_waterfall
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "verify_release_version.py"
@@ -48,6 +50,12 @@ def test_release_metadata_accepts_one_coherent_version(tmp_path):
     )
 
     assert issues == []
+
+
+def test_runtime_version_matches_project_version():
+    assert thirstys_waterfall.__version__ == release_version.read_project_version(
+        ROOT / "pyproject.toml"
+    )
 
 
 def test_release_metadata_reports_every_version_mismatch(tmp_path):
